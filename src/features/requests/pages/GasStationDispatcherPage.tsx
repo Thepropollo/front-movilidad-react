@@ -158,7 +158,7 @@ const GasStationDispatcherPage: React.FC = () => {
           
           {/* Columna Izquierda: Escanear / Digitar Código de Vale */}
           <div className="lg:col-span-1">
-            <div className="glass-panel p-6 bg-white/50">
+            <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
               <h2 className="section-title flex items-center gap-2 mb-4">
                 <Fuel size={18} className="text-primary-brand" />
                 Ingreso de Vale
@@ -198,7 +198,7 @@ const GasStationDispatcherPage: React.FC = () => {
               <form onSubmit={handleConfirmDispatch} className="flex flex-col gap-6">
                 
                 {/* Voucher Details Card */}
-                <div className="glass-panel p-6 bg-white/50">
+                <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                   <h2 className="section-title flex items-center gap-2 mb-6">
                     <Car size={18} className="text-primary-brand" />
                     Detalles del Vehículo Autorizado
@@ -207,7 +207,7 @@ const GasStationDispatcherPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
                     {/* Vehicle */}
-                    <div className="p-4 rounded-xl border border-gray-100 bg-white flex items-start gap-3 shadow-xs">
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/40 flex items-start gap-3 shadow-xs">
                       <div className="p-2 bg-primary-brand/10 text-primary-brand rounded-lg">
                         <Car size={20} />
                       </div>
@@ -219,7 +219,7 @@ const GasStationDispatcherPage: React.FC = () => {
                     </div>
 
                     {/* Fuel type */}
-                    <div className="p-4 rounded-xl border border-gray-100 bg-white flex items-start gap-3 shadow-xs">
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/40 flex items-start gap-3 shadow-xs">
                       <div className="p-2 bg-gold/15 text-gold-dark rounded-lg">
                         <Fuel size={20} />
                       </div>
@@ -230,7 +230,7 @@ const GasStationDispatcherPage: React.FC = () => {
                     </div>
 
                     {/* Driver */}
-                    <div className="p-4 rounded-xl border border-gray-100 bg-white flex items-start gap-3 shadow-xs">
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/40 flex items-start gap-3 shadow-xs">
                       <div className="p-2 bg-primary-brand/10 text-primary-brand rounded-lg">
                         <User size={20} />
                       </div>
@@ -242,7 +242,7 @@ const GasStationDispatcherPage: React.FC = () => {
                     </div>
 
                     {/* Limit */}
-                    <div className="p-4 rounded-xl border border-gray-100 bg-white flex items-start gap-3 shadow-xs">
+                    <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/40 flex items-start gap-3 shadow-xs">
                       <div className="p-2 bg-green-50 text-success rounded-lg">
                         <Award size={20} />
                       </div>
@@ -257,7 +257,7 @@ const GasStationDispatcherPage: React.FC = () => {
                 </div>
 
                 {/* Despacho en Bomba Form */}
-                <div className="glass-panel p-6 bg-white/50">
+                <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                   <h2 className="section-title flex items-center gap-2 mb-6">
                     <Fuel size={18} className="text-primary-brand" />
                     Liquidación de Bomba (Despachador)
@@ -285,7 +285,7 @@ const GasStationDispatcherPage: React.FC = () => {
                 </div>
 
                 {/* Submit Action Box */}
-                <div className="p-6 rounded-2xl border border-gray-200 bg-white shadow-xs">
+                <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/40 shadow-xs">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-start gap-3 text-sm text-gray-600">
                       <ShieldAlert className="text-primary-brand flex-shrink-0 mt-0.5" size={20} />

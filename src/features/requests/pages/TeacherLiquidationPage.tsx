@@ -172,7 +172,7 @@ const TeacherLiquidationPage: React.FC = () => {
           
           {/* Columna Izquierda: Listado de viajes retornados */}
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="glass-panel p-6 bg-white/50">
+            <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
               <h2 className="section-title flex items-center gap-2 mb-4">
                 <ClipboardList size={18} className="text-primary-brand" />
                 Viajes Pendientes de Cierre
@@ -180,9 +180,9 @@ const TeacherLiquidationPage: React.FC = () => {
               <p className="text-muted text-xs mb-4">Selecciona una comisión finalizada para iniciar la liquidación y previsualizar haberes.</p>
 
               {sheets.length === 0 ? (
-                <div className="border border-dashed border-gray-200 rounded-xl p-6 text-center bg-gray-50/50">
+                <div className="border border-dashed border-slate-200 dark:border-slate-700/60 rounded-xl p-6 text-center bg-slate-50/50 dark:bg-slate-900/30">
                   <FileCheck className="text-gray-300 mb-2 mx-auto" size={32} />
-                  <p className="font-semibold text-gray-500 text-xs">Sin viajes por liquidar</p>
+                  <p className="font-semibold text-slate-600 dark:text-slate-300 text-xs">Sin viajes por liquidar</p>
                   <p className="text-muted text-[10px] mt-1">No tienes solicitudes pendientes de carga de comprobantes post-viaje.</p>
                 </div>
               ) : (
@@ -194,7 +194,7 @@ const TeacherLiquidationPage: React.FC = () => {
                       className={`p-4 rounded-2xl border text-left transition-all ${
                         selectedSheet?.id === sheet.id
                           ? 'border-gold bg-gold/5 ring-1 ring-gold/20 shadow-xs'
-                          : 'border-gray-150 hover:border-gray-250 bg-white'
+                          : 'border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/40'
                       }`}
                     >
                       <div className="flex justify-between items-start gap-2 mb-2">
@@ -218,16 +218,16 @@ const TeacherLiquidationPage: React.FC = () => {
           {/* Columna Derecha: Detalle de liquidación y carga de archivo */}
           <div className="lg:col-span-2">
             {!selectedSheet ? (
-              <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center bg-gray-50/50">
+              <div className="h-full flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-700/60 rounded-2xl p-12 text-center bg-slate-50/50 dark:bg-slate-900/30">
                 <Calculator className="text-gray-300 mb-4" size={48} />
-                <p className="font-semibold text-gray-500">Cálculo de Haberes Automático</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">Cálculo de Haberes Automático</p>
                 <p className="text-muted text-sm max-w-sm mt-1">Selecciona una comisión del listado de la izquierda para computar viáticos y horas extras del conductor.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-6">
                 
                 {/* Desglose de Haberes del Conductor */}
-                <div className="glass-panel p-6 bg-white/50 relative">
+                <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40 relative">
                   <h2 className="section-title flex items-center gap-2 mb-6">
                     <Calculator size={18} className="text-primary-brand" />
                     Cálculo Analítico de Haberes (Conductor)
@@ -242,7 +242,7 @@ const TeacherLiquidationPage: React.FC = () => {
                     <div className="flex flex-col gap-6">
                       
                       {/* Tiempos de Viaje Reales */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-white border border-gray-100 p-4 rounded-xl shadow-xs">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 p-4 rounded-xl shadow-xs">
                         <div>
                           <p className="text-gray-400 font-medium flex items-center gap-1.5 mb-1">
                             <Calendar size={14} className="text-primary-brand" />
@@ -263,7 +263,7 @@ const TeacherLiquidationPage: React.FC = () => {
                       <div className="flex flex-col gap-3">
                         
                         {/* Viáticos */}
-                        <div className="flex justify-between items-center p-3.5 bg-white border border-gray-100 rounded-2xl shadow-xs">
+                        <div className="flex justify-between items-center p-3.5 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-xs">
                           <div>
                             <p className="font-bold text-primary text-sm">Viáticos por Comisión Exterior</p>
                             <p className="text-muted text-xs mt-0.5">{calc.nights_outside} noches transcurridas afuera ($80.00/día)</p>
@@ -272,7 +272,7 @@ const TeacherLiquidationPage: React.FC = () => {
                         </div>
 
                         {/* Horas Suplementarias 50% */}
-                        <div className="flex justify-between items-center p-3.5 bg-white border border-gray-100 rounded-2xl shadow-xs">
+                        <div className="flex justify-between items-center p-3.5 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-xs">
                           <div>
                             <p className="font-bold text-primary text-sm">Horas Suplementarias (50%)</p>
                             <p className="text-muted text-xs mt-0.5">{calc.overtime_50_hours} horas laboradas post-jornada laboral ($5.00/hr)</p>
@@ -281,7 +281,7 @@ const TeacherLiquidationPage: React.FC = () => {
                         </div>
 
                         {/* Horas Extraordinarias 100% */}
-                        <div className="flex justify-between items-center p-3.5 bg-white border border-gray-100 rounded-2xl shadow-xs">
+                        <div className="flex justify-between items-center p-3.5 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-xs">
                           <div>
                             <p className="font-bold text-primary text-sm">Horas Extraordinarias (100%)</p>
                             <p className="text-muted text-xs mt-0.5">{calc.overtime_100_hours} horas laboradas fin de semana o feriado ($7.50/hr)</p>
@@ -306,7 +306,7 @@ const TeacherLiquidationPage: React.FC = () => {
                 {/* Formulario de Carga Drag and Drop */}
                 {calc && (
                   <form onSubmit={handleSubmitLiquidation} className="flex flex-col gap-6">
-                    <div className="glass-panel p-6 bg-white/50">
+                    <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                       <h2 className="section-title flex items-center gap-2 mb-4">
                         <UploadCloud size={18} className="text-primary-brand" />
                         Carga de Comprobante Físico (PDF/Factura)
@@ -323,7 +323,7 @@ const TeacherLiquidationPage: React.FC = () => {
                             ? 'border-gold bg-gold/5' 
                             : uploadedFileName 
                               ? 'border-green-200 bg-green-50/20' 
-                              : 'border-gray-200 bg-gray-50/50 hover:bg-gray-50'
+                              : 'border-slate-200 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
                         }`}
                       >
                         <input

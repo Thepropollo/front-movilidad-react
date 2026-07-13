@@ -201,7 +201,7 @@ const ChecklistDigitalPage: React.FC = () => {
           
           {/* Columna Izquierda: Selección de Vehículo / Hoja de Ruta */}
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="glass-panel p-6 bg-white/50">
+            <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
               <h2 className="section-title flex items-center gap-2 mb-4">
                 <Car size={18} className="text-primary-brand" />
                 Selección de Unidad
@@ -271,7 +271,7 @@ const ChecklistDigitalPage: React.FC = () => {
             </div>
 
             {selectedSheet && (
-              <div className="glass-panel p-6 bg-white/50">
+              <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                 <h2 className="section-title flex items-center gap-2 mb-4">
                   <Gauge size={18} className="text-primary-brand" />
                   Datos de Garita
@@ -300,7 +300,7 @@ const ChecklistDigitalPage: React.FC = () => {
                           className={`py-2 px-1 text-xs font-semibold rounded-lg border text-center transition-all ${
                             fuelLevel === level
                               ? 'bg-primary-brand text-white border-primary-brand shadow-sm'
-                              : 'bg-white text-primary border-gray-200 hover:bg-gray-50'
+                              : 'bg-white dark:bg-slate-800 text-primary dark:text-slate-200 border-slate-200 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700'
                           }`}
                         >
                           {level.toUpperCase()}
@@ -316,14 +316,14 @@ const ChecklistDigitalPage: React.FC = () => {
           {/* Columna Derecha: Checklist del Conductor / Guardia (Categorías e Ítems) */}
           <div className="lg:col-span-2">
             {!selectedSheet ? (
-              <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center bg-gray-50/50">
+              <div className="h-full flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-700/60 rounded-2xl p-12 text-center bg-slate-50/50 dark:bg-slate-900/30">
                 <ClipboardList className="text-gray-300 mb-4" size={48} />
-                <p className="font-semibold text-gray-500">No se ha seleccionado ninguna unidad</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">No se ha seleccionado ninguna unidad</p>
                 <p className="text-muted text-sm max-w-sm mt-1">Selecciona una hoja de ruta en el panel izquierdo para cargar el checklist correspondiente de este vehículo.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                <div className="glass-panel p-6 bg-white/50">
+                <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                   <h2 className="section-title flex items-center gap-2 mb-6">
                     <ClipboardList size={18} className="text-primary-brand" />
                     Inspección Detallada de Componentes
@@ -345,9 +345,9 @@ const ChecklistDigitalPage: React.FC = () => {
                               return (
                                 <div 
                                   key={comp.id} 
-                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-gray-100 bg-white shadow-sm hover:border-gray-200 transition-all gap-4"
+                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/40 shadow-sm hover:border-slate-300 transition-all gap-4"
                                 >
-                                  <span className="font-medium text-primary text-sm sm:text-base">{comp.component_name}</span>
+                                  <span className="font-medium text-slate-800 dark:text-slate-200 text-sm sm:text-base">{comp.component_name}</span>
                                   
                                   <div className="flex gap-2">
                                     <button
@@ -356,7 +356,7 @@ const ChecklistDigitalPage: React.FC = () => {
                                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
                                         currentCondition === 'BUENO'
                                           ? 'bg-success text-white border-success shadow-xs'
-                                          : 'bg-white text-gray-500 border-gray-200 hover:bg-success/5 hover:text-success'
+                                          : 'bg-white dark:bg-slate-850 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700/60 hover:bg-success/5 dark:hover:bg-success/10 hover:text-success'
                                       }`}
                                     >
                                       BUENO
@@ -367,7 +367,7 @@ const ChecklistDigitalPage: React.FC = () => {
                                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
                                         currentCondition === 'REGULAR'
                                           ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                                          : 'bg-white text-gray-500 border-gray-200 hover:bg-amber-50'
+                                          : 'bg-white dark:bg-slate-850 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700/60 hover:bg-amber-50 dark:hover:bg-amber-950/20'
                                       }`}
                                     >
                                       REGULAR
@@ -378,7 +378,7 @@ const ChecklistDigitalPage: React.FC = () => {
                                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
                                         currentCondition === 'MALO'
                                           ? 'bg-danger text-white border-danger shadow-xs'
-                                          : 'bg-white text-gray-500 border-gray-200 hover:bg-danger/5 hover:text-danger'
+                                          : 'bg-white dark:bg-slate-850 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700/60 hover:bg-danger/5 dark:hover:bg-danger/10 hover:text-danger'
                                       }`}
                                     >
                                       MALO
@@ -396,8 +396,8 @@ const ChecklistDigitalPage: React.FC = () => {
                 {/* Submit Action Box */}
                 <div className={`p-6 rounded-2xl border transition-all ${
                   hasMaloComponent 
-                    ? 'bg-red-50 border-red-200 text-red-800' 
-                    : 'bg-green-50 border-green-200 text-green-800'
+                    ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/30 text-red-800 dark:text-red-300' 
+                    : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/30 text-green-800 dark:text-green-300'
                 }`}>
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-start gap-3">

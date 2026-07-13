@@ -5,4 +5,10 @@ export { default as GasStationDispatcherPage } from './pages/GasStationDispatche
 export { default as TeacherLiquidationPage } from './pages/TeacherLiquidationPage';
 export { default as TransportAuditPanelPage } from './pages/TransportAuditPanelPage';
 export { default as PendingFeedbackBanner } from './components/PendingFeedbackBanner';
-
+export { default as AdminDashboardPage } from './pages/AdminDashboardPage';
+export { default as AuditLogsPage } from './pages/AuditLogsPage';
+export { default as AdminUsersPage } from './pages/AdminUsersPage';
+export { default as AdminVehiclesPage } from './pages/AdminVehiclesPage';
+export { default as AdminDriversPage } from './pages/AdminDriversPage';
+export { default as AdminEstacionesPage } from './pages/AdminEstacionesPage';
+export { default as AdminTarifasPage } from './pages/AdminTarifasPage';

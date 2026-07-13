@@ -149,18 +149,18 @@ const TransportPanel: React.FC = () => {
   return (
     <div className="max-w-6xl w-full mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-gray-200 pb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
         <div>
           <h1 className="text-3xl font-extrabold text-primary flex items-center gap-2">
             <Milestone className="text-secondary" size={28} />
             Sección de Transporte y Logística
           </h1>
-          <p className="text-gray-500 mt-1">Asignación de recursos institucionales y emisión de Hojas de Ruta.</p>
+          <p className="text-muted mt-1">Asignación de recursos institucionales y emisión de Hojas de Ruta.</p>
         </div>
         <button 
           onClick={loadAllData} 
           disabled={listLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-semibold transition cursor-pointer"
         >
           <RefreshCw className={listLoading ? "animate-spin" : ""} size={16} />
           <span>Actualizar Datos</span>
@@ -169,8 +169,8 @@ const TransportPanel: React.FC = () => {
 
       {/* Success Notification */}
       {successData && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top duration-300">
-          <CheckCircle className="shrink-0 text-green-600 mt-0.5" size={22} />
+        <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/30 rounded-2xl text-green-800 dark:text-green-300 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top duration-300">
+          <CheckCircle className="shrink-0 text-green-600" size={22} />
           <div>
             <p className="font-bold text-base">¡Hoja de Ruta Emitida!</p>
             <p className="text-sm mt-0.5">{successData.message}</p>
@@ -183,7 +183,7 @@ const TransportPanel: React.FC = () => {
 
       {/* Error Notification */}
       {apiError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-2xl text-red-800 dark:text-red-300 flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
           <AlertTriangle className="shrink-0 text-red-600 mt-0.5" size={22} />
           <div>
             <p className="font-bold">Error de Validación / Bloqueo en Cascada</p>
@@ -195,8 +195,8 @@ const TransportPanel: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Side: Requests List */}
-        <div className="lg:col-span-1 bg-white rounded-xl shadow border p-5 flex flex-col h-[650px]">
-          <h2 className="text-lg font-bold text-primary mb-4 pb-2 border-b">
+        <div className="lg:col-span-1 glass-panel p-5 flex flex-col h-[650px]">
+          <h2 className="text-lg font-bold text-primary mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
             Solicitudes por Asignar ({requests.length})
           </h2>
 
@@ -208,7 +208,7 @@ const TransportPanel: React.FC = () => {
           ) : requests.length === 0 ? (
             <div className="flex-1 flex flex-col justify-center items-center text-center p-4">
               <FileText className="text-gray-300 mb-2" size={40} />
-              <p className="text-gray-500 font-bold">Sin solicitudes pendientes</p>
+              <p className="text-slate-500 font-bold">Sin solicitudes pendientes</p>
               <p className="text-xs text-gray-400 mt-1">Todas las comisiones tienen sus recursos asignados.</p>
             </div>
           ) : (
@@ -222,30 +222,30 @@ const TransportPanel: React.FC = () => {
                     setSelectedDriverId(null);
                     setSuccessData(null);
                   }}
-                  className={`p-4 rounded-lg border text-left cursor-pointer transition flex flex-col justify-between ${
+                  className={`p-4 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${
                     selectedRequest?.id === req.id 
                       ? 'border-secondary bg-secondary/5 ring-1 ring-secondary' 
-                      : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'
+                      : 'border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 bg-slate-50/50 dark:bg-slate-900/30'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
                       req.mobilization_type === 'externa' 
-                        ? 'bg-purple-100 text-purple-800 border border-purple-200' 
-                        : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        ? 'bg-purple-50 text-purple-700 border border-purple-200/50' 
+                        : 'bg-blue-50 text-blue-700 border border-blue-200/50'
                     }`}>
                       {req.mobilization_type}
                     </span>
                     <span className="font-extrabold text-primary text-sm">${Number(req.projected_cost).toFixed(2)}</span>
                   </div>
 
-                  <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-1">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm leading-tight line-clamp-1">
                     {req.origin} &rarr; {req.destination}
                   </h3>
 
-                  <div className="text-xs text-gray-500 mt-2 space-y-1">
-                    <p className="truncate"><span className="font-semibold text-gray-700">Solicita:</span> {req.requester?.first_name} {req.requester?.last_name}</p>
-                    <p><span className="font-semibold text-gray-700">Fecha:</span> {req.departure_date} al {req.return_date}</p>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 space-y-1">
+                    <p className="truncate"><span className="font-semibold text-slate-700 dark:text-slate-300">Solicita:</span> {req.requester?.first_name} {req.requester?.last_name}</p>
+                    <p><span className="font-semibold text-slate-700 dark:text-slate-300">Fecha:</span> {req.departure_date} al {req.return_date}</p>
                   </div>
                 </div>
               ))}
@@ -256,31 +256,31 @@ const TransportPanel: React.FC = () => {
         {/* Right Side: Assignment Process */}
         <div className="lg:col-span-2 flex flex-col gap-6 h-[650px]">
           {!selectedRequest ? (
-            <div className="flex-1 bg-gray-50 border border-dashed rounded-xl flex flex-col justify-center items-center text-center p-6">
+            <div className="flex-1 bg-slate-50/50 dark:bg-slate-900/30 border border-dashed border-slate-200 dark:border-slate-700/60 rounded-2xl flex flex-col justify-center items-center text-center p-6">
               <Milestone className="text-gray-300 mb-3" size={54} />
-              <h3 className="text-gray-600 font-bold text-lg">Asignación de Recursos en Patio</h3>
-              <p className="text-gray-400 text-sm mt-1 max-w-sm">
+              <h3 className="text-slate-600 dark:text-slate-300 font-bold text-lg">Asignación de Recursos en Patio</h3>
+              <p className="text-slate-400 dark:text-slate-500 text-sm mt-1 max-w-sm">
                 Seleccione una solicitud de movilización de la lista de la izquierda para comenzar el despacho de vehículos y conductores.
               </p>
             </div>
           ) : (
-            <div className="flex-1 bg-white rounded-xl shadow border p-6 flex flex-col overflow-hidden">
+            <div className="flex-1 glass-panel p-6 flex flex-col overflow-hidden">
               {/* Active Request Info */}
-              <div className="bg-gray-50 border rounded-lg p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 text-sm">
+              <div className="bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 text-sm">
                 <div>
-                  <span className="text-xs text-gray-400 block font-bold uppercase">Destino y Motivo</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block font-bold uppercase">Destino y Motivo</span>
                   <span className="font-bold text-primary block truncate">{selectedRequest.destination}</span>
-                  <span className="text-xs text-gray-500 block truncate italic">"{selectedRequest.travel_reason}"</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block truncate italic">"{selectedRequest.travel_reason}"</span>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-400 block font-bold uppercase">Fechas del Viaje</span>
-                  <span className="font-bold text-gray-950 block">{selectedRequest.departure_date}</span>
-                  <span className="text-xs text-gray-500 block">al {selectedRequest.return_date} ({selectedRequest.estimated_days} días)</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block font-bold uppercase">Fechas del Viaje</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 block">{selectedRequest.departure_date}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block">al {selectedRequest.return_date} ({selectedRequest.estimated_days} días)</span>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-400 block font-bold uppercase">Pre-Cálculo Autorizado</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block font-bold uppercase">Pre-Cálculo Autorizado</span>
                   <span className="font-extrabold text-secondary text-base">${Number(selectedRequest.projected_cost).toFixed(2)}</span>
-                  <span className="text-xs text-gray-400 block font-medium">Viáticos institucionales</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block font-medium">Viáticos institucionales</span>
                 </div>
               </div>
 
@@ -306,35 +306,35 @@ const TransportPanel: React.FC = () => {
                               setSuccessData(null);
                             }
                           }}
-                          className={`p-3.5 rounded-lg border text-left transition relative ${
+                          className={`p-3.5 rounded-xl border text-left transition relative ${
                             !veh.is_selectable 
-                              ? 'bg-gray-100 border-red-200 opacity-65 cursor-not-allowed' 
+                              ? 'bg-red-500/5 border-red-200/50 dark:border-red-900/30 opacity-65 cursor-not-allowed' 
                               : isSelected
                               ? 'border-secondary bg-secondary/5 ring-1 ring-secondary cursor-pointer'
-                              : 'border-gray-200 hover:border-gray-300 cursor-pointer bg-white'
+                              : 'border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer bg-white dark:bg-slate-800/40'
                           }`}
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <span className="font-extrabold text-gray-950 text-sm">{veh.plate}</span>
-                              <p className="text-xs text-gray-600 font-semibold">{veh.brand} {veh.model} ({veh.year})</p>
+                              <span className="font-extrabold text-slate-800 dark:text-slate-50 text-sm">{veh.plate}</span>
+                              <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold">{veh.brand} {veh.model} ({veh.year})</p>
                             </div>
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                               veh.status_label === 'available'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                                ? 'bg-green-50 text-green-700 border border-green-200/50'
+                                : 'bg-red-50 text-red-700 border border-red-200/50'
                             }`}>
                               {veh.status_label === 'available' ? 'Operativo' : 'Bloqueado'}
                             </span>
                           </div>
 
-                          <div className="text-xs text-gray-500 mt-2 flex justify-between">
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex justify-between">
                             <span>Kilometraje: {veh.current_mileage} km</span>
                             <span>Próx Cambio: {veh.next_oil_change_mileage} km</span>
                           </div>
 
                           {!veh.is_selectable && (
-                            <div className="mt-2.5 pt-1.5 border-t border-red-100 flex items-center gap-1.5 text-red-700 text-[10px] font-bold uppercase">
+                            <div className="mt-2.5 pt-1.5 border-t border-red-200/60 dark:border-red-900/30 flex items-center gap-1.5 text-red-600 text-[10px] font-bold uppercase">
                               <ShieldAlert size={12} />
                               <span>{veh.status_details}</span>
                             </div>
@@ -364,29 +364,29 @@ const TransportPanel: React.FC = () => {
                               setSuccessData(null);
                             }
                           }}
-                          className={`p-3.5 rounded-lg border text-left transition relative ${
+                          className={`p-3.5 rounded-xl border text-left transition relative ${
                             !dri.is_selectable 
-                              ? 'bg-gray-100 border-red-200 opacity-65 cursor-not-allowed' 
+                              ? 'bg-red-500/5 border-red-200/50 dark:border-red-900/30 opacity-65 cursor-not-allowed' 
                               : isSelected
                               ? 'border-secondary bg-secondary/5 ring-1 ring-secondary cursor-pointer'
-                              : 'border-gray-200 hover:border-gray-300 cursor-pointer bg-white'
+                              : 'border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer bg-white dark:bg-slate-800/40'
                           }`}
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <span className="font-extrabold text-gray-950 text-sm">{dri.name}</span>
-                              <p className="text-xs text-gray-400 font-medium">C.I. {dri.national_id}</p>
+                              <span className="font-extrabold text-slate-800 dark:text-slate-50 text-sm">{dri.name}</span>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">C.I. {dri.national_id}</p>
                             </div>
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                               dri.status_label === 'available'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                                ? 'bg-green-50 text-green-700 border border-green-200/50'
+                                : 'bg-red-50 text-red-700 border border-red-200/50'
                             }`}>
                               {dri.status_label === 'available' ? 'Habilitado' : 'Bloqueado'}
                             </span>
                           </div>
 
-                          <div className="text-xs text-gray-500 mt-2.5 flex items-center justify-between border-t pt-1.5">
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-2.5 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-1.5">
                             <span className="flex items-center gap-0.5">
                               <Award size={13} className="text-secondary" />
                               Puntos: <strong className="text-primary font-bold">{dri.points} pt</strong>
@@ -396,7 +396,7 @@ const TransportPanel: React.FC = () => {
                           </div>
 
                           {!dri.is_selectable && (
-                            <div className="mt-2.5 pt-1.5 border-t border-red-100 flex items-center gap-1.5 text-red-700 text-[10px] font-bold uppercase">
+                            <div className="mt-2.5 pt-1.5 border-t border-red-200/60 dark:border-red-900/30 flex items-center gap-1.5 text-red-600 text-[10px] font-bold uppercase">
                               <ShieldAlert size={12} />
                               <span>{dri.status_details}</span>
                             </div>
@@ -410,21 +410,23 @@ const TransportPanel: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="border-t pt-4 mt-4 shrink-0 flex justify-end gap-3">
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4 shrink-0 flex justify-end gap-3">
                 <button
+                  type="button"
                   onClick={() => {
                     setSelectedRequest(null);
                     setSelectedVehicleId(null);
                     setSelectedDriverId(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-semibold transition cursor-pointer"
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700/60 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-semibold transition cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
+                  type="button"
                   onClick={handleIssueRouteSheet}
                   disabled={loading || !selectedVehicleId || !selectedDriverId}
-                  className="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-sm font-bold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                  className="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-bold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
                 >
                   {loading ? (
                     <>

@@ -4,7 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 import { LoginPage, RegisterPage } from '@features/auth';
 import { DashboardPage } from '@features/dashboard';
-import { RequestFormPage, ChecklistDigitalPage, DriverFuelTicketsPage, GasStationDispatcherPage, TeacherLiquidationPage, TransportAuditPanelPage, PendingFeedbackBanner } from '@features/requests';
+import { RequestFormPage, ChecklistDigitalPage, DriverFuelTicketsPage, GasStationDispatcherPage, TeacherLiquidationPage, TransportAuditPanelPage, PendingFeedbackBanner, AdminDashboardPage, AuditLogsPage, AdminUsersPage, AdminVehiclesPage, AdminDriversPage, AdminEstacionesPage, AdminTarifasPage } from '@features/requests';
 import { RectorPanelPage } from '@features/rector';
 import { TransportPanelPage } from '@features/transport';
 import { WorkshopPanelPage } from '@features/workshop';
@@ -133,6 +133,77 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/analitica"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <AdminDashboardPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/auditoria"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <AuditLogsPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/usuarios"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <AdminUsersPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/vehiculos"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <AdminVehiclesPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/choferes"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <AdminDriversPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/estaciones"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <AdminEstacionesPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/tarifas"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <AdminTarifasPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Ruta por defecto */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -141,13 +212,17 @@ function AppContent() {
   );
 }
 
+import { ThemeProvider } from './context/ThemeContext';
+
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

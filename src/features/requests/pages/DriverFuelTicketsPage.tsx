@@ -128,7 +128,7 @@ const DriverFuelTicketsPage: React.FC = () => {
           {/* Columna Izquierda: Emisión de Vale (Solo Jefe de Transporte) */}
           {user?.role?.name === 'jefe_transporte' && (
             <div className="xl:col-span-1 flex flex-col gap-6">
-              <div className="glass-panel p-6 bg-white/50">
+              <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                 <h2 className="section-title flex items-center gap-2 mb-4">
                   <ClipboardCheck size={18} className="text-primary-brand" />
                   Emitir Vale de Combustible
@@ -209,12 +209,12 @@ const DriverFuelTicketsPage: React.FC = () => {
                   return (
                     <div 
                       key={order.id} 
-                      className={`relative overflow-hidden rounded-3xl border shadow-sm bg-white flex flex-col md:flex-row transition-all hover:border-gray-350 ${
-                        isConsumed ? 'border-gray-200 opacity-75' : 'border-gold/30 ring-1 ring-gold/5'
+                      className={`relative overflow-hidden rounded-3xl border shadow-sm bg-white dark:bg-slate-800/80 flex flex-col md:flex-row transition-all hover:border-gray-350 ${
+                        isConsumed ? 'border-slate-200 dark:border-slate-700/60 opacity-75' : 'border-gold/30 ring-1 ring-gold/5'
                       }`}
                     >
                       {/* Ticket Left Side: Info Card */}
-                      <div className="flex-1 p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-dashed border-gray-200">
+                      <div className="flex-1 p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-dashed border-slate-200 dark:border-slate-700/60">
                         <div>
                           <div className="flex justify-between items-start gap-2 mb-3">
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
@@ -255,17 +255,17 @@ const DriverFuelTicketsPage: React.FC = () => {
                             <span className="text-primary">Cupo Máximo Autorizado</span>
                             <span className="text-gold-dark">{order.authorized_gallons} Galones</span>
                           </div>
-                          <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                          <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
                             <div 
                               className={`h-full rounded-full transition-all ${
-                                isConsumed ? 'bg-gray-400' : 'bg-gold'
+                                isConsumed ? 'bg-slate-400 dark:bg-slate-500' : 'bg-gold'
                               }`}
                               style={{ width: '100%' }}
                             ></div>
                           </div>
                           
                           {isConsumed && (
-                            <div className="mt-2 pt-2 border-t border-gray-100 flex justify-between text-[11px] font-bold text-gray-500">
+                            <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/40 flex justify-between text-[11px] font-bold text-gray-500">
                               <span>Despachado: {order.actual_dispatched_gallons} Gal.</span>
                               <span>Total Pagado: ${order.total_amount_paid?.toFixed(2)}</span>
                             </div>
@@ -274,8 +274,8 @@ const DriverFuelTicketsPage: React.FC = () => {
                       </div>
 
                       {/* Ticket Right Side: QR Code Area */}
-                      <div className="p-6 md:w-44 flex flex-col items-center justify-center bg-gray-50/50 shrink-0">
-                        <div className="relative p-2.5 bg-white border border-gray-150 rounded-2xl shadow-xs">
+                      <div className="p-6 md:w-44 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-900/30 shrink-0">
+                        <div className="relative p-2.5 bg-white border border-slate-200 rounded-2xl shadow-xs">
                           {/* Simulated QR Code matrix box */}
                           <div 
                             className={`w-28 h-28 relative flex flex-col justify-between p-1 bg-white transition-all ${

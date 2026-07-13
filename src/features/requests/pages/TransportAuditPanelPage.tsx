@@ -91,7 +91,7 @@ const TransportAuditPanelPage: React.FC = () => {
           
           {/* Columna Izquierda: Liquidaciones pendientes */}
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="glass-panel p-6 bg-white/50">
+            <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
               <h2 className="section-title flex items-center gap-2 mb-4">
                 <FileCheck size={18} className="text-primary-brand" />
                 Liquidaciones en Espera
@@ -99,9 +99,9 @@ const TransportAuditPanelPage: React.FC = () => {
               <p className="text-muted text-xs mb-4">Planillas con comprobante cargado que requieren verificación de movilidad.</p>
 
               {liquidations.length === 0 ? (
-                <div className="border border-dashed border-gray-200 rounded-xl p-6 text-center bg-gray-50/50">
+                <div className="border border-dashed border-slate-200 dark:border-slate-700/60 rounded-xl p-6 text-center bg-slate-50/50 dark:bg-slate-900/30">
                   <ShieldCheck className="text-gray-300 mb-2 mx-auto" size={32} />
-                  <p className="font-semibold text-gray-500 text-xs">Bandeja de Entrada Limpia</p>
+                  <p className="font-semibold text-slate-600 dark:text-slate-300 text-xs">Bandeja de Entrada Limpia</p>
                   <p className="text-muted text-[10px] mt-1">No hay liquidaciones post-viaje esperando auditoría en este momento.</p>
                 </div>
               ) : (
@@ -113,7 +113,7 @@ const TransportAuditPanelPage: React.FC = () => {
                       className={`p-4 rounded-2xl border text-left transition-all ${
                         selectedLiq?.id === liq.id
                           ? 'border-gold bg-gold/5 ring-1 ring-gold/20 shadow-xs'
-                          : 'border-gray-150 hover:border-gray-250 bg-white'
+                          : 'border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/40'
                       }`}
                     >
                       <div className="flex justify-between items-start gap-2 mb-2">
@@ -137,23 +137,23 @@ const TransportAuditPanelPage: React.FC = () => {
           {/* Columna Derecha: Detalle de auditoría */}
           <div className="lg:col-span-2">
             {!selectedLiq ? (
-              <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center bg-gray-50/50">
+              <div className="h-full flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-700/60 rounded-2xl p-12 text-center bg-slate-50/50 dark:bg-slate-900/30">
                 <ShieldCheck className="text-gray-300 mb-4" size={48} />
-                <p className="font-semibold text-gray-500">Módulo de Auditoría Financiera</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">Módulo de Auditoría Financiera</p>
                 <p className="text-muted text-sm max-w-sm mt-1">Selecciona una planilla del listado de la izquierda para previsualizar los montos, inspeccionar el comprobante y archivar la comisión.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-6">
                 
                 {/* Info Header */}
-                <div className="glass-panel p-6 bg-white/50">
+                <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                   <h2 className="section-title flex items-center gap-2 mb-6">
                     <User size={18} className="text-primary-brand" />
                     Detalles Generales del Viaje
                   </h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-xs flex items-center gap-3">
+                    <div className="p-3 bg-white dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-xs flex items-center gap-3">
                       <User className="text-primary-brand" size={16} />
                       <div>
                         <p className="text-gray-400">Conductor</p>
@@ -161,7 +161,7 @@ const TransportAuditPanelPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-xs flex items-center gap-3">
+                    <div className="p-3 bg-white dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-xs flex items-center gap-3">
                       <Car className="text-primary-brand" size={16} />
                       <div>
                         <p className="text-gray-400">Vehículo Utilizado</p>
@@ -169,7 +169,7 @@ const TransportAuditPanelPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-xs flex items-center gap-3">
+                    <div className="p-3 bg-white dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-xs flex items-center gap-3">
                       <Calendar className="text-primary-brand" size={16} />
                       <div>
                         <p className="text-gray-400">Ruta y Comisión</p>
@@ -177,7 +177,7 @@ const TransportAuditPanelPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-xs flex items-center gap-3">
+                    <div className="p-3 bg-white dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-xs flex items-center gap-3">
                       <DollarSign className="text-primary-brand" size={16} />
                       <div>
                         <p className="text-gray-400">Docente Solicitante</p>
@@ -188,22 +188,22 @@ const TransportAuditPanelPage: React.FC = () => {
                 </div>
 
                 {/* Planilla de Haberes */}
-                <div className="glass-panel p-6 bg-white/50">
+                <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                   <h2 className="section-title flex items-center gap-2 mb-6">
                     <DollarSign size={18} className="text-primary-brand" />
                     Liquidación Computada
                   </h2>
 
                   <div className="flex flex-col gap-3 text-sm">
-                    <div className="flex justify-between py-2 border-b border-gray-100">
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
                       <span className="text-gray-500">Viáticos de Comisión Exterior</span>
                       <span className="font-bold text-primary font-mono">${selectedLiq.allowances_amount.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
                       <span className="text-gray-500">Horas Suplementarias (50%)</span>
                       <span className="font-bold text-primary font-mono">${selectedLiq.overtime_50_amount.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
                       <span className="text-gray-500">Horas Extraordinarias (100%)</span>
                       <span className="font-bold text-primary font-mono">${selectedLiq.overtime_100_amount.toFixed(2)}</span>
                     </div>
@@ -215,13 +215,13 @@ const TransportAuditPanelPage: React.FC = () => {
                 </div>
 
                 {/* Previsualización del Comprobante */}
-                <div className="glass-panel p-6 bg-white/50">
+                <div className="glass-panel p-6 bg-white/5 dark:bg-slate-800/40">
                   <h2 className="section-title flex items-center gap-2 mb-4">
                     <FileText size={18} className="text-primary-brand" />
                     Archivo de Respaldo Cargado
                   </h2>
 
-                  <div className="border border-gray-200 rounded-2xl p-6 bg-gray-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="border border-slate-200 dark:border-slate-700/60 rounded-2xl p-6 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className="p-3 bg-red-100 text-red-600 rounded-xl">
                         <FileText size={28} />
@@ -238,7 +238,7 @@ const TransportAuditPanelPage: React.FC = () => {
                         e.preventDefault();
                         alert(`Abriendo previsualización simulada de comprobante: ${selectedLiq.payment_receipt_url}`);
                       }}
-                      className="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-250 text-primary text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
+                      className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-250 dark:border-slate-700/60 text-primary dark:text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
                     >
                       <Eye size={14} />
                       Ver Comprobante
@@ -247,7 +247,7 @@ const TransportAuditPanelPage: React.FC = () => {
                 </div>
 
                 {/* Acciones de Auditoría */}
-                <div className="p-6 rounded-2xl border border-gray-200 bg-white shadow-xs">
+                <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/40 shadow-xs">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p className="text-xs text-gray-500">Al aprobar la comisión, el estado del viaje pasará a 'finalizado', se cerrará el asiento financiero y el conductor quedará disponible para nuevas comisiones.</p>
                     
