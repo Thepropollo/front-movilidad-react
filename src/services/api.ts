@@ -1,14 +1,20 @@
 import axios from 'axios';
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+
+if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
+  // Evita builds de producción apuntando a localhost por accidente.
+  console.error('VITE_API_BASE_URL no está definida en el build de producción.');
+}
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   },
 });
 
-// Interceptor para inyectar el token en cada petición si existe
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
@@ -17,7 +23,20 @@ api.interceptors.request.use(
     }
     return config;
   },
+  (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
   (error) => {
+    const status = error?.response?.status;
+    if (status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_data');
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login');
+      }
+    }
     return Promise.reject(error);
   }
 );

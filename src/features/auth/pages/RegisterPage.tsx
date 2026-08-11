@@ -14,7 +14,7 @@ const Register: React.FC = () => {
     email: '',
     password: '',
     faculty_institution: 'FACULTAD DE CIENCIAS INFORMATICAS',
-    role_name: 'solicitante'
+    role_name: 'docente',
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,7 @@ const Register: React.FC = () => {
 
     try {
       await register(formData);
-      navigate('/dashboard');
+      navigate('/app');
     } catch (err: any) {
       setError(err.message || 'Error durante el registro. Por favor intente de nuevo.');
     } finally {
@@ -45,8 +45,8 @@ const Register: React.FC = () => {
   return (
     <div className="auth-wrapper" style={{ maxWidth: '600px' }}>
       <div className="auth-header" style={{ marginBottom: '24px' }}>
-        <h1 className="auth-logo">TESIS MOVILIDAD</h1>
-        <p className="auth-subtitle">Crea tu cuenta institucional</p>
+        <h1 className="auth-logo">ULEAM Movilidad</h1>
+        <p className="auth-subtitle">Alta de docente o estudiante (sin roles privilegiados)</p>
       </div>
 
       <div className="glass-panel auth-card" style={{ padding: '32px' }}>
@@ -161,11 +161,8 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 style={{ paddingLeft: '48px' }}
               >
-                <option value="solicitante">Solicitante (Docente/Tutor)</option>
-                <option value="pasajero">Pasajero (Estudiante/Servidor)</option>
-                <option value="chofer">Chofer</option>
-                <option value="mecanico">Mecánico</option>
-                <option value="jefe_transporte">Jefe de Transporte</option>
+                <option value="docente">Docente</option>
+                <option value="estudiante">Estudiante</option>
               </select>
             </div>
           </div>
@@ -200,7 +197,8 @@ const Register: React.FC = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                minLength={8}
+                minLength={10}
+                autoComplete="new-password"
               />
             </div>
           </div>
