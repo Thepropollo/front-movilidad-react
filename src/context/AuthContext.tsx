@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { normalizeRoles, type RoleId } from '../config/roles';
+
+export interface RoleRef {
+  id: number;
+  name: string;
+  description: string;
+}
 
 export interface User {
   id: number;
@@ -9,11 +16,8 @@ export interface User {
   email: string;
   faculty_institution: string;
   role_id: number | null;
-  role?: {
-    id: number;
-    name: string;
-    description: string;
-  } | null;
+  role?: RoleRef | null;
+  roles?: RoleRef[];
 }
 
 interface AuthContextType {
@@ -21,8 +25,9 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
+  roleIds: RoleId[];
   login: (email: string, password: string) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  register: (data: Record<string, unknown>) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
 }
@@ -32,34 +37,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
-  // Inicializar cargando el token del almacenamiento local
+  const roleIds = normalizeRoles(user?.role, user?.roles);
+
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('access_token');
-      const storedUser = localStorage.getItem('user_data');
-      
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        
-        // Verificar el token con el servidor de forma asíncrona
-        try {
-          const response = await api.get('/me');
-          const freshUser = response.data.data;
-          setUser(freshUser);
-          localStorage.setItem('user_data', JSON.stringify(freshUser));
-        } catch (error) {
-          // Si el token es inválido o expiró, limpiar la sesión
-          console.error('Error al verificar sesión:', error);
-          logoutState();
-        }
+      if (!storedToken) {
+        setLoading(false);
+        return;
       }
+
+      setToken(storedToken);
+
+      try {
+        const storedUser = localStorage.getItem('user_data');
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser) as User);
+          } catch {
+            localStorage.removeItem('user_data');
+          }
+        }
+
+        // La fuente de verdad de roles es siempre /me (no localStorage).
+        const response = await api.get('/me');
+        const freshUser = response.data.data as User;
+        setUser(freshUser);
+        localStorage.setItem('user_data', JSON.stringify(freshUser));
+      } catch {
+        logoutState();
+      }
+
       setLoading(false);
     };
 
-    initializeAuth();
+    void initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -67,36 +81,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await api.post('/login', { email, password });
       const { access_token, user: loggedUser } = response.data.data;
-      
+
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('user_data', JSON.stringify(loggedUser));
-      
+
       setToken(access_token);
       setUser(loggedUser);
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Error al iniciar sesión';
-      throw new Error(message);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      throw new Error(err.response?.data?.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (data: any) => {
+  const register = async (data: Record<string, unknown>) => {
     setLoading(true);
     try {
       const response = await api.post('/register', data);
       const { access_token, user: registeredUser } = response.data.data;
-      
+
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('user_data', JSON.stringify(registeredUser));
-      
+
       setToken(access_token);
       setUser(registeredUser);
-    } catch (error: any) {
-      const errors = error.response?.data?.errors;
-      const message = error.response?.data?.message || 'Error en el registro';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
+      const errors = err.response?.data?.errors;
+      const message = err.response?.data?.message || 'Error en el registro';
       if (errors) {
-        // Concatenar todos los mensajes de error de validación
         const errorList = Object.values(errors).flat().join(', ');
         throw new Error(`${message}: ${errorList}`);
       }
@@ -110,8 +124,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       await api.post('/logout');
-    } catch (error) {
-      console.error('Error al cerrar sesión en servidor:', error);
+    } catch {
+      // ignore
     } finally {
       logoutState();
       setLoading(false);
@@ -131,23 +145,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const currentUser = response.data.data;
       setUser(currentUser);
       localStorage.setItem('user_data', JSON.stringify(currentUser));
-    } catch (error) {
+    } catch {
       logoutState();
     }
   };
 
-  const value = {
-    user,
-    token,
-    isAuthenticated: !!token,
-    loading,
-    login,
-    register,
-    logout,
-    fetchCurrentUser
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated: !!token,
+        loading,
+        roleIds,
+        login,
+        register,
+        logout,
+        fetchCurrentUser,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

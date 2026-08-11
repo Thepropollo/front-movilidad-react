@@ -38,6 +38,7 @@ interface VehicleData {
 interface DriverData {
   id: number;
   name: string;
+  email?: string;
   national_id: string;
   contract_type: string;
   license_type: string;
@@ -75,10 +76,9 @@ const TransportPanel: React.FC = () => {
         api.get('/drivers')
       ]);
 
-      // Filtrar solicitudes listas para asignación de recursos
-      // internas en 'pendiente', o externas en 'aprobado_rectorado'
-      const filterable = reqRes.data.filter((r: RequestData) => 
-        (r.mobilization_type === 'interna' && r.status === 'pendiente') ||
+      // Internas autorizadas por Secretaría; externas aprobadas por Vicerrectorado
+      const filterable = reqRes.data.filter((r: RequestData) =>
+        (r.mobilization_type === 'interna' && ['autorizada_secretaria', 'pendiente'].includes(r.status)) ||
         (r.mobilization_type === 'externa' && r.status === 'aprobado_rectorado')
       );
 
@@ -286,7 +286,14 @@ const TransportPanel: React.FC = () => {
 
               {/* Scrollable selectors */}
               <div className="flex-1 overflow-y-auto space-y-6 pr-1">
-                
+                {(vehicles.every((v) => !v.is_selectable) || drivers.every((d) => !d.is_selectable)) && (
+                  <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+                    No hay recursos disponibles para emitir hoja de ruta.
+                    {vehicles.every((v) => !v.is_selectable) && ' Todos los vehículos están en viaje, taller o bloqueados.'}
+                    {drivers.every((d) => !d.is_selectable) && ' No hay conductores habilitados.'}
+                  </div>
+                )}
+
                 {/* 1. Vehicle Selection */}
                 <div>
                   <h3 className="text-sm font-bold text-primary mb-3 flex items-center gap-1">
@@ -322,9 +329,15 @@ const TransportPanel: React.FC = () => {
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                               veh.status_label === 'available'
                                 ? 'bg-green-100 text-green-800'
+                                : veh.status_label === 'on_trip'
+                                ? 'bg-amber-100 text-amber-900'
                                 : 'bg-red-100 text-red-800'
                             }`}>
-                              {veh.status_label === 'available' ? 'Operativo' : 'Bloqueado'}
+                              {veh.status_label === 'available'
+                                ? 'Operativo'
+                                : veh.status_label === 'on_trip'
+                                ? 'En viaje'
+                                : 'Bloqueado'}
                             </span>
                           </div>
 
@@ -376,6 +389,7 @@ const TransportPanel: React.FC = () => {
                             <div>
                               <span className="font-extrabold text-gray-950 text-sm">{dri.name}</span>
                               <p className="text-xs text-gray-400 font-medium">C.I. {dri.national_id}</p>
+                              {dri.email && <p className="text-xs text-gray-500">{dri.email}</p>}
                             </div>
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                               dri.status_label === 'available'
