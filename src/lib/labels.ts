@@ -56,6 +56,14 @@ export const REQUEST_STATUS_LABEL: Record<string, string> = {
   rechazado: 'Rechazado',
 };
 
+export const COMPENSATION_STATUS_LABEL: Record<string, string> = {
+  pendiente_comprobante: 'Pendiente de confirmación',
+  confirmado_conductor: 'Confirmado',
+  en_disputa: 'En disputa',
+  verificado_movilidad: 'Verificado por Movilidad',
+  pagado: 'Pagado',
+};
+
 /** Devuelve la etiqueta legible de un valor, o el valor original si no existe. */
 export function labelOf(
   map: Record<string, string>,

@@ -2178,7 +2178,6 @@ body {
   align-items: end;
   margin-bottom: 16px;
 }
-
 .report-filters label {
   display: grid;
   gap: 4px;
@@ -2511,6 +2510,435 @@ body {
   }
 
   .trace-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Provisión de lubricantes (inventario) ---------- */
+
+.supply-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.supply-kpi {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.supply-kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.supply-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.supply-kpi-warn .supply-kpi-value {
+  color: var(--warning);
+}
+
+.supply-kpi-danger .supply-kpi-value {
+  color: var(--danger);
+}
+
+.supply-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.supply-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-panel);
+  transition: var(--transition-smooth);
+}
+
+.supply-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.supply-icon {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.supply-icon.cat-aceite {
+  background: #eef4ff;
+  color: #0b5fff;
+}
+
+.supply-icon.cat-filtro {
+  background: #eaf7f1;
+  color: #2e7d32;
+}
+
+.supply-icon.cat-freno {
+  background: #fff3e0;
+  color: #ed6c02;
+}
+
+.supply-icon.cat-otro {
+  background: #f0f2f5;
+  color: #4a5a6d;
+}
+
+.supply-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.supply-name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supply-unit {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.supply-stock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.supply-stock-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.supply-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.supply-badge.st-ok {
+  background: #eaf7f1;
+  color: #2e7d32;
+}
+
+.supply-badge.st-bajo {
+  background: #fff3e0;
+  color: #ed6c02;
+}
+
+.supply-badge.st-agotado {
+  background: #fdecea;
+  color: #d32f2f;
+}
+
+/* ---------- Pills de estado en historiales ---------- */
+
+.hist-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.hist-open {
+  background: #eaf1ff;
+  color: #0b3a8a;
+}
+
+@media (max-width: 640px) {
+  .supply-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Reportar novedad ---------- */
+
+.novelty-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.vehicle-summary {
+  display: grid;
+  gap: 6px;
+}
+
+.vehicle-summary-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.vehicle-summary-plate {
+  margin: 2px 0 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--color-primary);
+}
+
+.vehicle-summary-model {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.vehicle-summary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.vehicle-summary-stats div {
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  display: grid;
+  gap: 2px;
+}
+
+.vehicle-summary-stats span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.vehicle-summary-stats strong {
+  font-size: 16px;
+  color: var(--color-primary);
+}
+
+.novelty-types {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.novelty-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  text-align: left;
+}
+
+.novelty-type:hover {
+  border-color: var(--border-hover);
+}
+
+.novelty-type.is-active {
+  border-color: var(--color-secondary);
+  background: rgba(197, 160, 89, 0.12);
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-secondary);
+}
+
+/* ---------- Viáticos y pagos ---------- */
+
+.pay-list {
+  display: grid;
+  gap: 14px;
+}
+
+.pay-card {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-panel);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.pay-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pay-head-info {
+  min-width: 0;
+}
+
+.pay-dest {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.pay-total {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-secondary-hover);
+  white-space: nowrap;
+}
+
+.pay-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pay-breakdown div {
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  display: grid;
+  gap: 2px;
+}
+
+.pay-breakdown span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pay-breakdown strong {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.pay-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+}
+
+.pay-status {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.pay-status.st-pending {
+  background: #fff3e0;
+  color: #ed6c02;
+}
+
+.pay-status.st-done {
+  background: #eaf7f1;
+  color: #2e7d32;
+}
+
+.pay-status.st-dispute {
+  background: #fdecea;
+  color: #d32f2f;
+}
+
+.pay-status.st-verified {
+  background: #eaf1ff;
+  color: #0b3a8a;
+}
+
+.pay-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pay-dispute {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 100%;
+}
+
+.pay-dispute .form-input {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.pay-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.pay-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--text-muted);
+}
+
+.pay-empty p {
+  margin: 0;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.pay-empty span {
+  font-size: 13px;
+}
+
+@media (max-width: 960px) {
+  .novelty-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pay-breakdown {
     grid-template-columns: 1fr;
   }
 }
