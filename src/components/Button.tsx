@@ -42,8 +42,8 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   // Spinner inherits white color on dark buttons, or primary brand color on light/outline buttons
-  const spinnerBorderColor = ['secondary', 'outline'].includes(variant) 
-    ? 'var(--color-primary)' 
+  const spinnerBorderColor = ['secondary', 'outline'].includes(variant)
+    ? 'var(--color-primary)'
     : '#ffffff';
 
   return (
@@ -54,19 +54,28 @@ const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading ? (
-        <span 
-          className="spinner" 
-          style={{ 
-            width: '16px', 
-            height: '16px', 
-            borderWidth: '2px', 
+        <span
+          className="spinner"
+          style={{
+            width: '16px',
+            height: '16px',
+            borderWidth: '2px',
             borderLeftColor: spinnerBorderColor,
-            borderColor: ['secondary', 'outline'].includes(variant) ? 'rgba(0, 40, 85, 0.15)' : 'rgba(255, 255, 255, 0.2)'
+            borderColor: ['secondary', 'outline'].includes(variant)
+              ? 'rgba(0, 40, 85, 0.15)'
+              : 'rgba(255, 255, 255, 0.2)',
           }}
         ></span>
       ) : (
         <>
-          {icon && <span className="btn-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>{icon}</span>}
+          {icon && (
+            <span
+              className="btn-icon"
+              style={{ display: 'inline-flex', alignItems: 'center' }}
+            >
+              {icon}
+            </span>
+          )}
           <span>{children}</span>
         </>
       )}

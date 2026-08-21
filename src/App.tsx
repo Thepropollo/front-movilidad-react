@@ -8,6 +8,7 @@ import {
   DriverFuelTicketsPage,
   PendingFeedbackBanner,
   RequestFormPage,
+  TripEvaluationPage,
   TeacherLiquidationPage,
   TransportAuditPanelPage,
 } from '@features/requests';
@@ -17,13 +18,13 @@ import { WorkshopPanelPage } from '@features/workshop';
 import RoleHomePage from '@features/shared/RoleHomePage';
 import {
   AgendaPage,
-  AlertsPage,
   AuthorizePage,
   ConductorNoveltyPage,
   ConductorPaymentsPage,
-  ConductorStopsPage,
+  ConductorRouteMapPage,
   ConductorTripsPage,
   ConductorVehiclePage,
+  DisponibilidadPage,
   DocumentsHistoryPage,
   FleetDriversPage,
   FleetVehiclesPage,
@@ -54,11 +55,18 @@ function AppContent() {
     <>
       {isAuthenticated && <PendingFeedbackBanner />}
       <Routes>
-        <Route path="/" element={isAuthenticated ? <AppHome /> : <Navigate to="/login" replace />} />
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? <AppHome /> : <Navigate to="/login" replace />
+          }
+        />
         <Route path="/login" element={<LoginPage />} />
         <Route
           path="/register"
-          element={allowRegister ? <RegisterPage /> : <Navigate to="/login" replace />}
+          element={
+            allowRegister ? <RegisterPage /> : <Navigate to="/login" replace />
+          }
         />
 
         <Route
@@ -81,7 +89,10 @@ function AppContent() {
         >
           <Route index element={<AppHome />} />
 
-          <Route path="secretaria" element={<RoleRoute roles={['secretaria']} />}>
+          <Route
+            path="secretaria"
+            element={<RoleRoute roles={['secretaria']} />}
+          >
             <Route
               index
               element={
@@ -94,7 +105,7 @@ function AppContent() {
             />
             <Route path="solicitudes" element={<TransportPanelPage />} />
             <Route path="asignar" element={<TransportPanelPage />} />
-            <Route path="disponibilidad" element={<TransportPanelPage />} />
+            <Route path="disponibilidad" element={<DisponibilidadPage />} />
             <Route path="flota/estado" element={<FleetVehiclesPage />} />
             <Route path="taller" element={<WorkshopPanelPage />} />
             <Route path="economico" element={<TransportAuditPanelPage />} />
@@ -107,7 +118,6 @@ function AppContent() {
             <Route path="flota/conductores" element={<FleetDriversPage />} />
             <Route path="flota/vehiculos" element={<FleetVehiclesPage />} />
             <Route path="gasolineras" element={<GasStationsPage />} />
-            <Route path="alertas" element={<AlertsPage />} />
             <Route path="mapa" element={<MapPage />} />
             <Route path="reportes" element={<ReportsPage />} />
             <Route path="inspeccion" element={<ChecklistDigitalPage />} />
@@ -126,8 +136,8 @@ function AppContent() {
             />
             <Route path="combustible" element={<DriverFuelTicketsPage />} />
             <Route path="viajes" element={<ConductorTripsPage />} />
-            <Route path="hoja-ruta" element={<ConductorStopsPage />} />
-            <Route path="mapa" element={<MapPage />} />
+            <Route path="hoja-ruta" element={<ConductorRouteMapPage />} />
+            <Route path="mapa" element={<ConductorRouteMapPage />} />
             <Route path="pagos" element={<ConductorPaymentsPage />} />
             <Route path="novedades" element={<ConductorNoveltyPage />} />
             <Route path="vehiculo" element={<ConductorVehiclePage />} />
@@ -163,7 +173,7 @@ function AppContent() {
             />
             <Route path="solicitar" element={<RequestFormPage />} />
             <Route path="liquidar" element={<TeacherLiquidationPage />} />
-            <Route path="evaluar" element={<RequestFormPage />} />
+            <Route path="evaluar" element={<TripEvaluationPage />} />
             <Route path="participantes" element={<ParticipantsPage />} />
             <Route path="flujo" element={<FlujoPage />} />
             <Route path="seguimiento" element={<TripDetailPage />} />
@@ -172,7 +182,10 @@ function AppContent() {
             <Route path="reportes" element={<ReportsPage />} />
           </Route>
 
-          <Route path="facultad" element={<RoleRoute roles={['responsable_facultad']} />}>
+          <Route
+            path="facultad"
+            element={<RoleRoute roles={['responsable_facultad']} />}
+          >
             <Route
               index
               element={
@@ -188,7 +201,10 @@ function AppContent() {
             <Route path="reportes" element={<ReportsPage />} />
           </Route>
 
-          <Route path="vicerrector" element={<RoleRoute roles={['vicerrector']} />}>
+          <Route
+            path="vicerrector"
+            element={<RoleRoute roles={['vicerrector']} />}
+          >
             <Route
               index
               element={
@@ -206,7 +222,10 @@ function AppContent() {
             <Route path="reportes" element={<ReportsPage />} />
           </Route>
 
-          <Route path="estudiante" element={<RoleRoute roles={['estudiante']} />}>
+          <Route
+            path="estudiante"
+            element={<RoleRoute roles={['estudiante']} />}
+          >
             <Route
               index
               element={
@@ -217,7 +236,7 @@ function AppContent() {
                 />
               }
             />
-            <Route path="evaluar" element={<RequestFormPage />} />
+            <Route path="evaluar" element={<TripEvaluationPage />} />
             <Route path="invitaciones" element={<StudentInvitationsPage />} />
             <Route path="flujo" element={<FlujoPage />} />
             <Route path="detalle" element={<TripDetailPage />} />
@@ -227,14 +246,38 @@ function AppContent() {
         </Route>
 
         <Route path="/dashboard" element={<Navigate to="/app" replace />} />
-        <Route path="/solicitar" element={<Navigate to="/app/docente/solicitar" replace />} />
-        <Route path="/rectorado" element={<Navigate to="/app/vicerrector/pendientes" replace />} />
-        <Route path="/transporte" element={<Navigate to="/app/secretaria/asignar" replace />} />
-        <Route path="/taller" element={<Navigate to="/app/mecanico/ordenes" replace />} />
-        <Route path="/mis-vales" element={<Navigate to="/app/conductor/combustible" replace />} />
-        <Route path="/liquidar" element={<Navigate to="/app/docente/liquidar" replace />} />
-        <Route path="/auditar-liquidaciones" element={<Navigate to="/app/secretaria/economico" replace />} />
-        <Route path="/inspeccion" element={<Navigate to="/app/mecanico/inspeccion" replace />} />
+        <Route
+          path="/solicitar"
+          element={<Navigate to="/app/docente/solicitar" replace />}
+        />
+        <Route
+          path="/rectorado"
+          element={<Navigate to="/app/vicerrector/pendientes" replace />}
+        />
+        <Route
+          path="/transporte"
+          element={<Navigate to="/app/secretaria/asignar" replace />}
+        />
+        <Route
+          path="/taller"
+          element={<Navigate to="/app/mecanico/ordenes" replace />}
+        />
+        <Route
+          path="/mis-vales"
+          element={<Navigate to="/app/conductor/combustible" replace />}
+        />
+        <Route
+          path="/liquidar"
+          element={<Navigate to="/app/docente/liquidar" replace />}
+        />
+        <Route
+          path="/auditar-liquidaciones"
+          element={<Navigate to="/app/secretaria/economico" replace />}
+        />
+        <Route
+          path="/inspeccion"
+          element={<Navigate to="/app/mecanico/inspeccion" replace />}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

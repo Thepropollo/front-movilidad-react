@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Mail, Lock, Building, CreditCard, UserCheck, Shield } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Lock,
+  Building,
+  CreditCard,
+  UserCheck,
+  Shield,
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const Register: React.FC = () => {
@@ -20,10 +28,12 @@ const Register: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -36,7 +46,9 @@ const Register: React.FC = () => {
       await register(formData);
       navigate('/app');
     } catch (err: any) {
-      setError(err.message || 'Error durante el registro. Por favor intente de nuevo.');
+      setError(
+        err.message || 'Error durante el registro. Por favor intente de nuevo.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -46,11 +58,15 @@ const Register: React.FC = () => {
     <div className="auth-wrapper" style={{ maxWidth: '600px' }}>
       <div className="auth-header" style={{ marginBottom: '24px' }}>
         <h1 className="auth-logo">ULEAM Movilidad</h1>
-        <p className="auth-subtitle">Alta de docente o estudiante (sin roles privilegiados)</p>
+        <p className="auth-subtitle">
+          Alta de docente o estudiante (sin roles privilegiados)
+        </p>
       </div>
 
       <div className="glass-panel auth-card" style={{ padding: '32px' }}>
-        <h2 style={{ marginBottom: '20px', fontWeight: 600 }}>Registro de Usuario</h2>
+        <h2 style={{ marginBottom: '20px', fontWeight: 600 }}>
+          Registro de Usuario
+        </h2>
 
         {error && (
           <div className="alert alert-danger">
@@ -59,10 +75,17 @@ const Register: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '16px' }}>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px',
+            }}
+          >
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="first_name">Nombres</label>
+              <label className="form-label" htmlFor="first_name">
+                Nombres
+              </label>
               <div className="input-container">
                 <User className="input-icon" size={18} />
                 <input
@@ -79,7 +102,9 @@ const Register: React.FC = () => {
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="last_name">Apellidos</label>
+              <label className="form-label" htmlFor="last_name">
+                Apellidos
+              </label>
               <div className="input-container">
                 <User className="input-icon" size={18} />
                 <input
@@ -96,9 +121,17 @@ const Register: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px',
+            }}
+          >
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="national_id">Cédula</label>
+              <label className="form-label" htmlFor="national_id">
+                Cédula
+              </label>
               <div className="input-container">
                 <CreditCard className="input-icon" size={18} />
                 <input
@@ -115,9 +148,20 @@ const Register: React.FC = () => {
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="phone_number">Teléfono (Opcional)</label>
+              <label className="form-label" htmlFor="phone_number">
+                Teléfono (Opcional)
+              </label>
               <div className="input-container">
-                <span className="input-icon" style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 600 }}>+593</span>
+                <span
+                  className="input-icon"
+                  style={{
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                  }}
+                >
+                  +593
+                </span>
                 <input
                   id="phone_number"
                   name="phone_number"
@@ -133,7 +177,9 @@ const Register: React.FC = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" htmlFor="faculty_institution">Facultad / Institución</label>
+            <label className="form-label" htmlFor="faculty_institution">
+              Facultad / Institución
+            </label>
             <div className="input-container">
               <Building className="input-icon" size={18} />
               <input
@@ -150,7 +196,9 @@ const Register: React.FC = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" htmlFor="role_name">Rol en el Sistema</label>
+            <label className="form-label" htmlFor="role_name">
+              Rol en el Sistema
+            </label>
             <div className="input-container">
               <Shield className="input-icon" size={18} />
               <select
@@ -168,7 +216,9 @@ const Register: React.FC = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" htmlFor="email">Correo Institucional</label>
+            <label className="form-label" htmlFor="email">
+              Correo Institucional
+            </label>
             <div className="input-container">
               <Mail className="input-icon" size={18} />
               <input
@@ -185,7 +235,9 @@ const Register: React.FC = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" htmlFor="password">Contraseña</label>
+            <label className="form-label" htmlFor="password">
+              Contraseña
+            </label>
             <div className="input-container">
               <Lock className="input-icon" size={18} />
               <input
@@ -203,15 +255,18 @@ const Register: React.FC = () => {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary"
             disabled={isSubmitting}
             style={{ marginTop: '24px' }}
           >
             {isSubmitting ? (
               <>
-                <div className="spinner" style={{ width: '18px', height: '18px' }}></div>
+                <div
+                  className="spinner"
+                  style={{ width: '18px', height: '18px' }}
+                ></div>
                 <span>Creando cuenta...</span>
               </>
             ) : (
@@ -225,7 +280,9 @@ const Register: React.FC = () => {
 
         <div className="auth-footer">
           <span>¿Ya tienes una cuenta? </span>
-          <Link to="/login" className="auth-link">Inicia sesión</Link>
+          <Link to="/login" className="auth-link">
+            Inicia sesión
+          </Link>
         </div>
       </div>
     </div>

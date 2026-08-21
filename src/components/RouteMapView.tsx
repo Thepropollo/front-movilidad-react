@@ -1,7 +1,7 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ULEAM_CENTER, type LatLng } from '../lib/geo';
+import { ULEAM_CENTER, fetchRoute, type LatLng } from '../lib/geo';
 
 export type MapMarker = LatLng & {
   kind?: 'origin' | 'destination' | 'stop' | 'live';
@@ -12,6 +12,8 @@ type Props = {
   markers: MapMarker[];
   height?: number;
   drawLine?: boolean;
+  livePosition?: LatLng | null;
+  follow?: boolean;
 };
 
 const icon = (color: string) =>
@@ -22,6 +24,14 @@ const icon = (color: string) =>
     iconAnchor: [7, 7],
   });
 
+const liveIcon = () =>
+  L.divIcon({
+    className: 'map-pin map-pin-live',
+    html: '<span></span>',
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  });
+
 const COLORS: Record<string, string> = {
   origin: '#0b5fff',
   destination: '#c5a059',
@@ -29,23 +39,29 @@ const COLORS: Record<string, string> = {
   live: '#2e7d32',
 };
 
-export default function RouteMapView({ markers, height = 420, drawLine = true }: Props) {
+export default function RouteMapView({
+  markers,
+  height = 420,
+  drawLine = true,
+  livePosition = null,
+  follow = false,
+}: Props) {
   const id = useId().replace(/:/g, '');
   const mapRef = useRef<L.Map | null>(null);
+  const routeLayerRef = useRef<L.LayerGroup | null>(null);
+  const liveMarkerRef = useRef<L.Marker | null>(null);
+  const [routing, setRouting] = useState(false);
+  const [routeFallback, setRouteFallback] = useState(false);
 
+  // Crear el mapa una sola vez.
   useEffect(() => {
     const el = document.getElementById(`map-${id}`);
     if (!el) return;
 
-    if (mapRef.current) {
-      mapRef.current.remove();
-      mapRef.current = null;
-    }
-
-    const map = L.map(el, { zoomControl: true, attributionControl: true }).setView(
-      [ULEAM_CENTER.lat, ULEAM_CENTER.lng],
-      11
-    );
+    const map = L.map(el, {
+      zoomControl: true,
+      attributionControl: true,
+    }).setView([ULEAM_CENTER.lat, ULEAM_CENTER.lng], 11);
     mapRef.current = map;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -53,12 +69,36 @@ export default function RouteMapView({ markers, height = 420, drawLine = true }:
       attribution: '&copy; OpenStreetMap',
     }).addTo(map);
 
+    routeLayerRef.current = L.layerGroup().addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 80);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      routeLayerRef.current = null;
+      liveMarkerRef.current = null;
+    };
+  }, [id]);
+
+  // Marcadores de la ruta (origen, paradas, destino) + línea de carretera.
+  useEffect(() => {
+    const map = mapRef.current;
+    const routeLayer = routeLayerRef.current;
+    if (!map || !routeLayer) return;
+
+    let cancelled = false;
+    routeLayer.clearLayers();
+    setRouteFallback(false);
+
     const points: L.LatLngExpression[] = [];
     markers.forEach((m) => {
       if (Number.isFinite(m.lat) && Number.isFinite(m.lng)) {
         const ll: L.LatLngExpression = [m.lat, m.lng];
         points.push(ll);
-        const marker = L.marker(ll, { icon: icon(COLORS[m.kind || 'stop'] || COLORS.stop) }).addTo(map);
+        const marker = L.marker(ll, {
+          icon: icon(COLORS[m.kind || 'stop'] || COLORS.stop),
+        }).addTo(routeLayer);
         const title = m.label || m.kind || 'Punto';
         marker.bindPopup(
           `<strong>${title}</strong>${m.sequence ? `<br/>Parada #${m.sequence}` : ''}`
@@ -66,8 +106,15 @@ export default function RouteMapView({ markers, height = 420, drawLine = true }:
       }
     });
 
+    // Línea recta provisional (si falla el enrutamiento se mantiene).
+    let fallbackLine: L.Polyline | null = null;
     if (drawLine && points.length >= 2) {
-      L.polyline(points, { color: '#002855', weight: 4, opacity: 0.85 }).addTo(map);
+      fallbackLine = L.polyline(points, {
+        color: '#002855',
+        weight: 4,
+        opacity: 0.85,
+        dashArray: '8 8',
+      }).addTo(routeLayer);
     }
 
     if (points.length === 1) {
@@ -76,17 +123,82 @@ export default function RouteMapView({ markers, height = 420, drawLine = true }:
       map.fitBounds(L.latLngBounds(points), { padding: [36, 36] });
     }
 
-    setTimeout(() => map.invalidateSize(), 80);
+    if (drawLine && points.length >= 2) {
+      setRouting(true);
+      void fetchRoute(markers)
+        .then((route) => {
+          if (cancelled) return;
+          if (!route?.length) {
+            setRouteFallback(true);
+            return;
+          }
+          fallbackLine?.remove();
+          const routeLatLngs = route.map(
+            (p) => [p.lat, p.lng] as L.LatLngExpression
+          );
+          L.polyline(routeLatLngs, {
+            color: '#002855',
+            weight: 5,
+            opacity: 0.9,
+          }).addTo(routeLayer);
+          map.fitBounds(L.latLngBounds(routeLatLngs), { padding: [36, 36] });
+        })
+        .catch(() => {
+          if (!cancelled) setRouteFallback(true);
+        })
+        .finally(() => {
+          if (!cancelled) setRouting(false);
+        });
+    } else {
+      setRouting(false);
+    }
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      cancelled = true;
     };
-  }, [id, markers, drawLine]);
+  }, [markers, drawLine]);
+
+  // Marcador de posición en vivo + modo "seguir".
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (
+      livePosition &&
+      Number.isFinite(livePosition.lat) &&
+      Number.isFinite(livePosition.lng)
+    ) {
+      const ll: L.LatLngExpression = [livePosition.lat, livePosition.lng];
+      if (!liveMarkerRef.current) {
+        liveMarkerRef.current = L.marker(ll, { icon: liveIcon() }).addTo(map);
+      } else {
+        liveMarkerRef.current.setLatLng(ll);
+      }
+
+      if (follow) {
+        map.panTo(ll, { animate: true });
+      }
+    }
+  }, [livePosition, follow]);
 
   return (
-    <div className="route-map-wrap" style={{ height }}>
-      <div id={`map-${id}`} className="route-map-canvas" style={{ height: '100%', width: '100%' }} />
+    <div className="route-map-wrap" style={{ height, position: 'relative' }}>
+      <div
+        id={`map-${id}`}
+        className="route-map-canvas"
+        style={{ height: '100%', width: '100%' }}
+      />
+      {routing && (
+        <div className="map-loading" role="status">
+          <span className="spinner" style={{ width: 28, height: 28 }} />
+          <span>Calculando ruta…</span>
+        </div>
+      )}
+      {!routing && routeFallback && (
+        <div className="map-loading map-loading-note">
+          Ruta aproximada (línea recta); no fue posible enrutar por carretera.
+        </div>
+      )}
     </div>
   );
 }

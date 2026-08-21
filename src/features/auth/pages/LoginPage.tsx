@@ -39,7 +39,8 @@ const Login: React.FC = () => {
       await login(email, password);
       navigate('/app');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Credenciales inválidas.';
+      const message =
+        err instanceof Error ? err.message : 'Credenciales inválidas.';
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -65,14 +66,16 @@ const Login: React.FC = () => {
       <div className="auth-header">
         <h1 className="auth-logo">ULEAM Movilidad</h1>
         <p className="auth-subtitle">
-          Sistema de movilización institucional · Universidad Laica Eloy Alfaro de Manabí
+          Sistema de movilización institucional · Universidad Laica Eloy Alfaro
+          de Manabí
         </p>
       </div>
 
       <div className="glass-panel auth-card">
         <h2 style={{ marginBottom: '8px', fontWeight: 600 }}>Iniciar sesión</h2>
         <p className="auth-hint">
-          Dominios institucionales: {ULEAM_DOMAINS.map((d) => `@${d}`).join(' · ')}
+          Dominios institucionales:{' '}
+          {ULEAM_DOMAINS.map((d) => `@${d}`).join(' · ')}
         </p>
 
         {error && (
@@ -158,7 +161,9 @@ const Login: React.FC = () => {
 
         {ENABLE_DEMO && (
           <div className="auth-demo-roles" aria-label="Cuentas demo por rol">
-            <p className="auth-demo-hint">Solo entorno de prueba (no usar en producción)</p>
+            <p className="auth-demo-hint">
+              Solo entorno de prueba (no usar en producción)
+            </p>
             <div className="auth-demo-grid">
               {DEMO_ACCOUNTS.map((account) => (
                 <button
@@ -176,7 +181,13 @@ const Login: React.FC = () => {
         )}
 
         {ALLOW_REGISTER && (
-          <p style={{ marginTop: '20px', fontSize: '14px', color: 'var(--text-muted)' }}>
+          <p
+            style={{
+              marginTop: '20px',
+              fontSize: '14px',
+              color: 'var(--text-muted)',
+            }}
+          >
             ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
           </p>
         )}

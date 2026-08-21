@@ -83,22 +83,30 @@ export const submitEvaluation = async (data: {
   return response.data;
 };
 
-export const fetchPendingEvaluations = async (): Promise<RouteSheetSummary[]> => {
+export const fetchPendingEvaluations = async (): Promise<
+  RouteSheetSummary[]
+> => {
   const response = await api.get('/mis-evaluaciones-pendientes');
   return response.data;
 };
 
-export const fetchPendingLiquidations = async (): Promise<DriverCompensation[]> => {
+export const fetchPendingLiquidations = async (): Promise<
+  DriverCompensation[]
+> => {
   const response = await api.get('/compensaciones/pendientes');
   return response.data;
 };
 
-export const fetchTeacherPendingLiquidations = async (): Promise<RouteSheetSummary[]> => {
+export const fetchTeacherPendingLiquidations = async (): Promise<
+  RouteSheetSummary[]
+> => {
   const response = await api.get('/mis-comisiones-pendientes-liquidar');
   return response.data;
 };
 
-export const calculateCompensation = async (routeSheetId: number): Promise<CompensationCalculation> => {
+export const calculateCompensation = async (
+  routeSheetId: number
+): Promise<CompensationCalculation> => {
   const response = await api.get(`/compensaciones/${routeSheetId}/calcular`);
   return response.data;
 };
@@ -107,11 +115,16 @@ export const submitLiquidation = async (
   routeSheetId: number,
   data: { comprobante_pago_url: string }
 ): Promise<any> => {
-  const response = await api.post(`/compensaciones/${routeSheetId}/liquidar`, data);
+  const response = await api.post(
+    `/compensaciones/${routeSheetId}/liquidar`,
+    data
+  );
   return response.data;
 };
 
-export const approveLiquidation = async (routeSheetId: number): Promise<any> => {
+export const approveLiquidation = async (
+  routeSheetId: number
+): Promise<any> => {
   const response = await api.post(`/compensaciones/${routeSheetId}/aprobar`);
   return response.data;
 };

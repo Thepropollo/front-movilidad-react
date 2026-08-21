@@ -5,4 +5,4 @@ export { default as GasStationDispatcherPage } from './pages/GasStationDispatche
 export { default as TeacherLiquidationPage } from './pages/TeacherLiquidationPage';
 export { default as TransportAuditPanelPage } from './pages/TransportAuditPanelPage';
 export { default as PendingFeedbackBanner } from './components/PendingFeedbackBanner';
-
+export { default as TripEvaluationPage } from './pages/TripEvaluationPage';

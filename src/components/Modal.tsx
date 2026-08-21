@@ -16,7 +16,7 @@ const Modal: React.FC<ModalProps> = ({
   title,
   children,
   footer,
-  size = 'md'
+  size = 'md',
 }) => {
   if (!isOpen) return null;
 
@@ -30,7 +30,9 @@ const Modal: React.FC<ModalProps> = ({
         return '1140px';
       case 'md':
       default:
-        return size && !['sm', 'md', 'lg', 'xl'].includes(size) ? size : '550px';
+        return size && !['sm', 'md', 'lg', 'xl'].includes(size)
+          ? size
+          : '550px';
     }
   };
 
@@ -41,7 +43,7 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div 
+    <div
       onClick={handleBackdropClick}
       style={{
         position: 'fixed',
@@ -55,11 +57,11 @@ const Modal: React.FC<ModalProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 50,
-        padding: '20px'
+        padding: '20px',
       }}
     >
-      <div 
-        className="glass-panel" 
+      <div
+        className="glass-panel"
         style={{
           width: '100%',
           maxWidth: getMaxWidth(),
@@ -67,18 +69,27 @@ const Modal: React.FC<ModalProps> = ({
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: 'var(--shadow-lg)'
+          boxShadow: 'var(--shadow-lg)',
         }}
       >
         {/* Modal Header */}
-        <header style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--border-color)'
-        }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
+        <header
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '20px 24px',
+            borderBottom: '1px solid var(--border-color)',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '18px',
+              fontWeight: 700,
+              color: 'var(--color-primary)',
+              margin: 0,
+            }}
+          >
             {title}
           </h2>
           <button
@@ -93,7 +104,7 @@ const Modal: React.FC<ModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'var(--transition-smooth)'
+              transition: 'var(--transition-smooth)',
             }}
             className="hover:bg-gray-100"
           >
@@ -108,16 +119,18 @@ const Modal: React.FC<ModalProps> = ({
 
         {/* Modal Footer */}
         {footer && (
-          <footer style={{
-            padding: '16px 24px',
-            borderTop: '1px solid var(--border-color)',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '12px',
-            backgroundColor: '#fafafa',
-            borderBottomLeftRadius: '16px',
-            borderBottomRightRadius: '16px'
-          }}>
+          <footer
+            style={{
+              padding: '16px 24px',
+              borderTop: '1px solid var(--border-color)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              backgroundColor: '#fafafa',
+              borderBottomLeftRadius: '16px',
+              borderBottomRightRadius: '16px',
+            }}
+          >
             {footer}
           </footer>
         )}

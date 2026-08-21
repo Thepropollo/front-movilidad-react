@@ -15,7 +15,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, filteredLinks, onLogout }) => {
     <header className="navbar-header">
       <div className="navbar-container">
         <div className="navbar-content">
-          
           {/* Logo and Brand Name */}
           <div className="navbar-brand">
             <div className="navbar-logo-box">
@@ -62,7 +61,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, filteredLinks, onLogout }) => {
               <Power size={16} />
             </button>
           </div>
-
         </div>
       </div>
     </header>

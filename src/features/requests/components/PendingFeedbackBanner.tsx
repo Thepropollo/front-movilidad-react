@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Star, ShieldAlert, CheckCircle, Send, MessageSquare } from 'lucide-react';
+import {
+  Star,
+  ShieldAlert,
+  CheckCircle,
+  Send,
+  MessageSquare,
+} from 'lucide-react';
 import Button from '@/components/Button';
 import { useAuth } from '@/context/AuthContext';
-import { fetchPendingEvaluations, submitEvaluation, type RouteSheetSummary } from '../api/postTrip';
+import {
+  fetchPendingEvaluations,
+  submitEvaluation,
+  type RouteSheetSummary,
+} from '../api/postTrip';
 
 const PendingFeedbackBanner: React.FC = () => {
   const { user } = useAuth();
-  const [currentTrip, setCurrentTrip] = useState<RouteSheetSummary | null>(null);
+  const [currentTrip, setCurrentTrip] = useState<RouteSheetSummary | null>(
+    null
+  );
 
   // Form states
   const [driverRating, setDriverRating] = useState<number>(0);
   const [vehicleRating, setVehicleRating] = useState<number>(0);
   const [comments, setComments] = useState<string>('');
-  
+
   // Hover ratings states for animations
   const [driverHover, setDriverHover] = useState<number>(0);
   const [vehicleHover, setVehicleHover] = useState<number>(0);
@@ -41,7 +53,8 @@ const PendingFeedbackBanner: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTrip || !user || driverRating === 0 || vehicleRating === 0) return;
+    if (!currentTrip || !user || driverRating === 0 || vehicleRating === 0)
+      return;
 
     setSubmitting(true);
     try {
@@ -50,7 +63,7 @@ const PendingFeedbackBanner: React.FC = () => {
         pasajero_id: user.id,
         calificacion_conductor: driverRating,
         calificacion_vehiculo: vehicleRating,
-        comments
+        comments,
       });
       setSuccess(true);
       setTimeout(() => {
@@ -73,15 +86,19 @@ const PendingFeedbackBanner: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 backdrop-blur-md p-4 overflow-y-auto">
       <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl border border-gray-150 animate-fade-in relative text-left">
-        
         {/* Banner Alert Header */}
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
           <div className="p-2.5 bg-gold/15 text-gold-dark rounded-2xl">
             <ShieldAlert size={24} />
           </div>
           <div>
-            <h3 className="text-lg font-black text-primary">Co-Evaluación Obligatoria</h3>
-            <p className="text-xs text-muted">Tu opinión nos ayuda a regular la seguridad y calidad del transporte institucional.</p>
+            <h3 className="text-lg font-black text-primary">
+              Co-Evaluación Obligatoria
+            </h3>
+            <p className="text-xs text-muted">
+              Tu opinión nos ayuda a regular la seguridad y calidad del
+              transporte institucional.
+            </p>
           </div>
         </div>
 
@@ -91,24 +108,39 @@ const PendingFeedbackBanner: React.FC = () => {
               <CheckCircle size={36} />
             </div>
             <div>
-              <h4 className="text-xl font-bold text-green-800">Feedback Registrado</h4>
-              <p className="text-muted text-sm mt-1">¡Muchas gracias por completar la encuesta!</p>
+              <h4 className="text-xl font-bold text-green-800">
+                Feedback Registrado
+              </h4>
+              <p className="text-muted text-sm mt-1">
+                ¡Muchas gracias por completar la encuesta!
+              </p>
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            
             {/* Trip details */}
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm">
-              <p className="text-xs font-semibold text-gold-dark uppercase tracking-wider mb-2">Detalles del Viaje Finalizado</p>
-              <p className="font-bold text-primary">Ruta: Manta → {currentTrip.request.destination}</p>
-              <p className="text-muted text-xs mt-1">Conductor: {currentTrip.driver.user.first_name} {currentTrip.driver.user.last_name}</p>
-              <p className="text-muted text-xs">Vehículo: {currentTrip.vehicle.brand} {currentTrip.vehicle.model} ({currentTrip.vehicle.plate})</p>
+              <p className="text-xs font-semibold text-gold-dark uppercase tracking-wider mb-2">
+                Detalles del Viaje Finalizado
+              </p>
+              <p className="font-bold text-primary">
+                Ruta: Manta → {currentTrip.request.destination}
+              </p>
+              <p className="text-muted text-xs mt-1">
+                Conductor: {currentTrip.driver.user.first_name}{' '}
+                {currentTrip.driver.user.last_name}
+              </p>
+              <p className="text-muted text-xs">
+                Vehículo: {currentTrip.vehicle.brand}{' '}
+                {currentTrip.vehicle.model} ({currentTrip.vehicle.plate})
+              </p>
             </div>
 
             {/* Driver Star rating */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-primary">Calificación del Conductor</label>
+              <label className="text-sm font-bold text-primary">
+                Calificación del Conductor
+              </label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -130,14 +162,18 @@ const PendingFeedbackBanner: React.FC = () => {
                   </button>
                 ))}
                 {driverRating > 0 && (
-                  <span className="text-xs font-bold text-gold-dark ml-2">({driverRating} de 5)</span>
+                  <span className="text-xs font-bold text-gold-dark ml-2">
+                    ({driverRating} de 5)
+                  </span>
                 )}
               </div>
             </div>
 
             {/* Vehicle Star rating */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-primary">Calificación del Vehículo (Confort y Estado)</label>
+              <label className="text-sm font-bold text-primary">
+                Calificación del Vehículo (Confort y Estado)
+              </label>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -159,14 +195,18 @@ const PendingFeedbackBanner: React.FC = () => {
                   </button>
                 ))}
                 {vehicleRating > 0 && (
-                  <span className="text-xs font-bold text-gold-dark ml-2">({vehicleRating} de 5)</span>
+                  <span className="text-xs font-bold text-gold-dark ml-2">
+                    ({vehicleRating} de 5)
+                  </span>
                 )}
               </div>
             </div>
 
             {/* Comments */}
             <div className="form-group">
-              <label className="form-label" htmlFor="comments-input">Comentarios / Sugerencias (Opcional)</label>
+              <label className="form-label" htmlFor="comments-input">
+                Comentarios / Sugerencias (Opcional)
+              </label>
               <div className="relative">
                 <textarea
                   id="comments-input"
@@ -176,7 +216,10 @@ const PendingFeedbackBanner: React.FC = () => {
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                 />
-                <MessageSquare className="absolute right-3 bottom-3 text-gray-300" size={16} />
+                <MessageSquare
+                  className="absolute right-3 bottom-3 text-gray-300"
+                  size={16}
+                />
               </div>
             </div>
 
@@ -189,7 +232,6 @@ const PendingFeedbackBanner: React.FC = () => {
             >
               Enviar Co-Evaluación Obligatoria
             </Button>
-
           </form>
         )}
       </div>

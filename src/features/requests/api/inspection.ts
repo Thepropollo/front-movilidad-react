@@ -47,12 +47,16 @@ export interface ChecklistComponent {
   category: string;
 }
 
-export const fetchPendingRouteSheets = async (): Promise<PendingRouteSheet[]> => {
+export const fetchPendingRouteSheets = async (): Promise<
+  PendingRouteSheet[]
+> => {
   const response = await api.get('/inspecciones/pendientes');
   return response.data;
 };
 
-export const fetchChecklistComponents = async (): Promise<ChecklistComponent[]> => {
+export const fetchChecklistComponents = async (): Promise<
+  ChecklistComponent[]
+> => {
   const response = await api.get('/inspecciones/componentes');
   return response.data;
 };
@@ -62,7 +66,10 @@ export const submitChecklist = async (data: {
   registration_type: 'salida' | 'llegada';
   fuel_level: '1/4' | '1/2' | '3/4' | 'full';
   checkpoint_mileage: number;
-  components: Array<{ id: number; physical_condition: 'BUENO' | 'REGULAR' | 'MALO' }>;
+  components: Array<{
+    id: number;
+    physical_condition: 'BUENO' | 'REGULAR' | 'MALO';
+  }>;
 }) => {
   const response = await api.post('/actas-entrega', data);
   return response.data;

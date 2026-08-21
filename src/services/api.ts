@@ -1,10 +1,13 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+const baseURL =
+  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
 if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
   // Evita builds de producción apuntando a localhost por accidente.
-  console.error('VITE_API_BASE_URL no está definida en el build de producción.');
+  console.error(
+    'VITE_API_BASE_URL no está definida en el build de producción.'
+  );
 }
 
 const api = axios.create({

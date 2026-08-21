@@ -67,7 +67,10 @@ export interface SupplyItem {
   measurement_unit: string;
 }
 
-export const fetchWorkshopData = async (): Promise<{ issues: IssueLog[]; work_orders: WorkOrder[] }> => {
+export const fetchWorkshopData = async (): Promise<{
+  issues: IssueLog[];
+  work_orders: WorkOrder[];
+}> => {
   const response = await api.get('/novedades');
   return response.data;
 };
@@ -88,14 +91,19 @@ export const createWorkOrder = async (data: {
   return response.data;
 };
 
-export const closeWorkOrder = async (id: number, suppliesUsed: Array<{ id: number; quantity: number }>) => {
+export const closeWorkOrder = async (
+  id: number,
+  suppliesUsed: Array<{ id: number; quantity: number }>
+) => {
   const response = await api.patch(`/ordenes-taller/${id}/cerrar`, {
-    insumos_utilizados: suppliesUsed
+    insumos_utilizados: suppliesUsed,
   });
   return response.data;
 };
 
-export const fetchMechanicsList = async (): Promise<Array<{ id: number; first_name: string; last_name: string }>> => {
+export const fetchMechanicsList = async (): Promise<
+  Array<{ id: number; first_name: string; last_name: string }>
+> => {
   const response = await api.get('/mecanicos');
   return response.data;
 };

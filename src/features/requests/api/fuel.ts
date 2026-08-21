@@ -59,7 +59,9 @@ export const fetchDriverFuelOrders = async (): Promise<FuelOrder[]> => {
   return response.data;
 };
 
-export const fetchFuelOrderDetails = async (orderCode: string): Promise<FuelOrder> => {
+export const fetchFuelOrderDetails = async (
+  orderCode: string
+): Promise<FuelOrder> => {
   const response = await api.get(`/ordenes-combustible/${orderCode}`);
   return response.data;
 };
@@ -68,7 +70,10 @@ export const dispatchFuelOrder = async (
   orderCode: string,
   data: { galones_reales_despachados: number; valor_total_pagado: number }
 ): Promise<FuelOrder> => {
-  const response = await api.patch(`/ordenes-combustible/${orderCode}/despachar`, data);
+  const response = await api.patch(
+    `/ordenes-combustible/${orderCode}/despachar`,
+    data
+  );
   return response.data;
 };
 
@@ -77,7 +82,10 @@ export const fetchServiceStations = async (): Promise<ServiceStation[]> => {
   return response.data;
 };
 
-export const emitFuelOrder = async (data: { route_sheet_id: number; station_id: number }): Promise<any> => {
+export const emitFuelOrder = async (data: {
+  route_sheet_id: number;
+  station_id: number;
+}): Promise<any> => {
   const response = await api.post('/ordenes-combustible', data);
   return response.data;
 };

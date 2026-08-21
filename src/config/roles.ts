@@ -45,10 +45,9 @@ export function normalizeRoles(
   primary?: { name?: string } | null,
   roles?: Array<{ name?: string }> | null
 ): RoleId[] {
-  const names = [
-    ...(roles?.map((r) => r.name) ?? []),
-    primary?.name,
-  ].filter(Boolean) as string[];
+  const names = [...(roles?.map((r) => r.name) ?? []), primary?.name].filter(
+    Boolean
+  ) as string[];
 
   const set = new Set<RoleId>();
   for (const name of names) {

@@ -33,7 +33,11 @@ export default function ReportsPage() {
     setError(null);
     try {
       const { data: res } = await api.get(`/reportes/${kind}`, {
-        params: { from: from || undefined, to: to || undefined, status: status || undefined },
+        params: {
+          from: from || undefined,
+          to: to || undefined,
+          status: status || undefined,
+        },
       });
       setData(res);
     } catch (e: unknown) {
@@ -52,7 +56,10 @@ export default function ReportsPage() {
       ...(to ? { to } : {}),
       ...(status ? { status } : {}),
     });
-    const base = (api.defaults.baseURL || 'http://localhost:8000/api').replace(/\/$/, '');
+    const base = (api.defaults.baseURL || 'http://localhost:8000/api').replace(
+      /\/$/,
+      ''
+    );
     const res = await fetch(`${base}/reportes/${kind}?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -77,7 +84,8 @@ export default function ReportsPage() {
         <p className="module-kicker">Inteligencia operativa</p>
         <h1>Reportes</h1>
         <p className="module-lead">
-          Genere reportes filtrados según su rol. Exportables a CSV para Excel o auditoría.
+          Genere reportes filtrados según su rol. Exportables a CSV para Excel o
+          auditoría.
         </p>
       </header>
 
@@ -86,30 +94,62 @@ export default function ReportsPage() {
       <div className="module-panel report-filters">
         <label>
           Tipo
-          <select className="form-select" value={kind} onChange={(e) => setKind(e.target.value as ReportKind)}>
+          <select
+            className="form-select"
+            value={kind}
+            onChange={(e) => setKind(e.target.value as ReportKind)}
+          >
             {available.map((a) => (
-              <option key={a.id} value={a.id}>{a.label}</option>
+              <option key={a.id} value={a.id}>
+                {a.label}
+              </option>
             ))}
           </select>
         </label>
         <label>
           Desde
-          <input type="date" className="form-input" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <input
+            type="date"
+            className="form-input"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
         </label>
         <label>
           Hasta
-          <input type="date" className="form-input" value={to} onChange={(e) => setTo(e.target.value)} />
+          <input
+            type="date"
+            className="form-input"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
         </label>
         {kind === 'solicitudes' && (
           <label>
             Estado
-            <input className="form-input" placeholder="ej. aprobada" value={status} onChange={(e) => setStatus(e.target.value)} />
+            <input
+              className="form-input"
+              placeholder="ej. aprobada"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            />
           </label>
         )}
-        <button type="button" className="btn btn-primary" onClick={() => void load()} disabled={loading}>
-          <FileBarChart2 size={16} aria-hidden /> {loading ? 'Generando…' : 'Generar'}
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => void load()}
+          disabled={loading}
+        >
+          <FileBarChart2 size={16} aria-hidden />{' '}
+          {loading ? 'Generando…' : 'Generar'}
         </button>
-        <button type="button" className="btn btn-uleam-sso" onClick={() => void downloadCsv()} disabled={!data}>
+        <button
+          type="button"
+          className="btn btn-uleam-sso"
+          onClick={() => void downloadCsv()}
+          disabled={!data}
+        >
           <Download size={16} aria-hidden /> CSV
         </button>
       </div>
@@ -134,7 +174,9 @@ export default function ReportsPage() {
           )}
           <div className="stat-card">
             <span>Generado</span>
-            <strong>{String(data.generated_at).replace('T', ' ').slice(0, 19)}</strong>
+            <strong>
+              {String(data.generated_at).replace('T', ' ').slice(0, 19)}
+            </strong>
           </div>
         </div>
       )}

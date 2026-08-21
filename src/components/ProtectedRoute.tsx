@@ -11,16 +11,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        gap: '16px'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          gap: '16px',
+        }}
+      >
         <div className="spinner"></div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Cargando sesión segura...</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>
+          Cargando sesión segura...
+        </p>
       </div>
     );
   }

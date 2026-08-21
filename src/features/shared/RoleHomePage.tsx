@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { groupNavByModule, navForRoles, navLabel } from '../../config/navigation';
+import {
+  groupNavByModule,
+  navForRoles,
+  navLabel,
+} from '../../config/navigation';
 import {
   ROLE_LABELS,
   isDualConductorMechanic,
@@ -31,9 +35,11 @@ export default function RoleHomePage({ focusRoles, title, subtitle }: Props) {
         <p className="module-lead">
           Hola, {user?.first_name}. {subtitle}
         </p>
-        {(isDualConductorMechanic(roleIds) || isDualDocenteFacultad(roleIds)) && (
+        {(isDualConductorMechanic(roleIds) ||
+          isDualDocenteFacultad(roleIds)) && (
           <p className="role-home-dual" role="note">
-            Doble rol activo: el menú lateral agrupa las funciones de ambos perfiles.
+            Doble rol activo: el menú lateral agrupa las funciones de ambos
+            perfiles.
           </p>
         )}
       </header>

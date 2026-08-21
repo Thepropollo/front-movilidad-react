@@ -34,7 +34,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,7 +109,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(access_token);
       setUser(registeredUser);
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
+      const err = error as {
+        response?: {
+          data?: { message?: string; errors?: Record<string, string[]> };
+        };
+      };
       const errors = err.response?.data?.errors;
       const message = err.response?.data?.message || 'Error en el registro';
       if (errors) {

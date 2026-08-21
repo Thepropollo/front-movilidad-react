@@ -18,7 +18,10 @@ export default function StudentInvitationsPage() {
 
   const respond = async (id: number, action: 'accept' | 'reject') => {
     try {
-      const { data } = await modulesApi.respondInvitation(id, { action, reason: reason[id] });
+      const { data } = await modulesApi.respondInvitation(id, {
+        action,
+        reason: reason[id],
+      });
       setMsg(data.message);
       await load();
     } catch (e: unknown) {
@@ -32,7 +35,9 @@ export default function StudentInvitationsPage() {
       <header className="module-header">
         <p className="module-kicker">Mis viajes</p>
         <h1>Invitaciones</h1>
-        <p className="module-lead">Confirme o rechace su participación académica.</p>
+        <p className="module-lead">
+          Confirme o rechace su participación académica.
+        </p>
       </header>
       {msg && <div className="alert alert-info">{msg}</div>}
       {error && <div className="alert alert-danger">{error}</div>}
@@ -42,17 +47,41 @@ export default function StudentInvitationsPage() {
             <div>
               <strong>{r.request?.destination}</strong>
               <p>
-                Docente: {r.request?.requester?.first_name} {r.request?.requester?.last_name}
+                Docente: {r.request?.requester?.first_name}{' '}
+                {r.request?.requester?.last_name}
               </p>
-              <p className="ops-muted">Estado invitación: {r.invitation_status} · Solicitud: {r.request?.status}</p>
+              <p className="ops-muted">
+                Estado invitación: {r.invitation_status} · Solicitud:{' '}
+                {r.request?.status}
+              </p>
               {r.invitation_status === 'invitado' && (
-                <textarea className="form-input" rows={2} placeholder="Motivo si rechaza" value={reason[r.id] || ''} onChange={(e) => setReason((s) => ({ ...s, [r.id]: e.target.value }))} />
+                <textarea
+                  className="form-input"
+                  rows={2}
+                  placeholder="Motivo si rechaza"
+                  value={reason[r.id] || ''}
+                  onChange={(e) =>
+                    setReason((s) => ({ ...s, [r.id]: e.target.value }))
+                  }
+                />
               )}
             </div>
             {r.invitation_status === 'invitado' && (
               <div className="ops-actions">
-                <button type="button" className="btn btn-primary" onClick={() => void respond(r.id, 'accept')}>Aceptar</button>
-                <button type="button" className="btn btn-danger" onClick={() => void respond(r.id, 'reject')}>Rechazar</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => void respond(r.id, 'accept')}
+                >
+                  Aceptar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => void respond(r.id, 'reject')}
+                >
+                  Rechazar
+                </button>
               </div>
             )}
           </li>

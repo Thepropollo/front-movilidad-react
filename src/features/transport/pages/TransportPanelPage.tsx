@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Car, User, FileText, CheckCircle, AlertTriangle, RefreshCw, Milestone, ShieldAlert, Award } from 'lucide-react';
+import {
+  Car,
+  User,
+  FileText,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCw,
+  Milestone,
+  ShieldAlert,
+  Award,
+} from 'lucide-react';
 import api from '@/services/api';
+import { MOBILIZATION_TYPE_LABEL, labelOf } from '@/lib/labels';
 
 interface RequestData {
   id: number;
@@ -56,8 +67,12 @@ const TransportPanel: React.FC = () => {
   const [drivers, setDrivers] = useState<DriverData[]>([]);
 
   // Selection states
-  const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(
+    null
+  );
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
+    null
+  );
   const [selectedDriverId, setSelectedDriverId] = useState<number | null>(null);
 
   // UI state
@@ -73,13 +88,16 @@ const TransportPanel: React.FC = () => {
       const [reqRes, vehRes, driRes] = await Promise.all([
         api.get('/solicitudes'),
         api.get('/vehicles'),
-        api.get('/drivers')
+        api.get('/drivers'),
       ]);
 
       // Internas autorizadas por Secretaría; externas aprobadas por Vicerrectorado
-      const filterable = reqRes.data.filter((r: RequestData) =>
-        (r.mobilization_type === 'interna' && ['autorizada_secretaria', 'pendiente'].includes(r.status)) ||
-        (r.mobilization_type === 'externa' && r.status === 'aprobado_rectorado')
+      const filterable = reqRes.data.filter(
+        (r: RequestData) =>
+          (r.mobilization_type === 'interna' &&
+            ['autorizada_secretaria', 'pendiente'].includes(r.status)) ||
+          (r.mobilization_type === 'externa' &&
+            r.status === 'aprobado_rectorado')
       );
 
       setRequests(filterable);
@@ -88,7 +106,9 @@ const TransportPanel: React.FC = () => {
 
       // Reset selections if selected request is no longer in the list
       if (selectedRequest) {
-        const stillExists = filterable.some((r: RequestData) => r.id === selectedRequest.id);
+        const stillExists = filterable.some(
+          (r: RequestData) => r.id === selectedRequest.id
+        );
         if (!stillExists) {
           setSelectedRequest(null);
           setSelectedVehicleId(null);
@@ -96,7 +116,9 @@ const TransportPanel: React.FC = () => {
         }
       }
     } catch (err: any) {
-      setApiError(err.response?.data?.message || 'Error al cargar los datos del panel.');
+      setApiError(
+        err.response?.data?.message || 'Error al cargar los datos del panel.'
+      );
     } finally {
       setListLoading(false);
     }
@@ -108,7 +130,9 @@ const TransportPanel: React.FC = () => {
 
   const handleIssueRouteSheet = async () => {
     if (!selectedRequest || !selectedVehicleId || !selectedDriverId) {
-      setApiError('Debe seleccionar una solicitud, un vehículo y un conductor.');
+      setApiError(
+        'Debe seleccionar una solicitud, un vehículo y un conductor.'
+      );
       return;
     }
 
@@ -120,7 +144,7 @@ const TransportPanel: React.FC = () => {
       const response = await api.post('/hojas-ruta', {
         request_id: selectedRequest.id,
         vehicle_id: selectedVehicleId,
-        driver_id: selectedDriverId
+        driver_id: selectedDriverId,
       });
 
       setSuccessData(response.data);
@@ -155,14 +179,16 @@ const TransportPanel: React.FC = () => {
             <Milestone className="text-secondary" size={28} />
             Sección de Transporte y Logística
           </h1>
-          <p className="text-gray-500 mt-1">Asignación de recursos institucionales y emisión de Hojas de Ruta.</p>
+          <p className="text-gray-500 mt-1">
+            Asignación de recursos institucionales y emisión de Hojas de Ruta.
+          </p>
         </div>
-        <button 
-          onClick={loadAllData} 
+        <button
+          onClick={loadAllData}
           disabled={listLoading}
           className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition cursor-pointer"
         >
-          <RefreshCw className={listLoading ? "animate-spin" : ""} size={16} />
+          <RefreshCw className={listLoading ? 'animate-spin' : ''} size={16} />
           <span>Actualizar Datos</span>
         </button>
       </div>
@@ -175,7 +201,8 @@ const TransportPanel: React.FC = () => {
             <p className="font-bold text-base">¡Hoja de Ruta Emitida!</p>
             <p className="text-sm mt-0.5">{successData.message}</p>
             <p className="text-xs text-gray-500 mt-1 font-semibold uppercase">
-              Hoja de Ruta ID: #{successData.route_sheet?.id} | Kilometraje inicial: {successData.route_sheet?.initial_mileage} km
+              Hoja de Ruta ID: #{successData.route_sheet?.id} | Kilometraje
+              inicial: {successData.route_sheet?.initial_mileage} km
             </p>
           </div>
         </div>
@@ -186,14 +213,15 @@ const TransportPanel: React.FC = () => {
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-start gap-3 shadow-sm animate-in fade-in duration-200">
           <AlertTriangle className="shrink-0 text-red-600 mt-0.5" size={22} />
           <div>
-            <p className="font-bold">Error de Validación / Bloqueo en Cascada</p>
+            <p className="font-bold">
+              Error de Validación / Bloqueo en Cascada
+            </p>
             <p className="text-sm mt-0.5">{apiError}</p>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Left Side: Requests List */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow border p-5 flex flex-col h-[650px]">
           <h2 className="text-lg font-bold text-primary mb-4 pb-2 border-b">
@@ -202,14 +230,23 @@ const TransportPanel: React.FC = () => {
 
           {listLoading && requests.length === 0 ? (
             <div className="flex-1 flex flex-col justify-center items-center">
-              <RefreshCw className="animate-spin text-secondary mb-2" size={32} />
-              <span className="text-sm text-gray-400">Cargando solicitudes...</span>
+              <RefreshCw
+                className="animate-spin text-secondary mb-2"
+                size={32}
+              />
+              <span className="text-sm text-gray-400">
+                Cargando solicitudes...
+              </span>
             </div>
           ) : requests.length === 0 ? (
             <div className="flex-1 flex flex-col justify-center items-center text-center p-4">
               <FileText className="text-gray-300 mb-2" size={40} />
-              <p className="text-gray-500 font-bold">Sin solicitudes pendientes</p>
-              <p className="text-xs text-gray-400 mt-1">Todas las comisiones tienen sus recursos asignados.</p>
+              <p className="text-gray-500 font-bold">
+                Sin solicitudes pendientes
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Todas las comisiones tienen sus recursos asignados.
+              </p>
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto space-y-3.5 pr-1">
@@ -223,20 +260,24 @@ const TransportPanel: React.FC = () => {
                     setSuccessData(null);
                   }}
                   className={`p-4 rounded-lg border text-left cursor-pointer transition flex flex-col justify-between ${
-                    selectedRequest?.id === req.id 
-                      ? 'border-secondary bg-secondary/5 ring-1 ring-secondary' 
+                    selectedRequest?.id === req.id
+                      ? 'border-secondary bg-secondary/5 ring-1 ring-secondary'
                       : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
-                      req.mobilization_type === 'externa' 
-                        ? 'bg-purple-100 text-purple-800 border border-purple-200' 
-                        : 'bg-blue-100 text-blue-800 border border-blue-200'
-                    }`}>
-                      {req.mobilization_type}
+                    <span
+                      className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                        req.mobilization_type === 'externa'
+                          ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                          : 'bg-blue-100 text-blue-800 border border-blue-200'
+                      }`}
+                    >
+                      {labelOf(MOBILIZATION_TYPE_LABEL, req.mobilization_type)}
                     </span>
-                    <span className="font-extrabold text-primary text-sm">${Number(req.projected_cost).toFixed(2)}</span>
+                    <span className="font-extrabold text-primary text-sm">
+                      ${Number(req.projected_cost).toFixed(2)}
+                    </span>
                   </div>
 
                   <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-1">
@@ -244,8 +285,18 @@ const TransportPanel: React.FC = () => {
                   </h3>
 
                   <div className="text-xs text-gray-500 mt-2 space-y-1">
-                    <p className="truncate"><span className="font-semibold text-gray-700">Solicita:</span> {req.requester?.first_name} {req.requester?.last_name}</p>
-                    <p><span className="font-semibold text-gray-700">Fecha:</span> {req.departure_date} al {req.return_date}</p>
+                    <p className="truncate">
+                      <span className="font-semibold text-gray-700">
+                        Solicita:
+                      </span>{' '}
+                      {req.requester?.first_name} {req.requester?.last_name}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-gray-700">
+                        Fecha:
+                      </span>{' '}
+                      {req.departure_date} al {req.return_date}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -258,9 +309,12 @@ const TransportPanel: React.FC = () => {
           {!selectedRequest ? (
             <div className="flex-1 bg-gray-50 border border-dashed rounded-xl flex flex-col justify-center items-center text-center p-6">
               <Milestone className="text-gray-300 mb-3" size={54} />
-              <h3 className="text-gray-600 font-bold text-lg">Asignación de Recursos en Patio</h3>
+              <h3 className="text-gray-600 font-bold text-lg">
+                Asignación de Recursos en Patio
+              </h3>
               <p className="text-gray-400 text-sm mt-1 max-w-sm">
-                Seleccione una solicitud de movilización de la lista de la izquierda para comenzar el despacho de vehículos y conductores.
+                Seleccione una solicitud de movilización de la lista de la
+                izquierda para comenzar el despacho de vehículos y conductores.
               </p>
             </div>
           ) : (
@@ -268,29 +322,51 @@ const TransportPanel: React.FC = () => {
               {/* Active Request Info */}
               <div className="bg-gray-50 border rounded-lg p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 text-sm">
                 <div>
-                  <span className="text-xs text-gray-400 block font-bold uppercase">Destino y Motivo</span>
-                  <span className="font-bold text-primary block truncate">{selectedRequest.destination}</span>
-                  <span className="text-xs text-gray-500 block truncate italic">"{selectedRequest.travel_reason}"</span>
+                  <span className="text-xs text-gray-400 block font-bold uppercase">
+                    Destino y Motivo
+                  </span>
+                  <span className="font-bold text-primary block truncate">
+                    {selectedRequest.destination}
+                  </span>
+                  <span className="text-xs text-gray-500 block truncate italic">
+                    "{selectedRequest.travel_reason}"
+                  </span>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-400 block font-bold uppercase">Fechas del Viaje</span>
-                  <span className="font-bold text-gray-950 block">{selectedRequest.departure_date}</span>
-                  <span className="text-xs text-gray-500 block">al {selectedRequest.return_date} ({selectedRequest.estimated_days} días)</span>
+                  <span className="text-xs text-gray-400 block font-bold uppercase">
+                    Fechas del Viaje
+                  </span>
+                  <span className="font-bold text-gray-950 block">
+                    {selectedRequest.departure_date}
+                  </span>
+                  <span className="text-xs text-gray-500 block">
+                    al {selectedRequest.return_date} (
+                    {selectedRequest.estimated_days} días)
+                  </span>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-400 block font-bold uppercase">Pre-Cálculo Autorizado</span>
-                  <span className="font-extrabold text-secondary text-base">${Number(selectedRequest.projected_cost).toFixed(2)}</span>
-                  <span className="text-xs text-gray-400 block font-medium">Viáticos institucionales</span>
+                  <span className="text-xs text-gray-400 block font-bold uppercase">
+                    Pre-Cálculo Autorizado
+                  </span>
+                  <span className="font-extrabold text-secondary text-base">
+                    ${Number(selectedRequest.projected_cost).toFixed(2)}
+                  </span>
+                  <span className="text-xs text-gray-400 block font-medium">
+                    Viáticos institucionales
+                  </span>
                 </div>
               </div>
 
               {/* Scrollable selectors */}
               <div className="flex-1 overflow-y-auto space-y-6 pr-1">
-                {(vehicles.every((v) => !v.is_selectable) || drivers.every((d) => !d.is_selectable)) && (
+                {(vehicles.every((v) => !v.is_selectable) ||
+                  drivers.every((d) => !d.is_selectable)) && (
                   <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
                     No hay recursos disponibles para emitir hoja de ruta.
-                    {vehicles.every((v) => !v.is_selectable) && ' Todos los vehículos están en viaje, taller o bloqueados.'}
-                    {drivers.every((d) => !d.is_selectable) && ' No hay conductores habilitados.'}
+                    {vehicles.every((v) => !v.is_selectable) &&
+                      ' Todos los vehículos están en viaje, taller o bloqueados.'}
+                    {drivers.every((d) => !d.is_selectable) &&
+                      ' No hay conductores habilitados.'}
                   </div>
                 )}
 
@@ -300,7 +376,7 @@ const TransportPanel: React.FC = () => {
                     <Car size={16} className="text-secondary" />
                     1. Seleccione Vehículo Institucional
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {vehicles.map((veh) => {
                       const isSelected = selectedVehicleId === veh.id;
@@ -314,36 +390,44 @@ const TransportPanel: React.FC = () => {
                             }
                           }}
                           className={`p-3.5 rounded-lg border text-left transition relative ${
-                            !veh.is_selectable 
-                              ? 'bg-gray-100 border-red-200 opacity-65 cursor-not-allowed' 
+                            !veh.is_selectable
+                              ? 'bg-gray-100 border-red-200 opacity-65 cursor-not-allowed'
                               : isSelected
-                              ? 'border-secondary bg-secondary/5 ring-1 ring-secondary cursor-pointer'
-                              : 'border-gray-200 hover:border-gray-300 cursor-pointer bg-white'
+                                ? 'border-secondary bg-secondary/5 ring-1 ring-secondary cursor-pointer'
+                                : 'border-gray-200 hover:border-gray-300 cursor-pointer bg-white'
                           }`}
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <span className="font-extrabold text-gray-950 text-sm">{veh.plate}</span>
-                              <p className="text-xs text-gray-600 font-semibold">{veh.brand} {veh.model} ({veh.year})</p>
+                              <span className="font-extrabold text-gray-950 text-sm">
+                                {veh.plate}
+                              </span>
+                              <p className="text-xs text-gray-600 font-semibold">
+                                {veh.brand} {veh.model} ({veh.year})
+                              </p>
                             </div>
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                              veh.status_label === 'available'
-                                ? 'bg-green-100 text-green-800'
-                                : veh.status_label === 'on_trip'
-                                ? 'bg-amber-100 text-amber-900'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                veh.status_label === 'available'
+                                  ? 'bg-green-100 text-green-800'
+                                  : veh.status_label === 'on_trip'
+                                    ? 'bg-amber-100 text-amber-900'
+                                    : 'bg-red-100 text-red-800'
+                              }`}
+                            >
                               {veh.status_label === 'available'
                                 ? 'Operativo'
                                 : veh.status_label === 'on_trip'
-                                ? 'En viaje'
-                                : 'Bloqueado'}
+                                  ? 'En viaje'
+                                  : 'Bloqueado'}
                             </span>
                           </div>
 
                           <div className="text-xs text-gray-500 mt-2 flex justify-between">
                             <span>Kilometraje: {veh.current_mileage} km</span>
-                            <span>Próx Cambio: {veh.next_oil_change_mileage} km</span>
+                            <span>
+                              Próx Cambio: {veh.next_oil_change_mileage} km
+                            </span>
                           </div>
 
                           {!veh.is_selectable && (
@@ -364,7 +448,7 @@ const TransportPanel: React.FC = () => {
                     <User size={16} className="text-secondary" />
                     2. Seleccione Conductor Habilitado
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {drivers.map((dri) => {
                       const isSelected = selectedDriverId === dri.id;
@@ -378,32 +462,47 @@ const TransportPanel: React.FC = () => {
                             }
                           }}
                           className={`p-3.5 rounded-lg border text-left transition relative ${
-                            !dri.is_selectable 
-                              ? 'bg-gray-100 border-red-200 opacity-65 cursor-not-allowed' 
+                            !dri.is_selectable
+                              ? 'bg-gray-100 border-red-200 opacity-65 cursor-not-allowed'
                               : isSelected
-                              ? 'border-secondary bg-secondary/5 ring-1 ring-secondary cursor-pointer'
-                              : 'border-gray-200 hover:border-gray-300 cursor-pointer bg-white'
+                                ? 'border-secondary bg-secondary/5 ring-1 ring-secondary cursor-pointer'
+                                : 'border-gray-200 hover:border-gray-300 cursor-pointer bg-white'
                           }`}
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <span className="font-extrabold text-gray-950 text-sm">{dri.name}</span>
-                              <p className="text-xs text-gray-400 font-medium">C.I. {dri.national_id}</p>
-                              {dri.email && <p className="text-xs text-gray-500">{dri.email}</p>}
+                              <span className="font-extrabold text-gray-950 text-sm">
+                                {dri.name}
+                              </span>
+                              <p className="text-xs text-gray-400 font-medium">
+                                C.I. {dri.national_id}
+                              </p>
+                              {dri.email && (
+                                <p className="text-xs text-gray-500">
+                                  {dri.email}
+                                </p>
+                              )}
                             </div>
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                              dri.status_label === 'available'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {dri.status_label === 'available' ? 'Habilitado' : 'Bloqueado'}
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                dri.status_label === 'available'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {dri.status_label === 'available'
+                                ? 'Habilitado'
+                                : 'Bloqueado'}
                             </span>
                           </div>
 
                           <div className="text-xs text-gray-500 mt-2.5 flex items-center justify-between border-t pt-1.5">
                             <span className="flex items-center gap-0.5">
                               <Award size={13} className="text-secondary" />
-                              Puntos: <strong className="text-primary font-bold">{dri.points} pt</strong>
+                              Puntos:{' '}
+                              <strong className="text-primary font-bold">
+                                {dri.points} pt
+                              </strong>
                             </span>
                             <span>Tipo: {dri.license_type}</span>
                             <span>Exp: {dri.expiration_date}</span>
@@ -420,7 +519,6 @@ const TransportPanel: React.FC = () => {
                     })}
                   </div>
                 </div>
-
               </div>
 
               {/* Action Buttons */}
@@ -453,11 +551,9 @@ const TransportPanel: React.FC = () => {
                   )}
                 </button>
               </div>
-
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
