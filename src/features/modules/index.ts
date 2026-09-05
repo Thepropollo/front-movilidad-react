@@ -8,6 +8,7 @@ export { default as ParticipantsPage } from './pages/ParticipantsPage';
 export { default as StudentInvitationsPage } from './pages/StudentInvitationsPage';
 export { default as FleetDriversPage } from './pages/FleetDriversPage';
 export { default as FleetVehiclesPage } from './pages/FleetVehiclesPage';
+export { default as FleetStatusPage } from './pages/FleetStatusPage';
 export { default as GasStationsPage } from './pages/GasStationsPage';
 export { default as MapPage } from './pages/MapPage';
 export { default as ConductorRouteMapPage } from './pages/ConductorRouteMapPage';

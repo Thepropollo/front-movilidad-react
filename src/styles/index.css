@@ -146,6 +146,134 @@ body {
   color: var(--color-primary);
 }
 
+.trip-date-input {
+  min-width: 0;
+  padding-right: 10px;
+  font-size: 14px;
+}
+
+.trip-date-input::-webkit-datetime-edit {
+  padding: 0;
+}
+
+.trip-date-input::-webkit-calendar-picker-indicator {
+  margin-left: 4px;
+}
+
+.destination-location-section {
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.destination-location-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.destination-location-header > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.destination-location-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.destination-location-header .destination-map-toggle {
+  width: auto;
+  flex-shrink: 0;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.destination-map-content {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.destination-location-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.destination-location-tools .btn {
+  width: auto;
+  padding: 12px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.destination-location-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.destination-coordinates {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.location-picker {
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: #e8eef5;
+}
+
+.location-picker-map {
+  width: 100%;
+}
+
+.location-picker-help {
+  margin: 0;
+  padding: 8px 10px;
+  background: #fff;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.location-picker-pin {
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+}
+
+.location-picker-pin span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 560px) {
+  .destination-location-header,
+  .destination-location-tools {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .destination-location-header .destination-map-toggle,
+  .destination-location-tools .btn {
+    width: 100%;
+  }
+}
+
 /* Select element customization */
 .form-select {
   width: 100%;
@@ -1472,6 +1600,7 @@ body {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
+  min-width: 0;
 }
 
 @media (max-width: 1080px) {
@@ -1481,6 +1610,7 @@ body {
 }
 
 .schedule-day {
+  min-width: 0;
   min-height: 140px;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
@@ -1489,6 +1619,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: hidden;
 }
 
 .schedule-day.is-today {
@@ -1500,41 +1631,61 @@ body {
   justify-content: space-between;
   align-items: baseline;
   gap: 6px;
+  min-width: 0;
 }
 
 .schedule-day-title {
+  min-width: 0;
   font-size: 13px;
   font-weight: 700;
   text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .schedule-day-date {
+  min-width: 0;
   font-size: 12px;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .schedule-cards {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .schedule-card {
+  min-width: 0;
+  width: 100%;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 8px;
   display: grid;
   gap: 4px;
   background: var(--bg-page);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .schedule-card strong {
+  min-width: 0;
   font-size: 13px;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .schedule-card small {
+  min-width: 0;
   font-size: 12px;
   color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .schedule-empty {
@@ -1550,8 +1701,15 @@ body {
   line-height: 1;
   padding: 4px 8px;
   border-radius: 999px;
-  width: fit-content;
-  white-space: nowrap;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  justify-content: center;
+  text-align: center;
 }
 
 .schedule-status.status-programado {
@@ -2011,6 +2169,127 @@ body {
   font-weight: 600;
 }
 
+.guide-summary-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.guide-navigation {
+  border: 1px solid #dbe4ef;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f7faff;
+}
+
+.guide-navigation .guide-section-title {
+  margin-bottom: 12px;
+}
+
+.guide-route-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.guide-route-metrics div {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: #fff;
+  border: 1px solid #e2e9f1;
+}
+
+.guide-route-metrics strong {
+  color: var(--color-primary);
+  font-size: 16px;
+}
+
+.guide-route-metrics span,
+.guide-next-label {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.guide-next-point {
+  display: grid;
+  gap: 3px;
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-left: 3px solid var(--color-secondary);
+  background: #fff;
+}
+
+.guide-next-point strong {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.guide-instructions {
+  display: grid;
+  gap: 7px;
+  max-height: 230px;
+  margin: 10px 0 0;
+  padding: 0 4px 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.guide-instructions li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.guide-instructions li > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.guide-instructions li > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.guide-instructions strong {
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.guide-instructions small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.guide-navigation-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .guide-section-title {
   display: flex;
   align-items: center;
@@ -2064,6 +2343,11 @@ body {
   z-index: 1;
 }
 
+.guide-step > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .guide-step-dot.origin {
   background: #0b5fff;
 }
@@ -2087,8 +2371,10 @@ body {
 }
 
 .guide-step-sub {
+  display: block;
   font-size: 13px;
   color: var(--text-muted);
+  overflow-wrap: anywhere;
 }
 
 .guide-step.is-target .guide-step-name {
@@ -2099,6 +2385,28 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.guide-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.guide-field label {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guide-field .form-input {
+  min-width: 0;
+  padding: 11px 12px;
+  font-size: 13px;
+}
+
+.guide-note-field {
+  margin-top: 10px;
 }
 
 .guide-gps-ok,

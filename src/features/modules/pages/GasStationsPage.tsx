@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 import Input from '@/components/Input';
 import { modulesApi } from '../api';
 
@@ -19,12 +20,19 @@ const actionBtn: React.CSSProperties = {
   fontSize: 14,
 };
 
+const normalizeSearchValue = (value: unknown) =>
+  String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase();
+
 export default function GasStationsPage() {
   const [stations, setStations] = useState<any[]>([]);
   const [form, setForm] = useState(empty);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [stationSearch, setStationSearch] = useState('');
 
   const load = async () => {
     const { data } = await modulesApi.stations();
@@ -109,6 +117,15 @@ export default function GasStationsPage() {
       setError(er.response?.data?.message || 'Error al actualizar.');
     }
   };
+
+  const normalizedStationSearch = normalizeSearchValue(stationSearch.trim());
+  const filteredStations = normalizedStationSearch
+    ? stations.filter((s) =>
+        [s.commercial_name, s.ruc, s.address].some((value) =>
+          normalizeSearchValue(value).includes(normalizedStationSearch)
+        )
+      )
+    : stations;
 
   return (
     <section className="module-page">
@@ -245,6 +262,16 @@ export default function GasStationsPage() {
 
       <div className="module-panel">
         <h2>Estaciones de servicio registradas</h2>
+        <Input
+          id="station-search"
+          label="Buscar estación"
+          placeholder="Buscar por nombre, RUC o dirección"
+          value={stationSearch}
+          onChange={(e) => setStationSearch(e.target.value)}
+          icon={<Search size={18} aria-hidden="true" />}
+          containerStyle={{ marginBottom: 16 }}
+          aria-label="Buscar estación por nombre, RUC o dirección"
+        />
         <table className="ops-table">
           <thead>
             <tr>
@@ -257,35 +284,45 @@ export default function GasStationsPage() {
             </tr>
           </thead>
           <tbody>
-            {stations.map((s) => (
-              <tr key={s.id}>
-                <td>{s.commercial_name}</td>
-                <td>{s.ruc}</td>
-                <td>{s.price_per_liter ?? '—'}</td>
-                <td>{s.monthly_quota_liters ?? '—'}</td>
-                <td>{s.active_agreement ? 'Activo' : 'Inactivo'}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button
-                      className="btn btn-secondary"
-                      style={actionBtn}
-                      onClick={() => startEdit(s)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className={
-                        s.active_agreement ? 'btn btn-outline' : 'btn btn-success'
-                      }
-                      style={actionBtn}
-                      onClick={() => void toggle(s)}
-                    >
-                      {s.active_agreement ? 'Desactivar' : 'Activar'}
-                    </button>
-                  </div>
+            {filteredStations.length > 0 ? (
+              filteredStations.map((s) => (
+                <tr key={s.id}>
+                  <td>{s.commercial_name}</td>
+                  <td>{s.ruc}</td>
+                  <td>{s.price_per_liter ?? '—'}</td>
+                  <td>{s.monthly_quota_liters ?? '—'}</td>
+                  <td>{s.active_agreement ? 'Activo' : 'Inactivo'}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button
+                        className="btn btn-secondary"
+                        style={actionBtn}
+                        onClick={() => startEdit(s)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className={
+                          s.active_agreement ? 'btn btn-outline' : 'btn btn-success'
+                        }
+                        style={actionBtn}
+                        onClick={() => void toggle(s)}
+                      >
+                        {s.active_agreement ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                  {stationSearch.trim()
+                    ? 'No se encontraron estaciones con esa búsqueda.'
+                    : 'No hay estaciones registradas.'}
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

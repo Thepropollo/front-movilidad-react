@@ -10,13 +10,14 @@ import {
   Car,
   Plane,
   ArrowRight,
-  Clock,
 } from 'lucide-react';
 import api from '@/services/api';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
+import LocationPicker, { type SelectedLocation } from '@/components/LocationPicker';
 import Modal from '@/components/Modal';
 import { formatDateReadable } from '@/lib/datetime';
+import { geocodePlace } from '@/lib/geo';
 import { MOBILIZATION_TYPE_LABEL, REQUEST_STATUS_LABEL, labelOf } from '@/lib/labels';
 
 interface RequestData {
@@ -24,6 +25,7 @@ interface RequestData {
   mobilization_type: string;
   origin: string;
   destination: string;
+  destination_address?: string | null;
   travel_reason: string;
   departure_date: string;
   departure_time?: string | null;
@@ -39,6 +41,15 @@ const RequestForm: React.FC = () => {
   const [mobilizationType, setMobilizationType] = useState<string>('interna');
   const [origin, setOrigin] = useState<string>('MANTA');
   const [destination, setDestination] = useState<string>('');
+  const [destinationAddress, setDestinationAddress] = useState('');
+  const [destinationPoint, setDestinationPoint] = useState<SelectedLocation>({
+    lat: null,
+    lng: null,
+    address: '',
+  });
+  const [showDestinationMap, setShowDestinationMap] = useState(false);
+  const [locatingDestination, setLocatingDestination] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [travelReason, setTravelReason] = useState<string>('');
   const [departureDate, setDepartureDate] = useState<string>('');
   const [departureTime, setDepartureTime] = useState<string>('');
@@ -71,6 +82,55 @@ const RequestForm: React.FC = () => {
     fetchRequests();
   }, []);
 
+  const requestPayload = (fundsAccepted: boolean) => ({
+    mobilization_type: mobilizationType,
+    origin,
+    destination,
+    destination_address: destinationAddress.trim() || null,
+    destination_latitude: destinationPoint.lat,
+    destination_longitude: destinationPoint.lng,
+    travel_reason: travelReason,
+    departure_date: departureDate,
+    departure_time: departureTime,
+    return_date: returnDate,
+    return_time: returnTime,
+    declaracion_fondos_aceptada: fundsAccepted,
+  });
+
+  const handleDestinationLocation = (location: SelectedLocation) => {
+    setDestinationPoint(location);
+    setDestinationAddress(location.address);
+    setLocationError(null);
+  };
+
+  const locateDestination = async () => {
+    const query = destinationAddress.trim() || destination.trim();
+    if (!query) {
+      setLocationError('Escriba una dirección o destino para buscarlo en el mapa.');
+      return;
+    }
+
+    setLocatingDestination(true);
+    setLocationError(null);
+    try {
+      const location = await geocodePlace(query);
+      if (!location) {
+        setLocationError('No encontramos esa dirección. Puede marcar el punto manualmente.');
+        return;
+      }
+      handleDestinationLocation({
+        lat: location.lat,
+        lng: location.lng,
+        address: location.label || query,
+      });
+      setShowDestinationMap(true);
+    } catch {
+      setLocationError('No se pudo buscar la dirección. Puede marcar el punto manualmente.');
+    } finally {
+      setLocatingDestination(false);
+    }
+  };
+
   const handleSimulate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -78,17 +138,7 @@ const RequestForm: React.FC = () => {
     setSuccessMsg(null);
 
     try {
-      const response = await api.post('/solicitudes', {
-        mobilization_type: mobilizationType,
-        origin,
-        destination,
-        travel_reason: travelReason,
-        departure_date: departureDate,
-        departure_time: departureTime,
-        return_date: returnDate,
-        return_time: returnTime,
-        declaracion_fondos_aceptada: false,
-      });
+      const response = await api.post('/solicitudes', requestPayload(false));
 
       if (response.data.requires_confirmation) {
         setPreCalcData(response.data);
@@ -115,17 +165,7 @@ const RequestForm: React.FC = () => {
     setErrors(null);
 
     try {
-      const response = await api.post('/solicitudes', {
-        mobilization_type: mobilizationType,
-        origin,
-        destination,
-        travel_reason: travelReason,
-        departure_date: departureDate,
-        departure_time: departureTime,
-        return_date: returnDate,
-        return_time: returnTime,
-        declaracion_fondos_aceptada: true,
-      });
+      const response = await api.post('/solicitudes', requestPayload(true));
 
       setSuccessMsg(response.data.message);
       // Reset form
@@ -136,6 +176,9 @@ const RequestForm: React.FC = () => {
       setReturnDate('');
       setReturnTime('');
       setOrigin('MANTA');
+      setDestinationAddress('');
+      setDestinationPoint({ lat: null, lng: null, address: '' });
+      setShowDestinationMap(false);
 
       // Refresh requests list
       fetchRequests();
@@ -227,9 +270,9 @@ const RequestForm: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Form panel */}
-        <div className="lg:col-span-5 glass-panel p-8 self-start bg-white">
+        <div className="lg:col-span-6 glass-panel p-8 self-start bg-white">
           <h2 className="text-xl font-bold text-primary mb-6 border-b pb-2">
             Datos del Viaje
           </h2>
@@ -302,11 +345,79 @@ const RequestForm: React.FC = () => {
               />
             </div>
 
+            <div className="destination-location-section">
+              <div className="destination-location-header">
+                <div>
+                  <p className="form-label" style={{ marginBottom: 4 }}>
+                    Ubicación detallada del destino
+                  </p>
+                  <p className="destination-location-note">
+                    Opcional. Agregue una dirección o marque el punto exacto en el mapa.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline destination-map-toggle"
+                  onClick={() => {
+                    setShowDestinationMap((visible) => !visible);
+                    setLocationError(null);
+                  }}
+                >
+                  <MapPin size={16} />
+                  {showDestinationMap ? 'Ocultar mapa' : 'Ubicar en mapa'}
+                </button>
+              </div>
+
+              {showDestinationMap && (
+                <div className="destination-map-content">
+                  <div className="destination-location-tools">
+                    <Input
+                      id="destination-address"
+                      label="Dirección o referencia"
+                      placeholder="Ej. Av. Malecón y calle 10, Manta"
+                      value={destinationAddress}
+                      onChange={(e) => {
+                        setDestinationAddress(e.target.value);
+                        setDestinationPoint({ lat: null, lng: null, address: '' });
+                        setLocationError(null);
+                      }}
+                      containerStyle={{ marginBottom: 0 }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      fullWidth={false}
+                      isLoading={locatingDestination}
+                      onClick={() => void locateDestination()}
+                    >
+                      Buscar dirección
+                    </Button>
+                  </div>
+                  {locationError && (
+                    <p className="destination-location-error" role="alert">
+                      {locationError}
+                    </p>
+                  )}
+                  <LocationPicker
+                    value={destinationPoint}
+                    onChange={handleDestinationLocation}
+                    height={240}
+                  />
+                  {destinationPoint.lat !== null && destinationPoint.lng !== null && (
+                    <p className="destination-coordinates">
+                      Punto seleccionado: {destinationPoint.lat.toFixed(6)},{' '}
+                      {destinationPoint.lng.toFixed(6)}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="date"
                 label="Fecha de salida"
-                icon={<Calendar size={16} />}
+                className="trip-date-input"
                 value={departureDate}
                 onChange={(e) => setDepartureDate(e.target.value)}
                 error={
@@ -318,7 +429,7 @@ const RequestForm: React.FC = () => {
               <Input
                 type="date"
                 label="Fecha de retorno"
-                icon={<Calendar size={16} />}
+                className="trip-date-input"
                 value={returnDate}
                 onChange={(e) => setReturnDate(e.target.value)}
                 error={errors?.return_date ? errors.return_date[0] : undefined}
@@ -330,7 +441,7 @@ const RequestForm: React.FC = () => {
               <Input
                 type="time"
                 label="Hora de salida"
-                icon={<Clock size={16} />}
+                className="trip-date-input"
                 value={departureTime}
                 onChange={(e) => setDepartureTime(e.target.value)}
                 error={
@@ -342,7 +453,7 @@ const RequestForm: React.FC = () => {
               <Input
                 type="time"
                 label="Hora de retorno"
-                icon={<Clock size={16} />}
+                className="trip-date-input"
                 value={returnTime}
                 onChange={(e) => setReturnTime(e.target.value)}
                 error={errors?.return_time ? errors.return_time[0] : undefined}
@@ -389,7 +500,7 @@ const RequestForm: React.FC = () => {
         </div>
 
         {/* List panel */}
-        <div className="lg:col-span-7 glass-panel p-8 bg-white">
+        <div className="lg:col-span-6 glass-panel p-8 bg-white">
           <div className="flex justify-between items-center mb-6 border-b pb-2">
             <h2 className="text-xl font-bold text-primary">
               Historial de Solicitudes
@@ -428,7 +539,7 @@ const RequestForm: React.FC = () => {
                         <ArrowRight size={14} className="text-gray-400 shrink-0" />
                         {req.destination}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                       <p className="text-xs text-gray-500 mt-1">
                         <Calendar size={12} className="inline mr-1" />
                         {formatDateReadable(req.departure_date)}
                         {req.departure_time ? ` · ${req.departure_time}` : ''}
@@ -436,8 +547,14 @@ const RequestForm: React.FC = () => {
                         {formatDateReadable(req.return_date)}
                         {req.return_time ? ` · ${req.return_time}` : ''}
                         <span className="mx-1">·</span>
-                        {req.estimated_days} d
-                      </p>
+                         {req.estimated_days} d
+                       </p>
+                       {req.destination_address && (
+                         <p className="text-xs text-gray-500 mt-1 flex items-start gap-1">
+                           <MapPin size={12} className="mt-0.5 shrink-0" />
+                           <span>{req.destination_address}</span>
+                         </p>
+                       )}
                     </div>
                     {getStatusBadge(req.status)}
                   </div>

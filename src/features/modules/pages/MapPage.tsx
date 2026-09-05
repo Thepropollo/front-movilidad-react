@@ -61,13 +61,27 @@ export default function MapPage() {
         }
       });
       if (data.destination) {
-        const g = await geocodePlace(data.destination);
-        if (g)
+        const hasExactDestination =
+          data.destination_latitude != null &&
+          data.destination_longitude != null &&
+          Number.isFinite(Number(data.destination_latitude)) &&
+          Number.isFinite(Number(data.destination_longitude));
+        if (hasExactDestination) {
           next.push({
-            ...g,
+            lat: Number(data.destination_latitude),
+            lng: Number(data.destination_longitude),
             kind: 'destination',
-            label: `Destino: ${data.destination}`,
+            label: `Destino: ${data.destination_address || data.destination}`,
           });
+        } else {
+          const g = await geocodePlace(data.destination);
+          if (g)
+            next.push({
+              ...g,
+              kind: 'destination',
+              label: `Destino: ${data.destination}`,
+            });
+        }
       }
       setMarkers(next);
     } catch {
@@ -146,6 +160,11 @@ export default function MapPage() {
                 <strong>Estado:</strong>{' '}
                 {labelOf(TRIP_STATUS_LABEL, detail.trip_status)}
               </p>
+              {detail.destination_address && (
+                <p>
+                  <strong>Dirección destino:</strong> {detail.destination_address}
+                </p>
+              )}
             </div>
           )}
 

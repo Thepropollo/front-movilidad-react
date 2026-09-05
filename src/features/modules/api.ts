@@ -49,6 +49,8 @@ export const modulesApi = {
   createVehicle: (body: Record<string, unknown>) => api.post('/vehicles', body),
   updateVehicle: (id: number, body: Record<string, unknown>) =>
     api.patch(`/vehicles/${id}`, body),
+  updateVehicleDocuments: (id: number, body: Record<string, unknown>) =>
+    api.patch(`/vehicles/${id}/documentos`, body),
   stations: () => api.get('/estaciones-servicio'),
   createStation: (body: Record<string, unknown>) =>
     api.post('/estaciones-servicio', body),

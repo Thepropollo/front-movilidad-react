@@ -128,7 +128,7 @@ export const NAV_ITEMS: NavItem[] = [
     module: 'Flota y taller',
     roles: ['secretaria'],
     status: 'ready',
-    description: 'Registrar y editar vehículos',
+    description: 'Vehículos y documentación vigente',
     priority: 'secondary',
   },
   {
@@ -139,7 +139,7 @@ export const NAV_ITEMS: NavItem[] = [
     module: 'Flota y taller',
     roles: ['secretaria'],
     status: 'ready',
-    description: 'Disponible / en uso / taller',
+    description: 'Vigencia de permisos y documentos',
     priority: 'secondary',
   },
   {

@@ -10,7 +10,14 @@ import {
   Crosshair,
 } from 'lucide-react';
 import RouteMapView, { type MapMarker } from '@/components/RouteMapView';
-import { geocodePlace, watchPosition, clearWatch, type LatLng } from '@/lib/geo';
+import {
+  fetchRouteDetails,
+  geocodePlace,
+  watchPosition,
+  clearWatch,
+  type LatLng,
+  type RoutePlan,
+} from '@/lib/geo';
 import { TRIP_STATUS_LABEL, labelOf } from '@/lib/labels';
 import api from '@/services/api';
 import { modulesApi } from '../api';
@@ -38,11 +45,25 @@ type TripDetail = {
   trip_status: string;
   origin?: string;
   destination?: string;
+  destination_address?: string | null;
+  destination_latitude?: number | string | null;
+  destination_longitude?: number | string | null;
   vehicle?: { plate: string; brand: string; model: string };
   stops?: Stop[];
 };
 
 const ACTIVE_STATUS = ['en_ruta', 'programado'];
+
+const formatDistance = (meters: number) =>
+  meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
+
+const formatDuration = (seconds: number) => {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes ? `${hours} h ${remainingMinutes} min` : `${hours} h`;
+};
 
 async function buildMarkers(data: TripDetail): Promise<MapMarker[]> {
   const next: MapMarker[] = [];
@@ -65,9 +86,23 @@ async function buildMarkers(data: TripDetail): Promise<MapMarker[]> {
       }
     });
   if (data.destination) {
-    const g = await geocodePlace(data.destination);
-    if (g)
-      next.push({ ...g, kind: 'destination', label: `Destino: ${data.destination}` });
+    const hasExactDestination =
+      data.destination_latitude != null &&
+      data.destination_longitude != null &&
+      Number.isFinite(Number(data.destination_latitude)) &&
+      Number.isFinite(Number(data.destination_longitude));
+    if (hasExactDestination) {
+      next.push({
+        lat: Number(data.destination_latitude),
+        lng: Number(data.destination_longitude),
+        kind: 'destination',
+        label: `Destino: ${data.destination_address || data.destination}`,
+      });
+    } else {
+      const g = await geocodePlace(data.destination);
+      if (g)
+        next.push({ ...g, kind: 'destination', label: `Destino: ${data.destination}` });
+    }
   }
   return next;
 }
@@ -77,6 +112,7 @@ export default function ConductorRouteMapPage() {
   const [selectedId, setSelectedId] = useState<number | ''>('');
   const [detail, setDetail] = useState<TripDetail | null>(null);
   const [markers, setMarkers] = useState<MapMarker[]>([]);
+  const [routePlan, setRoutePlan] = useState<RoutePlan | null>(null);
   const [live, setLive] = useState<LatLng | null>(null);
   const [follow, setFollow] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -137,7 +173,10 @@ export default function ConductorRouteMapPage() {
         if (cancelled) return;
         setDetail(data);
         const next = await buildMarkers(data);
-        if (!cancelled) setMarkers(next);
+        if (!cancelled) {
+          setMarkers(next);
+          setRoutePlan(await fetchRouteDetails(next));
+        }
       })
       .catch(() => {
         if (!cancelled) setError('No se pudo armar el mapa de la ruta.');
@@ -159,8 +198,12 @@ export default function ConductorRouteMapPage() {
     if (!id) {
       setDetail(null);
       setMarkers([]);
+      setRoutePlan(null);
       setBuilding(false);
     } else {
+      setDetail(null);
+      setMarkers([]);
+      setRoutePlan(null);
       setBuilding(true);
     }
   };
@@ -190,7 +233,9 @@ export default function ConductorRouteMapPage() {
 
       const { data: refreshed } = await api.get(`/mapas/viajes/${selectedId}`);
       setDetail(refreshed);
-      setMarkers(await buildMarkers(refreshed));
+      const refreshedMarkers = await buildMarkers(refreshed);
+      setMarkers(refreshedMarkers);
+      setRoutePlan(await fetchRouteDetails(refreshedMarkers));
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setError(err.response?.data?.message || 'No se pudo registrar la parada.');
@@ -316,6 +361,55 @@ export default function ConductorRouteMapPage() {
                   {detail.vehicle?.plate} ·{' '}
                   {labelOf(TRIP_STATUS_LABEL, detail.trip_status)}
                 </span>
+                {detail.destination_address && (
+                  <span className="guide-summary-address">
+                    <MapPin size={13} /> {detail.destination_address}
+                  </span>
+                )}
+              </div>
+
+              <div className="guide-navigation">
+                <h2 className="guide-section-title">
+                  <Navigation size={16} /> Navegación
+                </h2>
+                {routePlan ? (
+                  <>
+                    <div className="guide-route-metrics">
+                      <div>
+                        <strong>{formatDistance(routePlan.distanceMeters)}</strong>
+                        <span>Distancia</span>
+                      </div>
+                      <div>
+                        <strong>{formatDuration(routePlan.durationSeconds)}</strong>
+                        <span>Tiempo estimado</span>
+                      </div>
+                    </div>
+                    <div className="guide-next-point">
+                      <span className="guide-next-label">Próximo punto</span>
+                      <strong>
+                        <Flag size={14} />{' '}
+                        {detail.destination_address || detail.destination}
+                      </strong>
+                    </div>
+                    {routePlan.steps.length > 0 && (
+                      <ol className="guide-instructions">
+                        {routePlan.steps.slice(0, 8).map((step, index) => (
+                          <li key={`${step.instruction}-${index}`}>
+                            <span>{index + 1}</span>
+                            <div>
+                              <strong>{step.instruction}</strong>
+                              <small>{formatDistance(step.distanceMeters)}</small>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </>
+                ) : (
+                  <p className="guide-navigation-empty">
+                    Seleccione un viaje con origen y destino ubicables para mostrar la navegación.
+                  </p>
+                )}
               </div>
 
               <div className="guide-itinerary">
@@ -351,7 +445,9 @@ export default function ConductorRouteMapPage() {
                       <p className="guide-step-name">
                         <Flag size={13} /> Destino final
                       </p>
-                      <span className="guide-step-sub">{detail.destination}</span>
+                       <span className="guide-step-sub">
+                         {detail.destination_address || detail.destination}
+                       </span>
                     </div>
                   </li>
                 </ol>
@@ -362,26 +458,39 @@ export default function ConductorRouteMapPage() {
                   <CircleDot size={16} /> Registrar parada
                 </h2>
                 <div className="guide-form-grid">
+                  <div className="guide-field">
+                    <label htmlFor="guide-stop-name">Lugar de la parada</label>
+                    <input
+                      id="guide-stop-name"
+                      className="form-input"
+                      placeholder="Ej. Portoviejo"
+                      value={stopName}
+                      onChange={(e) => setStopName(e.target.value)}
+                    />
+                  </div>
+                  <div className="guide-field">
+                    <label htmlFor="guide-odometer">Odómetro (km)</label>
+                    <input
+                      id="guide-odometer"
+                      className="form-input"
+                      type="number"
+                      min="0"
+                      placeholder="Ej. 45230"
+                      value={odometer}
+                      onChange={(e) => setOdometer(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="guide-field guide-note-field">
+                  <label htmlFor="guide-stop-note">Nota (opcional)</label>
                   <input
+                    id="guide-stop-note"
                     className="form-input"
-                    placeholder="Nombre del lugar (opcional)"
-                    value={stopName}
-                    onChange={(e) => setStopName(e.target.value)}
-                  />
-                  <input
-                    className="form-input"
-                    type="number"
-                    placeholder="Odómetro km"
-                    value={odometer}
-                    onChange={(e) => setOdometer(e.target.value)}
+                    placeholder="Agregue una referencia o novedad"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
                   />
                 </div>
-                <input
-                  className="form-input"
-                  placeholder="Nota (opcional)"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
                 <button
                   type="button"
                   className="btn btn-primary"

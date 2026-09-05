@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 import Input from '@/components/Input';
 import { yesNo } from '@/lib/labels';
 import { modulesApi } from '../api';
@@ -27,6 +28,7 @@ export default function FleetDriversPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [driverSearch, setDriverSearch] = useState('');
 
   const load = async () => {
     const { data } = await modulesApi.drivers();
@@ -113,6 +115,19 @@ export default function FleetDriversPage() {
       setError(er.response?.data?.message || 'Error al actualizar.');
     }
   };
+
+  const normalizedDriverSearch = driverSearch.trim().toLocaleLowerCase();
+  const filteredDrivers = normalizedDriverSearch
+    ? drivers.filter((d) => {
+        const name = `${d.user?.first_name || d.first_name || d.name || ''} ${
+          d.user?.last_name || d.last_name || ''
+        }`;
+        const license = d.license_type || d.licenses?.[0]?.license_type || '';
+        return [name, d.national_id, d.email, license].some((value) =>
+          String(value ?? '').toLocaleLowerCase().includes(normalizedDriverSearch)
+        );
+      })
+    : drivers;
 
   return (
     <section className="module-page">
@@ -266,47 +281,68 @@ export default function FleetDriversPage() {
 
       <div className="module-panel">
         <h2>Conductores registrados</h2>
-        <table className="ops-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Disponible</th>
-              <th>Licencia</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {drivers.map((d) => (
-              <tr key={d.id}>
-                <td>
-                  {d.user?.first_name || d.name} {d.user?.last_name}
-                </td>
-                <td>{yesNo(d.is_available ?? d.is_selectable)}</td>
-                <td>
-                  {d.license_type || d.licenses?.[0]?.license_type || '—'}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      className="btn btn-secondary"
-                      style={actionBtn}
-                      onClick={() => startEdit(d)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className={d.is_available ? 'btn btn-outline' : 'btn btn-success'}
-                      style={actionBtn}
-                      onClick={() => void toggleAvailability(d)}
-                    >
-                      {d.is_available ? 'Desactivar' : 'Activar'}
-                    </button>
-                  </div>
-                </td>
+        <Input
+          id="driver-search"
+          label="Buscar conductor"
+          placeholder="Buscar por nombre, cédula, correo o licencia"
+          value={driverSearch}
+          onChange={(e) => setDriverSearch(e.target.value)}
+          icon={<Search size={18} aria-hidden="true" />}
+          containerStyle={{ marginBottom: 16 }}
+        />
+        <div style={{ overflowX: 'auto' }}>
+          <table className="ops-table" style={{ minWidth: 680 }}>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Disponible</th>
+                <th>Licencia</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredDrivers.length > 0 ? (
+                filteredDrivers.map((d) => (
+                  <tr key={d.id}>
+                    <td>
+                      {d.user?.first_name || d.name} {d.user?.last_name}
+                    </td>
+                    <td>{yesNo(d.is_available ?? d.is_selectable)}</td>
+                    <td>
+                      {d.license_type || d.licenses?.[0]?.license_type || '—'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={actionBtn}
+                          onClick={() => startEdit(d)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className={d.is_available ? 'btn btn-outline' : 'btn btn-success'}
+                          style={actionBtn}
+                          onClick={() => void toggleAvailability(d)}
+                        >
+                          {d.is_available ? 'Desactivar' : 'Activar'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                    {driverSearch.trim()
+                      ? 'No se encontraron conductores con esa búsqueda.'
+                      : 'No hay conductores registrados.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );

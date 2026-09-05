@@ -27,6 +27,7 @@ import {
   DisponibilidadPage,
   DocumentsHistoryPage,
   FleetDriversPage,
+  FleetStatusPage,
   FleetVehiclesPage,
   FlujoPage,
   GasStationsPage,
@@ -106,7 +107,7 @@ function AppContent() {
             <Route path="solicitudes" element={<TransportPanelPage />} />
             <Route path="asignar" element={<TransportPanelPage />} />
             <Route path="disponibilidad" element={<DisponibilidadPage />} />
-            <Route path="flota/estado" element={<FleetVehiclesPage />} />
+            <Route path="flota/estado" element={<FleetStatusPage />} />
             <Route path="taller" element={<WorkshopPanelPage />} />
             <Route path="economico" element={<TransportAuditPanelPage />} />
             <Route path="documentos" element={<ChecklistDigitalPage />} />
