@@ -16,6 +16,7 @@ import { RectorPanelPage } from '@features/rector';
 import { TransportPanelPage } from '@features/transport';
 import { WorkshopPanelPage } from '@features/workshop';
 import RoleHomePage from '@features/shared/RoleHomePage';
+import NotFoundPage from '@features/shared/NotFoundPage';
 import {
   AgendaPage,
   AuthorizePage,
@@ -279,7 +280,7 @@ function AppContent() {
           path="/inspeccion"
           element={<Navigate to="/app/mecanico/inspeccion" replace />}
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   );

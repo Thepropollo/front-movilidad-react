@@ -225,7 +225,7 @@ export default function AgendaPage() {
         </button>
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       {view === 'horario' && (
         <>

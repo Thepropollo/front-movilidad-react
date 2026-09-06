@@ -89,7 +89,7 @@ export default function ReportsPage() {
         </p>
       </header>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       <div className="module-panel report-filters">
         <label>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ArrowUpRight, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   groupNavByModule,
@@ -31,10 +32,18 @@ export default function RoleHomePage({ focusRoles, title, subtitle }: Props) {
         <p className="module-kicker">
           {active.map((r) => ROLE_LABELS[r]).join(' · ') || 'Panel'}
         </p>
-        <h1 id="role-home-title">{title}</h1>
-        <p className="module-lead">
-          Hola, {user?.first_name}. {subtitle}
-        </p>
+        <div className="role-home-title-row">
+          <div>
+            <h1 id="role-home-title">{title}</h1>
+            <p className="module-lead">
+              Hola, {user?.first_name}. {subtitle}
+            </p>
+          </div>
+          <div className="role-home-hero-meta" aria-label="Resumen del panel">
+            <strong>{primary.length}</strong>
+            <span>tareas prioritarias</span>
+          </div>
+        </div>
         {(isDualConductorMechanic(roleIds) ||
           isDualDocenteFacultad(roleIds)) && (
           <p className="role-home-dual" role="note">
@@ -49,6 +58,9 @@ export default function RoleHomePage({ focusRoles, title, subtitle }: Props) {
         <div className="role-home-focus-grid">
           {primary.slice(0, 4).map((link) => (
             <Link key={link.id} to={link.path} className="role-home-focus-card">
+              <span className="role-home-focus-icon" aria-hidden>
+                <ArrowUpRight size={18} />
+              </span>
               <strong>{navLabel(link)}</strong>
               <span>{link.description}</span>
             </Link>
@@ -65,7 +77,10 @@ export default function RoleHomePage({ focusRoles, title, subtitle }: Props) {
               <ul>
                 {links.map((link) => (
                   <li key={link.id}>
-                    <Link to={link.path}>{navLabel(link)}</Link>
+                    <Link to={link.path}>
+                      <span>{navLabel(link)}</span>
+                      <ChevronRight size={15} aria-hidden />
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -32,6 +32,8 @@ export const modulesApi = {
   stops: (id: number) => api.get(`/hojas-ruta/${id}/paradas`),
   addStop: (id: number, body: Record<string, unknown>) =>
     api.post(`/hojas-ruta/${id}/paradas`, body),
+  routeMaps: () => api.get('/mapas/viajes'),
+  routeMap: (id: number) => api.get(`/mapas/viajes/${id}`),
   myVehicle: () => api.get('/mi-vehiculo'),
   createNovelty: (body: Record<string, unknown>) =>
     api.post('/novedades', body),

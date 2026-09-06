@@ -139,8 +139,8 @@ export default function ParticipantsPage() {
           Invite estudiantes y revise confirmaciones.
         </p>
       </header>
-      {msg && <div className="alert alert-info">{msg}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {msg && <div className="alert alert-info" role="status">{msg}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="module-panel" style={{ marginBottom: 16 }}>
         <label className="form-label" htmlFor="sol">
           Solicitud
@@ -190,17 +190,21 @@ export default function ParticipantsPage() {
       )}
       {selected && (
         <div className="participants-layout" style={{ marginBottom: 16 }}>
-          <div className="module-panel">
-            <div className="filters-row">
-              <input
-                className="form-input"
-                placeholder="Buscar estudiante por nombre/cédula/correo"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void search(1);
-                }}
-              />
+            <div className="module-panel">
+              <div className="filters-row">
+                <label>
+                  Buscar estudiante
+                  <input
+                    id="participant-search"
+                    className="form-input"
+                    placeholder="Nombre, cédula o correo"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void search(1);
+                    }}
+                  />
+                </label>
               <label>
                 Por página
                 <select

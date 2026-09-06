@@ -171,7 +171,7 @@ const TransportPanel: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl w-full mx-auto px-4 py-8">
+    <div className="operational-page transport-page max-w-6xl w-full mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-gray-200 pb-4">
         <div>

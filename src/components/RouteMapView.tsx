@@ -10,9 +10,11 @@ export type MapMarker = LatLng & {
 
 type Props = {
   markers: MapMarker[];
+  routeMarkers?: MapMarker[];
   height?: number;
   drawLine?: boolean;
   livePosition?: LatLng | null;
+  routeStartPosition?: LatLng | null;
   follow?: boolean;
 };
 
@@ -41,15 +43,18 @@ const COLORS: Record<string, string> = {
 
 export default function RouteMapView({
   markers,
+  routeMarkers = markers,
   height = 420,
   drawLine = true,
   livePosition = null,
+  routeStartPosition = null,
   follow = false,
 }: Props) {
   const id = useId().replace(/:/g, '');
   const mapRef = useRef<L.Map | null>(null);
   const routeLayerRef = useRef<L.LayerGroup | null>(null);
   const liveMarkerRef = useRef<L.Marker | null>(null);
+  const hasLivePositionRef = useRef(false);
   const [routing, setRouting] = useState(false);
   const [routeFallback, setRouteFallback] = useState(false);
 
@@ -91,11 +96,15 @@ export default function RouteMapView({
     routeLayer.clearLayers();
     setRouteFallback(false);
 
-    const points: L.LatLngExpression[] = [];
+    const routePoints = routeStartPosition
+      ? [routeStartPosition, ...routeMarkers.filter((m) => m.kind !== 'origin')]
+      : routeMarkers;
+    const points: L.LatLngExpression[] = routePoints.flatMap((m) =>
+      Number.isFinite(m.lat) && Number.isFinite(m.lng) ? [[m.lat, m.lng]] : []
+    );
     markers.forEach((m) => {
       if (Number.isFinite(m.lat) && Number.isFinite(m.lng)) {
         const ll: L.LatLngExpression = [m.lat, m.lng];
-        points.push(ll);
         const marker = L.marker(ll, {
           icon: icon(COLORS[m.kind || 'stop'] || COLORS.stop),
         }).addTo(routeLayer);
@@ -119,13 +128,23 @@ export default function RouteMapView({
 
     if (points.length === 1) {
       map.setView(points[0], 13);
-    } else if (points.length > 1) {
+    } else if (routeStartPosition) {
+      // En navegación activa se prioriza el tramo cercano al conductor,
+      // no la vista completa entre ciudades.
+      map.setView(
+        [routeStartPosition.lat, routeStartPosition.lng],
+        Math.max(map.getZoom(), 17),
+        { animate: false }
+      );
+    } else if (points.length > 1 && !routeStartPosition && !hasLivePositionRef.current) {
       map.fitBounds(L.latLngBounds(points), { padding: [36, 36] });
     }
 
     if (drawLine && points.length >= 2) {
-      setRouting(true);
-      void fetchRoute(markers)
+      void Promise.resolve().then(() => {
+        if (!cancelled) setRouting(true);
+      });
+      void fetchRoute(routePoints)
         .then((route) => {
           if (cancelled) return;
           if (!route?.length) {
@@ -141,7 +160,9 @@ export default function RouteMapView({
             weight: 5,
             opacity: 0.9,
           }).addTo(routeLayer);
-          map.fitBounds(L.latLngBounds(routeLatLngs), { padding: [36, 36] });
+           if (!routeStartPosition && !hasLivePositionRef.current) {
+             map.fitBounds(L.latLngBounds(routeLatLngs), { padding: [36, 36] });
+           }
         })
         .catch(() => {
           if (!cancelled) setRouteFallback(true);
@@ -150,13 +171,15 @@ export default function RouteMapView({
           if (!cancelled) setRouting(false);
         });
     } else {
-      setRouting(false);
+      void Promise.resolve().then(() => {
+        if (!cancelled) setRouting(false);
+      });
     }
 
     return () => {
       cancelled = true;
     };
-  }, [markers, drawLine]);
+  }, [drawLine, markers, routeMarkers, routeStartPosition]);
 
   // Marcador de posición en vivo + modo "seguir".
   useEffect(() => {
@@ -168,6 +191,7 @@ export default function RouteMapView({
       Number.isFinite(livePosition.lat) &&
       Number.isFinite(livePosition.lng)
     ) {
+      hasLivePositionRef.current = true;
       const ll: L.LatLngExpression = [livePosition.lat, livePosition.lng];
       if (!liveMarkerRef.current) {
         liveMarkerRef.current = L.marker(ll, { icon: liveIcon() }).addTo(map);
@@ -176,8 +200,10 @@ export default function RouteMapView({
       }
 
       if (follow) {
-        map.panTo(ll, { animate: true });
+        map.setView(ll, Math.max(map.getZoom(), 17), { animate: true });
       }
+    } else {
+      hasLivePositionRef.current = false;
     }
   }, [livePosition, follow]);
 

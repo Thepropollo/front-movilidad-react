@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LocateFixed,
   MapPin,
@@ -8,11 +8,14 @@ import {
   Route,
   Loader2,
   Crosshair,
+  CheckCircle2,
+  ListChecks,
 } from 'lucide-react';
 import RouteMapView, { type MapMarker } from '@/components/RouteMapView';
 import {
   fetchRouteDetails,
   geocodePlace,
+  isLikelyEcuadorCoordinate,
   watchPosition,
   clearWatch,
   type LatLng,
@@ -37,6 +40,7 @@ type Stop = {
   latitude?: number | string | null;
   longitude?: number | string | null;
   odometer_km?: number | null;
+  arrival_time?: string | null;
   notes?: string | null;
 };
 
@@ -65,6 +69,12 @@ const formatDuration = (seconds: number) => {
   return remainingMinutes ? `${hours} h ${remainingMinutes} min` : `${hours} h`;
 };
 
+const formatEta = (seconds: number) =>
+  new Intl.DateTimeFormat('es-EC', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(Date.now() + seconds * 1000));
+
 async function buildMarkers(data: TripDetail): Promise<MapMarker[]> {
   const next: MapMarker[] = [];
   if (data.origin) {
@@ -75,10 +85,12 @@ async function buildMarkers(data: TripDetail): Promise<MapMarker[]> {
     .slice()
     .sort((a, b) => a.sequence - b.sequence)
     .forEach((s) => {
-      if (s.latitude && s.longitude) {
+       const latitude = Number(s.latitude);
+       const longitude = Number(s.longitude);
+       if (isLikelyEcuadorCoordinate(latitude, longitude)) {
         next.push({
-          lat: Number(s.latitude),
-          lng: Number(s.longitude),
+          lat: latitude,
+          lng: longitude,
           kind: 'stop',
           sequence: s.sequence,
           label: s.location || `Parada ${s.sequence}`,
@@ -89,8 +101,10 @@ async function buildMarkers(data: TripDetail): Promise<MapMarker[]> {
     const hasExactDestination =
       data.destination_latitude != null &&
       data.destination_longitude != null &&
-      Number.isFinite(Number(data.destination_latitude)) &&
-      Number.isFinite(Number(data.destination_longitude));
+      isLikelyEcuadorCoordinate(
+        Number(data.destination_latitude),
+        Number(data.destination_longitude)
+      );
     if (hasExactDestination) {
       next.push({
         lat: Number(data.destination_latitude),
@@ -113,9 +127,12 @@ export default function ConductorRouteMapPage() {
   const [detail, setDetail] = useState<TripDetail | null>(null);
   const [markers, setMarkers] = useState<MapMarker[]>([]);
   const [routePlan, setRoutePlan] = useState<RoutePlan | null>(null);
+  const [navigationStart, setNavigationStart] = useState<LatLng | null>(null);
+  const [rerouting, setRerouting] = useState(false);
   const [live, setLive] = useState<LatLng | null>(null);
-  const [follow, setFollow] = useState(false);
+  const [follow, setFollow] = useState(true);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [gpsRetry, setGpsRetry] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [building, setBuilding] = useState(false);
@@ -126,10 +143,16 @@ export default function ConductorRouteMapPage() {
   const [stopName, setStopName] = useState('');
   const [odometer, setOdometer] = useState('');
   const [note, setNote] = useState('');
+  const rerouteAtRef = useRef(0);
 
   const accepted = useMemo(
     () => trips.filter((t) => t.driver_response === 'aceptado'),
     [trips]
+  );
+
+  const stops = useMemo(
+    () => (detail?.stops || []).slice().sort((a, b) => a.sequence - b.sequence),
+    [detail]
   );
 
   // Cargar viajes aceptados, auto-seleccionar el activo y arrancar GPS en vivo.
@@ -151,6 +174,9 @@ export default function ConductorRouteMapPage() {
       .catch(() => setError('No se pudieron cargar sus viajes.'))
       .finally(() => setLoading(false));
 
+  }, []);
+
+  useEffect(() => {
     const watcher = watchPosition(
       (p) => {
         setLive(p);
@@ -160,7 +186,7 @@ export default function ConductorRouteMapPage() {
     );
 
     return () => clearWatch(watcher);
-  }, []);
+  }, [gpsRetry]);
 
   // Cargar detalle (origen, destino, paradas) cuando cambia la selección.
   useEffect(() => {
@@ -175,6 +201,7 @@ export default function ConductorRouteMapPage() {
         const next = await buildMarkers(data);
         if (!cancelled) {
           setMarkers(next);
+          setNavigationStart(null);
           setRoutePlan(await fetchRouteDetails(next));
         }
       })
@@ -190,6 +217,44 @@ export default function ConductorRouteMapPage() {
     };
   }, [selectedId]);
 
+  // Enfocar el mapa apenas llega el GPS, sin esperar la respuesta del enrutador.
+  useEffect(() => {
+    if (!live || !detail || markers.length < 2 || navigationStart) return;
+    const timer = window.setTimeout(() => setNavigationStart(live), 0);
+    return () => window.clearTimeout(timer);
+  }, [detail, live, markers, navigationStart]);
+
+  // Recalcular desde la posición actual permite recuperar la ruta si el conductor toma otra calle.
+  useEffect(() => {
+    if (!live || !selectedId || !detail || markers.length < 2) return;
+    if (Date.now() - rerouteAtRef.current < 10000) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      rerouteAtRef.current = Date.now();
+      setRerouting(true);
+      const completedSequences = new Set(
+        stops.filter((stop) => stop.arrival_time).map((stop) => stop.sequence)
+      );
+      const pendingMarkers = markers.filter(
+        (marker) =>
+          marker.kind !== 'origin' &&
+          !(marker.kind === 'stop' && marker.sequence && completedSequences.has(marker.sequence))
+      );
+      const recalculated = await fetchRouteDetails([live, ...pendingMarkers]);
+      if (!cancelled && recalculated) {
+        setRoutePlan(recalculated);
+        setNavigationStart(live);
+      }
+      if (!cancelled) setRerouting(false);
+    }, 1200);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [detail, live, markers, selectedId, stops]);
+
   const selectTrip = (value: string) => {
     const id = value ? Number(value) : '';
     setSelectedId(id);
@@ -199,11 +264,15 @@ export default function ConductorRouteMapPage() {
       setDetail(null);
       setMarkers([]);
       setRoutePlan(null);
+      setNavigationStart(null);
+      rerouteAtRef.current = 0;
       setBuilding(false);
     } else {
       setDetail(null);
       setMarkers([]);
       setRoutePlan(null);
+      setNavigationStart(null);
+      rerouteAtRef.current = 0;
       setBuilding(true);
     }
   };
@@ -232,10 +301,11 @@ export default function ConductorRouteMapPage() {
       setNote('');
 
       const { data: refreshed } = await api.get(`/mapas/viajes/${selectedId}`);
-      setDetail(refreshed);
-      const refreshedMarkers = await buildMarkers(refreshed);
-      setMarkers(refreshedMarkers);
-      setRoutePlan(await fetchRouteDetails(refreshedMarkers));
+       setDetail(refreshed);
+       const refreshedMarkers = await buildMarkers(refreshed);
+       setMarkers(refreshedMarkers);
+       setNavigationStart(null);
+       setRoutePlan(await fetchRouteDetails(refreshedMarkers));
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setError(err.response?.data?.message || 'No se pudo registrar la parada.');
@@ -244,15 +314,27 @@ export default function ConductorRouteMapPage() {
     }
   };
 
-  const stops = useMemo(
-    () => (detail?.stops || []).slice().sort((a, b) => a.sequence - b.sequence),
-    [detail]
-  );
+  const remainingRouteMarkers = useMemo(() => {
+    const completedSequences = new Set(
+      stops.filter((stop) => stop.arrival_time).map((stop) => stop.sequence)
+    );
+    return markers.filter(
+      (marker) =>
+        marker.kind !== 'origin' &&
+        !(marker.kind === 'stop' && marker.sequence && completedSequences.has(marker.sequence))
+    );
+  }, [markers, stops]);
 
   const selectedTrip = accepted.find((t) => t.id === selectedId);
+  const nextStop = stops.find((stop) => !stop.arrival_time);
+  const completedStops = stops.filter((stop) => stop.arrival_time).length;
+  const progressTotal = stops.length + 1;
+  const progressPercent = Math.round((completedStops / progressTotal) * 100);
+  const nextInstruction = routePlan?.steps[0];
+  const nextPointLabel = nextStop?.location || detail?.destination_address || detail?.destination;
 
   return (
-    <section className="module-page">
+    <section className="module-page driver-route-page">
       <header className="module-header">
         <p className="module-kicker">Guía de ruta</p>
         <h1>Navegación del viaje</h1>
@@ -273,10 +355,45 @@ export default function ConductorRouteMapPage() {
       )}
       {gpsError && !live && (
         <div className="alert alert-warning" role="alert">
-          {gpsError} La ruta se mostrará igualmente; podrá registrar paradas con
-          coordenadas manuales.
+          <div>
+            <strong>Ubicación no disponible</strong>
+            <span>
+              {gpsError} Permita el acceso a la ubicación en el navegador. Si usa
+              un teléfono, abra la aplicación con HTTPS o desde localhost.
+            </span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-outline gps-retry"
+            onClick={() => {
+              setGpsError(null);
+              setGpsRetry((attempt) => attempt + 1);
+            }}
+          >
+            Reintentar GPS
+          </button>
         </div>
       )}
+
+      <div className="guide-trip-picker">
+        <label className="form-label" htmlFor="guide-trip">
+          Viaje activo
+        </label>
+        <select
+          id="guide-trip"
+          className="form-select"
+          value={selectedId}
+          disabled={loading}
+          onChange={(e) => selectTrip(e.target.value)}
+        >
+          <option value="">Seleccione un viaje…</option>
+          {accepted.map((t) => (
+            <option key={t.id} value={t.id}>
+              #{t.id} · {t.request?.origin} → {t.request?.destination}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="route-guide-layout">
         {/* Mapa */}
@@ -293,10 +410,25 @@ export default function ConductorRouteMapPage() {
             <>
               <RouteMapView
                 markers={markers}
+                routeMarkers={navigationStart ? remainingRouteMarkers : markers}
                 height={620}
                 livePosition={live}
+                routeStartPosition={navigationStart}
                 follow={follow}
               />
+              {selectedTrip && detail && routePlan && (
+                <div className="guide-mobile-nav" role="status">
+                  <div className="guide-mobile-nav-heading">
+                    <span><Navigation size={14} /> Próxima maniobra</span>
+                    <strong>{rerouting ? 'Recalculando' : live ? 'GPS activo' : 'Sin GPS'}</strong>
+                  </div>
+                  <p>{nextInstruction?.instruction || 'Continúe hacia su destino'}</p>
+                  <div className="guide-mobile-nav-meta">
+                    <span>{nextInstruction ? formatDistance(nextInstruction.distanceMeters) : 'Ruta lista'}</span>
+                    <span>ETA {formatEta(routePlan.durationSeconds)}</span>
+                  </div>
+                </div>
+              )}
               <div className="guide-map-controls">
                 <button
                   type="button"
@@ -333,23 +465,18 @@ export default function ConductorRouteMapPage() {
 
         {/* Panel guía */}
         <aside className="guide-panel module-panel">
-          <label className="form-label" htmlFor="guide-trip">
-            Viaje
-          </label>
-          <select
-            id="guide-trip"
-            className="form-select"
-            value={selectedId}
-            disabled={loading}
-            onChange={(e) => selectTrip(e.target.value)}
-          >
-            <option value="">Seleccione un viaje…</option>
-            {accepted.map((t) => (
-              <option key={t.id} value={t.id}>
-                #{t.id} · {t.request?.origin} → {t.request?.destination}
-              </option>
-            ))}
-          </select>
+          {selectedTrip && detail && (
+            <div className="guide-live-strip">
+              <span className={`guide-live-indicator ${live ? 'is-on' : 'is-off'}`} />
+              <div>
+                <strong>{live ? 'GPS activo' : 'GPS sin señal'}</strong>
+                <span>{live ? 'Ubicación actualizada en vivo' : 'La ruta sigue disponible'}</span>
+              </div>
+              <span className={`guide-trip-status status-${detail.trip_status}`}>
+                {labelOf(TRIP_STATUS_LABEL, detail.trip_status)}
+              </span>
+            </div>
+          )}
 
           {selectedTrip && detail && (
             <>
@@ -369,31 +496,72 @@ export default function ConductorRouteMapPage() {
               </div>
 
               <div className="guide-navigation">
-                <h2 className="guide-section-title">
-                  <Navigation size={16} /> Navegación
-                </h2>
+                <div className="guide-navigation-heading">
+                  <h2 className="guide-section-title">
+                    <Navigation size={16} /> Navegación activa
+                  </h2>
+                  {rerouting ? (
+                    <span className="guide-following-label is-recalculating">Recalculando ruta</span>
+                  ) : follow ? (
+                    <span className="guide-following-label">Siguiendo GPS</span>
+                  ) : null}
+                </div>
                 {routePlan ? (
                   <>
+                    <div className="guide-next-maneuver">
+                      <div className="guide-next-maneuver-icon" aria-hidden="true">
+                        <Navigation size={22} />
+                      </div>
+                      <div>
+                        <span className="guide-next-label">Siguiente indicación</span>
+                        <strong>{nextInstruction?.instruction || 'Continúe hacia su destino'}</strong>
+                        <span className="guide-next-detail">
+                          {nextInstruction
+                            ? `${formatDistance(nextInstruction.distanceMeters)} hasta la maniobra`
+                            : 'Siga la línea marcada en el mapa'}
+                        </span>
+                      </div>
+                    </div>
                     <div className="guide-route-metrics">
                       <div>
                         <strong>{formatDistance(routePlan.distanceMeters)}</strong>
-                        <span>Distancia</span>
+                        <span>{navigationStart ? 'Distancia restante' : 'Distancia total'}</span>
                       </div>
                       <div>
                         <strong>{formatDuration(routePlan.durationSeconds)}</strong>
-                        <span>Tiempo estimado</span>
+                        <span>{navigationStart ? 'Tiempo restante' : 'Duración estimada'}</span>
+                      </div>
+                      <div>
+                        <strong>{formatEta(routePlan.durationSeconds)}</strong>
+                        <span>Llegada estimada</span>
                       </div>
                     </div>
                     <div className="guide-next-point">
-                      <span className="guide-next-label">Próximo punto</span>
+                      <span className="guide-next-label">Próximo punto operativo</span>
                       <strong>
                         <Flag size={14} />{' '}
-                        {detail.destination_address || detail.destination}
+                        {nextPointLabel}
                       </strong>
                     </div>
+                    <div className="guide-progress-block">
+                      <div className="guide-progress-heading">
+                        <span><ListChecks size={14} /> Progreso por puntos</span>
+                        <strong>{completedStops}/{progressTotal}</strong>
+                      </div>
+                      <div className="guide-progress-track" aria-label={`${progressPercent}% de puntos completados`}>
+                        <span style={{ width: `${progressPercent}%` }} />
+                      </div>
+                      <small>
+                        {completedStops > 0
+                          ? `${completedStops} parada(s) registrada(s)`
+                          : 'Aún no se han registrado paradas'}
+                      </small>
+                    </div>
                     {routePlan.steps.length > 0 && (
-                      <ol className="guide-instructions">
-                        {routePlan.steps.slice(0, 8).map((step, index) => (
+                      <div className="guide-upcoming">
+                        <span className="guide-next-label">Siguientes indicaciones</span>
+                        <ol className="guide-instructions">
+                          {routePlan.steps.slice(1, 5).map((step, index) => (
                           <li key={`${step.instruction}-${index}`}>
                             <span>{index + 1}</span>
                             <div>
@@ -401,8 +569,9 @@ export default function ConductorRouteMapPage() {
                               <small>{formatDistance(step.distanceMeters)}</small>
                             </div>
                           </li>
-                        ))}
-                      </ol>
+                          ))}
+                        </ol>
+                      </div>
                     )}
                   </>
                 ) : (
@@ -427,16 +596,19 @@ export default function ConductorRouteMapPage() {
                   </li>
 
                   {stops.map((s) => (
-                    <li className="guide-step" key={s.id}>
-                      <span className="guide-step-dot stop" />
-                      <div>
-                        <p className="guide-step-name">Parada {s.sequence}</p>
-                        <span className="guide-step-sub">
-                          {s.location || '—'}
-                          {s.odometer_km ? ` · ${s.odometer_km} km` : ''}
-                        </span>
-                      </div>
-                    </li>
+                     <li className={`guide-step ${s.arrival_time ? 'is-complete' : ''}`} key={s.id}>
+                       <span className="guide-step-dot stop">
+                         {s.arrival_time && <CheckCircle2 size={12} />}
+                       </span>
+                       <div>
+                         <p className="guide-step-name">Parada {s.sequence}</p>
+                         <span className="guide-step-sub">
+                           {s.location || '—'}
+                           {s.odometer_km ? ` · ${s.odometer_km} km` : ''}
+                         </span>
+                         {s.arrival_time && <small className="guide-step-complete">Registrada</small>}
+                       </div>
+                     </li>
                   ))}
 
                   <li className="guide-step is-target">

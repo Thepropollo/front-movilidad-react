@@ -13,7 +13,22 @@ export type RoutePlan = {
 
 const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 const NOMINATIM_REVERSE = 'https://nominatim.openstreetmap.org/reverse';
-const OSRM = 'https://router.project-osrm.org/route/v1/driving';
+const ROUTING_SERVERS = [
+  'https://router.project-osrm.org/route/v1/driving',
+  'https://routing.openstreetmap.de/routed-car/route/v1/driving',
+];
+
+/** Evita usar coordenadas invertidas o de otro continente en este mapa ecuatoriano. */
+export function isLikelyEcuadorCoordinate(lat: number, lng: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -5.5 &&
+    lat <= 2.5 &&
+    lng >= -92.5 &&
+    lng <= -75
+  );
+}
 
 /** Geocodifica un lugar en Ecuador (OpenStreetMap Nominatim). */
 export async function geocodePlace(query: string): Promise<LatLng | null> {
@@ -144,21 +159,32 @@ export async function fetchRoute(points: LatLng[]): Promise<LatLng[] | null> {
   if (valid.length < 2) return null;
 
   const coords = valid.map((p) => `${p.lng},${p.lat}`).join(';');
-  const url = `${OSRM}/${coords}?overview=full&geometries=geojson`;
 
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = (await res.json()) as {
-      routes?: Array<{ geometry?: { coordinates?: number[][] } }>;
-    };
-    const coordinates = data.routes?.[0]?.geometry?.coordinates;
-    if (!coordinates?.length) return null;
+  for (const server of ROUTING_SERVERS) {
+    try {
+      const res = await fetch(
+        `${server}/${coords}?overview=full&geometries=geojson`
+      );
+      if (!res.ok) continue;
 
-    return coordinates.map(([lng, lat]) => ({ lat, lng }));
-  } catch {
-    return null;
+      const data = (await res.json()) as {
+        code?: string;
+        routes?: Array<{ geometry?: { coordinates?: number[][] } }>;
+      };
+      const coordinates = data.routes?.[0]?.geometry?.coordinates;
+      if (data.code && data.code !== 'Ok') continue;
+      if (!coordinates || coordinates.length < 2) continue;
+
+      const route = coordinates.flatMap(([lng, lat]) =>
+        Number.isFinite(lat) && Number.isFinite(lng) ? [{ lat, lng }] : []
+      );
+      if (route.length >= 2) return route;
+    } catch {
+      // Intenta el siguiente servicio público de enrutamiento.
+    }
   }
+
+  return null;
 }
 
 const maneuverText = (step: {
@@ -215,51 +241,55 @@ export async function fetchRouteDetails(points: LatLng[]): Promise<RoutePlan | n
   if (valid.length < 2) return null;
 
   const coords = valid.map((p) => `${p.lng},${p.lat}`).join(';');
-  const url = `${OSRM}/${coords}?overview=false&steps=true`;
-
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = (await res.json()) as {
-      routes?: Array<{
-        distance?: number;
-        duration?: number;
-        legs?: Array<{
-          steps?: Array<{
-            distance?: number;
-            name?: string;
-            maneuver?: {
-              type?: string;
-              modifier?: string;
-              location?: number[];
-            };
+  for (const server of ROUTING_SERVERS) {
+    try {
+      const res = await fetch(`${server}/${coords}?overview=false&steps=true`);
+      if (!res.ok) continue;
+      const data = (await res.json()) as {
+        code?: string;
+        routes?: Array<{
+          distance?: number;
+          duration?: number;
+          legs?: Array<{
+            steps?: Array<{
+              distance?: number;
+              name?: string;
+              maneuver?: {
+                type?: string;
+                modifier?: string;
+                location?: number[];
+              };
+            }>;
           }>;
         }>;
-      }>;
-    };
-    const route = data.routes?.[0];
-    if (!route) return null;
+      };
+      if (data.code && data.code !== 'Ok') continue;
+      const route = data.routes?.[0];
+      if (!route) continue;
 
-    const steps = (route.legs || []).flatMap((leg) =>
-      (leg.steps || []).flatMap((step) => {
-        const coordinates = step.maneuver?.location;
-        if (!coordinates || coordinates.length < 2) return [];
-        return [
-          {
-            instruction: maneuverText(step),
-            distanceMeters: step.distance || 0,
-            location: { lat: coordinates[1], lng: coordinates[0] },
-          },
-        ];
-      })
-    );
+      const steps = (route.legs || []).flatMap((leg) =>
+        (leg.steps || []).flatMap((step) => {
+          const coordinates = step.maneuver?.location;
+          if (!coordinates || coordinates.length < 2) return [];
+          return [
+            {
+              instruction: maneuverText(step),
+              distanceMeters: step.distance || 0,
+              location: { lat: coordinates[1], lng: coordinates[0] },
+            },
+          ];
+        })
+      );
 
-    return {
-      distanceMeters: route.distance || 0,
-      durationSeconds: route.duration || 0,
-      steps,
-    };
-  } catch {
-    return null;
+      return {
+        distanceMeters: route.distance || 0,
+        durationSeconds: route.duration || 0,
+        steps,
+      };
+    } catch {
+      // Intenta el siguiente servicio si el proveedor principal no responde.
+    }
   }
+
+  return null;
 }

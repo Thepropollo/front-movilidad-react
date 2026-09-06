@@ -178,7 +178,7 @@ export default function FleetVehiclesPage() {
         </p>
       </header>
       {msg && <div className="alert alert-success">{msg}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       <form
         className="module-panel"

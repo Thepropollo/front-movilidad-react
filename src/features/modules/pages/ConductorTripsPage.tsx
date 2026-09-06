@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { formatDateTimeReadable } from '@/lib/datetime';
 import { DRIVER_RESPONSE_LABEL, TRIP_STATUS_LABEL, labelOf } from '@/lib/labels';
 import { modulesApi } from '../api';
@@ -17,29 +18,48 @@ export default function ConductorTripsPage() {
   const [reason, setReason] = useState<Record<number, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<number | null>(null);
 
   const load = async () => {
-    const { data } = await modulesApi.myTrips();
-    setTrips(data);
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await modulesApi.myTrips();
+      setTrips(data);
+    } catch {
+      setError('No se pudieron cargar viajes. Intente actualizar nuevamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    void load().catch(() => setError('No se pudieron cargar viajes.'));
+    void load();
   }, []);
 
   const respond = async (id: number, action: 'accept' | 'reject') => {
+    if (action === 'reject' && !reason[id]?.trim()) {
+      setError('Escriba un motivo antes de rechazar el viaje.');
+      return;
+    }
+
     setMsg(null);
     setError(null);
+    setProcessingId(id);
     try {
       const { data } = await modulesApi.respondTrip(id, {
         action,
         reason: reason[id],
       });
       setMsg(data.message);
+      setReason((current) => ({ ...current, [id]: '' }));
       await load();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setError(err.response?.data?.message || 'Error al responder.');
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -48,12 +68,39 @@ export default function ConductorTripsPage() {
       <header className="module-header">
         <p className="module-kicker">Mis viajes</p>
         <h1>Asignaciones</h1>
-        <p className="module-lead">
-          Acepte o rechace viajes asignados por Secretaría.
-        </p>
+        <div className="module-header-actions">
+          <p className="module-lead">
+            Acepte o rechace viajes asignados por Secretaría.
+          </p>
+          <button
+            type="button"
+            className="btn btn-outline module-refresh"
+            onClick={() => void load()}
+            disabled={loading || processingId !== null}
+          >
+            <RefreshCw size={16} className={loading ? 'spin' : ''} aria-hidden />
+            Actualizar
+          </button>
+        </div>
       </header>
-      {msg && <div className="alert alert-info">{msg}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {msg && <div className="alert alert-info" role="status">{msg}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
+      {loading ? (
+        <div className="module-panel module-state" role="status">
+          <span className="spinner" aria-hidden />
+          <p>Cargando asignaciones…</p>
+        </div>
+      ) : error && trips.length === 0 ? (
+        <div className="module-panel module-state" role="alert">
+          <strong>No se pudieron cargar las asignaciones</strong>
+          <p>Use «Actualizar» para intentarlo nuevamente.</p>
+        </div>
+      ) : trips.length === 0 ? (
+        <div className="module-panel module-state" role="status">
+          <strong>No tienes viajes asignados</strong>
+          <p>Las nuevas asignaciones aparecerán aquí.</p>
+        </div>
+      ) : (
       <ul className="ops-list">
         {trips.map((t) => (
           <li key={t.id} className="ops-item">
@@ -73,15 +120,21 @@ export default function ConductorTripsPage() {
                 {labelOf(DRIVER_RESPONSE_LABEL, t.driver_response)}
               </p>
               {t.driver_response === 'pendiente' && (
-                <textarea
-                  className="form-input"
-                  rows={2}
-                  placeholder="Motivo si rechaza"
-                  value={reason[t.id] || ''}
-                  onChange={(e) =>
-                    setReason((s) => ({ ...s, [t.id]: e.target.value }))
-                  }
-                />
+                <>
+                  <label className="form-label" htmlFor={`trip-reason-${t.id}`}>
+                    Motivo si rechaza
+                  </label>
+                  <textarea
+                    id={`trip-reason-${t.id}`}
+                    className="form-input"
+                    rows={2}
+                    placeholder="Explique brevemente el motivo"
+                    value={reason[t.id] || ''}
+                    onChange={(e) =>
+                      setReason((s) => ({ ...s, [t.id]: e.target.value }))
+                    }
+                  />
+                </>
               )}
             </div>
             {t.driver_response === 'pendiente' && (
@@ -89,6 +142,7 @@ export default function ConductorTripsPage() {
                 <button
                   type="button"
                   className="btn btn-primary"
+                  disabled={processingId !== null}
                   onClick={() => void respond(t.id, 'accept')}
                 >
                   Aceptar
@@ -96,6 +150,7 @@ export default function ConductorTripsPage() {
                 <button
                   type="button"
                   className="btn btn-danger"
+                  disabled={processingId !== null}
                   onClick={() => void respond(t.id, 'reject')}
                 >
                   Rechazar
@@ -105,10 +160,6 @@ export default function ConductorTripsPage() {
           </li>
         ))}
       </ul>
-      {trips.length === 0 && (
-        <div className="module-panel">
-          <p>No tiene viajes asignados.</p>
-        </div>
       )}
     </section>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -18,6 +18,26 @@ const Modal: React.FC<ModalProps> = ({
   footer,
   size = 'md',
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const getMaxWidth = () => {
@@ -45,6 +65,7 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <div
       onClick={handleBackdropClick}
+      role="presentation"
       style={{
         position: 'fixed',
         top: 0,
@@ -56,12 +77,18 @@ const Modal: React.FC<ModalProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 50,
+        // Leaflet controls use z-index 1000; dialogs must stay above every map layer.
+        zIndex: 1100,
         padding: '20px',
       }}
     >
       <div
         className="glass-panel"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: getMaxWidth(),
@@ -83,6 +110,7 @@ const Modal: React.FC<ModalProps> = ({
           }}
         >
           <h2
+            id="modal-title"
             style={{
               fontSize: '18px',
               fontWeight: 700,
@@ -93,7 +121,9 @@ const Modal: React.FC<ModalProps> = ({
             {title}
           </h2>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Cerrar ventana"
             style={{
               background: 'none',
               border: 'none',

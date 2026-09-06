@@ -32,6 +32,7 @@ const PendingFeedbackBanner: React.FC = () => {
   // UI states
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const checkPending = async () => {
     if (!user) return;
@@ -53,10 +54,14 @@ const PendingFeedbackBanner: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTrip || !user || driverRating === 0 || vehicleRating === 0)
+    if (!currentTrip || !user) return;
+    if (driverRating === 0 || vehicleRating === 0) {
+      setError('Seleccione una calificación para el conductor y el vehículo.');
       return;
+    }
 
     setSubmitting(true);
+    setError(null);
     try {
       await submitEvaluation({
         hoja_ruta_id: currentTrip.id,
@@ -76,6 +81,7 @@ const PendingFeedbackBanner: React.FC = () => {
       }, 2000);
     } catch (err) {
       console.error('Error submitting feedback:', err);
+      setError('No se pudo enviar la evaluación. Revise su conexión e intente nuevamente.');
     } finally {
       setSubmitting(false);
     }
@@ -84,20 +90,31 @@ const PendingFeedbackBanner: React.FC = () => {
   if (!currentTrip) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl border border-gray-150 animate-fade-in relative text-left">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 backdrop-blur-md p-4 overflow-y-auto"
+      role="presentation"
+    >
+      <div
+        className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl border border-gray-150 animate-fade-in relative text-left"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="feedback-title"
+        aria-describedby="feedback-description"
+      >
         {/* Banner Alert Header */}
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
           <div className="p-2.5 bg-gold/15 text-gold-dark rounded-2xl">
             <ShieldAlert size={24} />
           </div>
           <div>
-            <h3 className="text-lg font-black text-primary">
+               <h3 id="feedback-title" className="text-lg font-black text-primary">
               Co-Evaluación Obligatoria
             </h3>
             <p className="text-xs text-muted">
-              Tu opinión nos ayuda a regular la seguridad y calidad del
-              transporte institucional.
+               <span id="feedback-description">
+                 Tu opinión nos ayuda a regular la seguridad y calidad del
+                 transporte institucional.
+               </span>
             </p>
           </div>
         </div>
@@ -118,6 +135,11 @@ const PendingFeedbackBanner: React.FC = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
             {/* Trip details */}
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm">
               <p className="text-xs font-semibold text-gold-dark uppercase tracking-wider mb-2">
@@ -141,12 +163,15 @@ const PendingFeedbackBanner: React.FC = () => {
               <label className="text-sm font-bold text-primary">
                 Calificación del Conductor
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" role="radiogroup" aria-label="Calificación del conductor">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     type="button"
                     className="focus:outline-none transition-transform hover:scale-125"
+                    aria-label={`${star} de 5 estrellas para el conductor`}
+                    aria-checked={driverRating === star}
+                    role="radio"
                     onClick={() => setDriverRating(star)}
                     onMouseEnter={() => setDriverHover(star)}
                     onMouseLeave={() => setDriverHover(0)}
@@ -174,12 +199,15 @@ const PendingFeedbackBanner: React.FC = () => {
               <label className="text-sm font-bold text-primary">
                 Calificación del Vehículo (Confort y Estado)
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" role="radiogroup" aria-label="Calificación del vehículo">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     type="button"
                     className="focus:outline-none transition-transform hover:scale-125"
+                    aria-label={`${star} de 5 estrellas para el vehículo`}
+                    aria-checked={vehicleRating === star}
+                    role="radio"
                     onClick={() => setVehicleRating(star)}
                     onMouseEnter={() => setVehicleHover(star)}
                     onMouseLeave={() => setVehicleHover(0)}

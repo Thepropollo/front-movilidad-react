@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { formatDateTimeReadable } from '@/lib/datetime';
 import { MOBILIZATION_TYPE_LABEL, labelOf } from '@/lib/labels';
 import { modulesApi } from '../api';
@@ -22,21 +23,37 @@ export default function AuthorizePage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [observation, setObservation] = useState<Record<number, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<number | null>(null);
 
   const load = async () => {
-    const { data } = await modulesApi.listSolicitudes({
-      status: 'pendiente_secretaria',
-    });
-    setRows(data);
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await modulesApi.listSolicitudes({
+        status: 'pendiente_secretaria',
+      });
+      setRows(data);
+    } catch {
+      setError('No se pudo cargar la bandeja. Intente actualizar nuevamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    void load().catch(() => setError('No se pudo cargar la bandeja.'));
+    void load();
   }, []);
 
   const act = async (id: number, action: 'approve' | 'reject') => {
+    if (action === 'reject' && !observation[id]?.trim()) {
+      setError('Escriba una observación antes de rechazar la solicitud.');
+      return;
+    }
+
     setMsg(null);
     setError(null);
+    setProcessingId(id);
     try {
       const { data } = await modulesApi.authorize(id, {
         action,
@@ -47,6 +64,8 @@ export default function AuthorizePage() {
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setError(err.response?.data?.message || 'No se pudo procesar.');
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -55,10 +74,21 @@ export default function AuthorizePage() {
       <header className="module-header">
         <p className="module-kicker">Solicitudes</p>
         <h1>Autorizar o rechazar</h1>
-        <p className="module-lead">
-          Secretaría revisa cada solicitud. Internas quedan listas para asignar;
-          externas pasan a Vicerrectorado.
-        </p>
+        <div className="module-header-actions">
+          <p className="module-lead">
+            Secretaría revisa cada solicitud. Internas quedan listas para asignar;
+            externas pasan a Vicerrectorado.
+          </p>
+          <button
+            type="button"
+            className="btn btn-outline module-refresh"
+            onClick={() => void load()}
+            disabled={loading || processingId !== null}
+          >
+            <RefreshCw size={16} className={loading ? 'spin' : ''} aria-hidden />
+            Actualizar
+          </button>
+        </div>
       </header>
       {msg && (
         <div className="alert alert-info" role="status">
@@ -71,8 +101,21 @@ export default function AuthorizePage() {
         </div>
       )}
       <div className="module-panel">
-        {rows.length === 0 ? (
-          <p>No hay solicitudes pendientes de Secretaría.</p>
+        {loading ? (
+          <div className="module-state" role="status">
+            <span className="spinner" aria-hidden />
+            <p>Cargando solicitudes pendientes…</p>
+          </div>
+        ) : error && rows.length === 0 ? (
+          <div className="module-state" role="alert">
+            <strong>No se pudo cargar la bandeja</strong>
+            <p>Use «Actualizar» para intentarlo nuevamente.</p>
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="module-state" role="status">
+            <strong>No hay solicitudes pendientes</strong>
+            <p>La bandeja está al día por ahora.</p>
+          </div>
         ) : (
           <ul className="ops-list">
             {rows.map((r) => (
@@ -104,13 +147,15 @@ export default function AuthorizePage() {
                   <button
                     type="button"
                     className="btn btn-primary"
+                    disabled={processingId !== null}
                     onClick={() => void act(r.id, 'approve')}
                   >
-                    Autorizar
+                    {processingId === r.id ? 'Procesando…' : 'Autorizar'}
                   </button>
                   <button
                     type="button"
                     className="btn btn-danger"
+                    disabled={processingId !== null}
                     onClick={() => void act(r.id, 'reject')}
                   >
                     Rechazar

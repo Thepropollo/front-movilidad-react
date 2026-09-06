@@ -219,7 +219,7 @@ const RequestForm: React.FC = () => {
 
   return (
     <div
-      className="glass-panel wide-container mx-auto"
+      className="operational-page request-page glass-panel wide-container mx-auto"
       style={{ textAlign: 'left' }}
     >
       {/* Header */}
@@ -505,11 +505,12 @@ const RequestForm: React.FC = () => {
             <h2 className="text-xl font-bold text-primary">
               Historial de Solicitudes
             </h2>
-            <button
-              onClick={fetchRequests}
-              className="text-gray-400 hover:text-secondary transition"
-              title="Actualizar listado"
-            >
+             <button
+               onClick={fetchRequests}
+               className="text-gray-400 hover:text-secondary transition"
+               title="Actualizar listado"
+               aria-label="Actualizar historial de solicitudes"
+             >
               <RefreshCw size={18} />
             </button>
           </div>

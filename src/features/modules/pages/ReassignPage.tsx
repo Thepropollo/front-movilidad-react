@@ -81,7 +81,7 @@ export default function ReassignPage() {
       </header>
 
       {msg && <div className="alert alert-success">{msg}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       {loading ? (
         <div className="module-panel" style={{ textAlign: 'center', padding: 48 }}>

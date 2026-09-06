@@ -45,9 +45,11 @@ const Register: React.FC = () => {
     try {
       await register(formData);
       navigate('/app');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message || 'Error durante el registro. Por favor intente de nuevo.'
+        err instanceof Error
+          ? err.message
+          : 'Error durante el registro. Por favor intente de nuevo.'
       );
     } finally {
       setIsSubmitting(false);
@@ -55,7 +57,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="auth-wrapper" style={{ maxWidth: '600px' }}>
+    <div className="auth-wrapper auth-register">
       <div className="auth-header" style={{ marginBottom: '24px' }}>
         <h1 className="auth-logo">ULEAM Movilidad</h1>
         <p className="auth-subtitle">

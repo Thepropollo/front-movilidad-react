@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import RouteMapView, { type MapMarker } from '@/components/RouteMapView';
-import { geocodePlace } from '@/lib/geo';
+import { geocodePlace, isLikelyEcuadorCoordinate } from '@/lib/geo';
 import { TRIP_STATUS_LABEL, labelOf } from '@/lib/labels';
 import api from '@/services/api';
 
@@ -50,10 +50,12 @@ export default function MapPage() {
           next.push({ ...g, kind: 'origin', label: `Origen: ${data.origin}` });
       }
       (data.stops || []).forEach((s: any) => {
-        if (s.latitude && s.longitude) {
+        const latitude = Number(s.latitude);
+        const longitude = Number(s.longitude);
+        if (isLikelyEcuadorCoordinate(latitude, longitude)) {
           next.push({
-            lat: Number(s.latitude),
-            lng: Number(s.longitude),
+            lat: latitude,
+            lng: longitude,
             kind: 'stop',
             sequence: s.sequence,
             label: s.location,
@@ -64,8 +66,10 @@ export default function MapPage() {
         const hasExactDestination =
           data.destination_latitude != null &&
           data.destination_longitude != null &&
-          Number.isFinite(Number(data.destination_latitude)) &&
-          Number.isFinite(Number(data.destination_longitude));
+          isLikelyEcuadorCoordinate(
+            Number(data.destination_latitude),
+            Number(data.destination_longitude)
+          );
         if (hasExactDestination) {
           next.push({
             lat: Number(data.destination_latitude),
@@ -143,6 +147,11 @@ export default function MapPage() {
               </option>
             ))}
           </select>
+          {!loadingTrips && trips.length === 0 && (
+            <p className="ops-muted" role="status">
+              No hay hojas de ruta disponibles para visualizar.
+            </p>
+          )}
 
           {detail && (
             <div className="map-meta">

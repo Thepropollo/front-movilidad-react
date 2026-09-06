@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   MapPin,
+  CalendarDays,
+  CarFront,
   Droplet,
   Filter,
   Wrench,
@@ -13,12 +15,16 @@ import {
   Send,
   CheckCircle2,
   Wallet,
+  RefreshCw,
+  UserRound,
 } from 'lucide-react';
-import { getCurrentPosition } from '@/lib/geo';
+import { geocodePlace, getCurrentPosition, isLikelyEcuadorCoordinate } from '@/lib/geo';
 import { formatDateTimeReadable } from '@/lib/datetime';
+import RouteMapView, { type MapMarker } from '@/components/RouteMapView';
 import {
   MOBILIZATION_TYPE_LABEL,
   REQUEST_STATUS_LABEL,
+  TRIP_STATUS_LABEL,
   COMPENSATION_STATUS_LABEL,
   labelOf,
 } from '@/lib/labels';
@@ -104,8 +110,8 @@ export function ConductorStopsPage() {
           rutas.
         </p>
       </header>
-      {msg && <div className="alert alert-info">{msg}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {msg && <div className="alert alert-info" role="status">{msg}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="module-panel" style={{ marginBottom: 16 }}>
         <select
           className="form-select"
@@ -253,8 +259,8 @@ export function ConductorPaymentsPage() {
           Confirme o dispute los montos de sus comisiones de viaje.
         </p>
       </header>
-      {msg && <div className="alert alert-info">{msg}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {msg && <div className="alert alert-info" role="status">{msg}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       {rows.length === 0 ? (
         <div className="module-panel pay-empty">
@@ -440,8 +446,8 @@ export function ConductorNoveltyPage() {
         </p>
       </header>
 
-      {msg && <div className="alert alert-info">{msg}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {msg && <div className="alert alert-info" role="status">{msg}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       <div className="novelty-layout">
         <aside className="module-panel">
@@ -986,46 +992,299 @@ export function DocumentsHistoryPage() {
   );
 }
 
+type TrackingTrip = {
+  id: number;
+  origin: string;
+  destination: string;
+  trip_status: string;
+  driver: string;
+  vehicle: string;
+  stops_count: number;
+  has_geo: boolean;
+};
+
+type TrackingStop = {
+  id: number;
+  sequence: number;
+  location: string | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
+  odometer_km?: number | null;
+  arrival_time?: string | null;
+};
+
+type TrackingDetail = {
+  route_sheet_id: number;
+  trip_status: string;
+  driver_response: string;
+  origin: string;
+  destination: string;
+  destination_address?: string | null;
+  destination_latitude?: number | string | null;
+  destination_longitude?: number | string | null;
+  departure_date?: string | null;
+  return_date?: string | null;
+  vehicle?: { plate: string; brand: string; model: string } | null;
+  driver?: { first_name: string; last_name: string } | null;
+  stops: TrackingStop[];
+};
+
+const toMapPoint = (value: number | string | null | undefined) => {
+  const point = Number(value);
+  return Number.isFinite(point) ? point : null;
+};
+
 export function TripDetailPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [trips, setTrips] = useState<TrackingTrip[]>([]);
+  const [selectedId, setSelectedId] = useState<number | ''>('');
+  const [detail, setDetail] = useState<TrackingDetail | null>(null);
+  const [markers, setMarkers] = useState<MapMarker[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadTrips = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await modulesApi.routeMaps();
+      const payload = Array.isArray(data) ? data : data?.data ?? [];
+      setTrips(payload);
+      setSelectedId((current) => current || payload[0]?.id || '');
+    } catch {
+      setError('No se pudieron cargar los viajes para seguimiento.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadDetail = async (id: number) => {
+    setLoadingDetail(true);
+    setError(null);
+    setDetail(null);
+    setMarkers([]);
+    try {
+      const { data } = await modulesApi.routeMap(id);
+      const nextMarkers: MapMarker[] = [];
+      const origin = await geocodePlace(data.origin);
+      if (origin) {
+        nextMarkers.push({ ...origin, kind: 'origin', label: `Origen: ${data.origin}` });
+      }
+
+      const stops = ((data.stops ?? []) as TrackingStop[])
+        .slice()
+        .sort((a, b) => a.sequence - b.sequence);
+      for (const stop of stops) {
+        const lat = toMapPoint(stop.latitude);
+        const lng = toMapPoint(stop.longitude);
+        if (
+          lat !== null &&
+          lng !== null &&
+          isLikelyEcuadorCoordinate(lat, lng)
+        ) {
+          nextMarkers.push({
+            lat,
+            lng,
+            kind: 'stop',
+            sequence: stop.sequence,
+            label: stop.location || `Parada ${stop.sequence}`,
+          });
+        }
+      }
+
+      const destinationLat = toMapPoint(data.destination_latitude);
+      const destinationLng = toMapPoint(data.destination_longitude);
+      if (
+        destinationLat !== null &&
+        destinationLng !== null &&
+        isLikelyEcuadorCoordinate(destinationLat, destinationLng)
+      ) {
+        nextMarkers.push({
+          lat: destinationLat,
+          lng: destinationLng,
+          kind: 'destination',
+          label: `Destino: ${data.destination_address || data.destination}`,
+        });
+      } else {
+        const destination = await geocodePlace(data.destination);
+        if (destination) {
+          nextMarkers.push({
+            ...destination,
+            kind: 'destination',
+            label: `Destino: ${data.destination}`,
+          });
+        }
+      }
+
+      setDetail(data);
+      setMarkers(nextMarkers);
+    } catch {
+      setError('No se pudo cargar el detalle de este viaje.');
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
   useEffect(() => {
-    void modulesApi
-      .myInvitations()
-      .then((r) => setRows(r.data || []))
-      .catch(async () => {
-        const s = await modulesApi.listSolicitudes();
-        setRows(
-          (s.data || []).map((x: any) => ({
-            id: x.id,
-            request: x,
-            invitation_status: 'n/a',
-          }))
-        );
-      });
+    void loadTrips();
   }, []);
+
+  useEffect(() => {
+    if (selectedId) void loadDetail(Number(selectedId));
+  }, [selectedId]);
+
   return (
-    <section className="module-page">
+    <section className="module-page tracking-page">
       <header className="module-header">
-        <p className="module-kicker">Seguimiento</p>
-        <h1>Conductor, vehículo y horarios</h1>
+        <p className="module-kicker">Seguimiento operativo</p>
+        <h1>Seguimiento del viaje</h1>
+        <p className="module-lead">
+          Consulte el estado, la ruta, las paradas registradas y los recursos
+          asignados a cada comisión.
+        </p>
       </header>
-      <ul className="ops-list">
-        {rows.map((r) => (
-          <li key={r.id} className="ops-item">
+
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
+
+      {loading ? (
+        <div className="module-panel module-state" role="status">
+          <span className="spinner" aria-hidden />
+          <p>Cargando viajes disponibles…</p>
+        </div>
+      ) : trips.length === 0 ? (
+        <div className="module-panel module-state" role="status">
+          <strong>No hay viajes disponibles para seguimiento</strong>
+          <p>Cuando exista una hoja de ruta asignada aparecerá aquí.</p>
+          <button type="button" className="btn btn-outline tracking-retry" onClick={() => void loadTrips()}>
+            <RefreshCw size={16} aria-hidden />
+            Reintentar
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="module-panel tracking-selector">
             <div>
-              <strong>{r.request?.destination}</strong>
-              <p>Estado solicitud: {r.request?.status}</p>
-              <p className="ops-muted">
-                Conductor:{' '}
-                {r.request?.route_sheet?.driver?.user?.first_name ||
-                  'Pendiente'}{' '}
-                · Vehículo:{' '}
-                {r.request?.route_sheet?.vehicle?.plate || 'Pendiente'}
-              </p>
+              <label className="form-label" htmlFor="tracking-trip">
+                Seleccione un viaje
+              </label>
+              <select
+                id="tracking-trip"
+                className="form-select"
+                value={selectedId}
+                onChange={(event) => setSelectedId(Number(event.target.value))}
+              >
+                {trips.map((trip) => (
+                  <option key={trip.id} value={trip.id}>
+                    #{trip.id} · {trip.origin} → {trip.destination}
+                  </option>
+                ))}
+              </select>
             </div>
-          </li>
-        ))}
-      </ul>
+            <button
+              type="button"
+              className="btn btn-outline tracking-refresh"
+              onClick={() => void loadTrips()}
+              disabled={loading || loadingDetail}
+              aria-label="Actualizar viajes"
+            >
+              <RefreshCw size={16} className={loading ? 'spin' : ''} aria-hidden />
+              Actualizar
+            </button>
+          </div>
+
+          <div className="tracking-layout">
+            <div className="module-panel tracking-map-panel">
+              <div className="tracking-map-heading">
+                <div>
+                  <p className="module-kicker">Ruta geográfica</p>
+                  <h2>{detail?.origin || 'Origen'} → {detail?.destination || 'Destino'}</h2>
+                </div>
+                {detail && (
+                  <span className={`tracking-status status-${detail.trip_status}`}>
+                    {labelOf(TRIP_STATUS_LABEL, detail.trip_status)}
+                  </span>
+                )}
+              </div>
+              <div className="tracking-map-wrap">
+                <RouteMapView markers={markers} height={460} />
+                {loadingDetail && (
+                  <div className="map-loading" role="status">
+                    <span className="spinner" style={{ width: 28, height: 28 }} />
+                    <span>Construyendo el recorrido…</span>
+                  </div>
+                )}
+                {!loadingDetail && detail && markers.length === 0 && (
+                  <p className="map-empty">Este viaje todavía no tiene coordenadas ubicables.</p>
+                )}
+              </div>
+            </div>
+
+            <aside className="tracking-summary module-panel">
+              {detail ? (
+                <>
+                  <div className="tracking-summary-head">
+                    <div>
+                      <p className="module-kicker">Hoja de ruta #{detail.route_sheet_id}</p>
+                      <h2>Resumen del viaje</h2>
+                    </div>
+                    <MapPin size={22} aria-hidden />
+                  </div>
+                  <div className="tracking-detail-grid">
+                    <div>
+                      <CalendarDays size={16} aria-hidden />
+                      <span>Fechas</span>
+                      <strong>{formatDateTimeReadable(detail.departure_date)} – {formatDateTimeReadable(detail.return_date)}</strong>
+                    </div>
+                    <div>
+                      <UserRound size={16} aria-hidden />
+                      <span>Conductor</span>
+                      <strong>{detail.driver ? `${detail.driver.first_name} ${detail.driver.last_name}` : 'Pendiente'}</strong>
+                    </div>
+                    <div>
+                      <CarFront size={16} aria-hidden />
+                      <span>Vehículo</span>
+                      <strong>{detail.vehicle ? `${detail.vehicle.plate} · ${detail.vehicle.brand} ${detail.vehicle.model}` : 'Pendiente'}</strong>
+                    </div>
+                    <div>
+                      <MapPin size={16} aria-hidden />
+                      <span>Paradas registradas</span>
+                      <strong>{detail.stops?.length ?? 0}</strong>
+                    </div>
+                  </div>
+
+                  <div className="tracking-itinerary">
+                    <h3>Itinerario</h3>
+                    <ol>
+                      <li>
+                        <span className="tracking-dot origin" />
+                        <div><strong>Origen</strong><span>{detail.origin}</span></div>
+                      </li>
+                      {(detail.stops ?? []).map((stop) => (
+                        <li key={stop.id}>
+                          <span className="tracking-dot stop" />
+                          <div>
+                            <strong>Parada {stop.sequence}</strong>
+                            <span>{stop.location || 'Ubicación sin descripción'}</span>
+                            {stop.arrival_time && <small>{formatDateTimeReadable(stop.arrival_time)}</small>}
+                          </div>
+                        </li>
+                      ))}
+                      <li>
+                        <span className="tracking-dot destination" />
+                        <div><strong>Destino final</strong><span>{detail.destination_address || detail.destination}</span></div>
+                      </li>
+                    </ol>
+                  </div>
+                </>
+              ) : (
+                <div className="module-state" role="status">
+                  <p>Seleccione un viaje para ver sus detalles.</p>
+                </div>
+              )}
+            </aside>
+          </div>
+        </>
+      )}
     </section>
   );
 }

@@ -256,7 +256,7 @@ export default function FlujoPage() {
           Registro de cambio de estados, fecha y observacion
         </p>
       </header>
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="module-panel" style={{ marginBottom: 16 }}>
         <label className="form-label" htmlFor="solicitud">
           Solicitud

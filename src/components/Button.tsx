@@ -50,22 +50,26 @@ const Button: React.FC<ButtonProps> = ({
     <button
       className={`${getButtonClass()} ${className}`}
       disabled={disabled || isLoading}
+      aria-busy={isLoading}
       style={buttonStyle}
       {...props}
     >
       {isLoading ? (
-        <span
-          className="spinner"
-          style={{
-            width: '16px',
-            height: '16px',
-            borderWidth: '2px',
-            borderLeftColor: spinnerBorderColor,
-            borderColor: ['secondary', 'outline'].includes(variant)
-              ? 'rgba(0, 40, 85, 0.15)'
-              : 'rgba(255, 255, 255, 0.2)',
-          }}
-        ></span>
+        <>
+          <span
+            className="spinner"
+            style={{
+              width: '16px',
+              height: '16px',
+              borderWidth: '2px',
+              borderLeftColor: spinnerBorderColor,
+              borderColor: ['secondary', 'outline'].includes(variant)
+                ? 'rgba(0, 40, 85, 0.15)'
+                : 'rgba(255, 255, 255, 0.2)',
+            }}
+          ></span>
+          <span>Procesando…</span>
+        </>
       ) : (
         <>
           {icon && (

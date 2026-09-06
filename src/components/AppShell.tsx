@@ -33,8 +33,13 @@ export default function AppShell() {
     if (!menuOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, [menuOpen]);
 
@@ -68,6 +73,7 @@ export default function AppShell() {
             className="shell-menu-btn"
             aria-expanded={menuOpen}
             aria-controls="shell-sidebar"
+            aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
             onClick={() => setMenuOpen((v) => !v)}
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}

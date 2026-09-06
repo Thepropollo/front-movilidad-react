@@ -1,6 +1,6 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Link, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { hasAnyRole, type RoleId } from '../config/roles';
+import { hasAnyRole, homeForRoles, type RoleId } from '../config/roles';
 
 type Props = {
   roles: RoleId[];
@@ -23,7 +23,19 @@ export default function RoleRoute({ roles, children }: Props) {
   }
 
   if (!hasAnyRole(roleIds, roles)) {
-    return <Navigate to="/app" replace />;
+    return (
+      <section className="module-page access-denied" aria-labelledby="access-denied-title">
+        <p className="module-kicker">Acceso restringido</p>
+        <h1 id="access-denied-title">No tienes permiso para ver este módulo</h1>
+        <p className="module-lead">
+          Tu cuenta está activa, pero este flujo está disponible para otro perfil
+          institucional.
+        </p>
+        <Link className="btn btn-primary access-denied-link" to={homeForRoles(roleIds)}>
+          Volver a mi panel
+        </Link>
+      </section>
+    );
   }
 
   return <>{children ?? <Outlet />}</>;

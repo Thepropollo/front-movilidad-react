@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
@@ -30,6 +30,7 @@ export default function NotificationBell({
   const { alerts, unreadCount, importantUnreadCount, markRead } = useAlerts();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const menuId = useId();
   const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -111,6 +112,7 @@ export default function NotificationBell({
         className="notif-btn"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-controls={menuId}
         aria-label={`Alertas (${unreadCount} sin leer)`}
         onClick={toggle}
       >
@@ -127,6 +129,7 @@ export default function NotificationBell({
         createPortal(
           <div
             ref={dropdownRef}
+            id={menuId}
             className="notif-dropdown"
             style={{ left: pos.left, top: pos.top }}
             role="menu"
