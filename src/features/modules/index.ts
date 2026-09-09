@@ -9,6 +9,7 @@ export { default as StudentInvitationsPage } from './pages/StudentInvitationsPag
 export { default as FleetDriversPage } from './pages/FleetDriversPage';
 export { default as FleetVehiclesPage } from './pages/FleetVehiclesPage';
 export { default as FleetStatusPage } from './pages/FleetStatusPage';
+export { default as RateConfigurationPage } from './pages/RateConfigurationPage';
 export { default as GasStationsPage } from './pages/GasStationsPage';
 export { default as MapPage } from './pages/MapPage';
 export { default as ConductorRouteMapPage } from './pages/ConductorRouteMapPage';

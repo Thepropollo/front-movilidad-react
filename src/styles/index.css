@@ -1054,7 +1054,8 @@ body {
     gap: 10px;
     position: sticky;
     top: 0;
-    z-index: 30;
+    /* La barra fija debe permanecer sobre los overlays del mapa al hacer scroll. */
+    z-index: 1100;
     min-height: 56px;
     padding: 8px 12px;
     padding-top: calc(8px + env(safe-area-inset-top, 0px));
@@ -1106,7 +1107,7 @@ body {
     max-height: 100dvh;
     transform: translateX(-105%);
     transition: transform 0.2s ease;
-    z-index: 40;
+    z-index: 1200;
     box-shadow: 12px 0 32px rgba(0, 0, 0, 0.28);
   }
 
@@ -2115,6 +2116,7 @@ body {
   position: relative;
   padding: 0;
   overflow: hidden;
+  isolation: isolate;
   min-height: 620px;
   border-radius: 14px;
 }
@@ -2789,12 +2791,12 @@ body {
   }
 
   .guide-map {
-    min-height: 480px;
+    min-height: clamp(440px, 64dvh, 500px);
   }
 
   .guide-map .route-map-wrap {
-    height: min(60vh, 540px) !important;
-    min-height: 480px;
+    height: clamp(440px, 64dvh, 500px) !important;
+    min-height: 440px;
   }
 
   .guide-mobile-nav {
@@ -2864,6 +2866,10 @@ body {
     gap: 5px;
     padding: 10px 8px;
     font-size: 11px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .guide-live-strip {
@@ -3940,6 +3946,147 @@ button:disabled {
 
 .module-state .spinner {
   display: block;
+}
+
+.rates-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.rate-total {
+  display: grid;
+  gap: 2px;
+  min-width: 170px;
+  padding: 12px 15px;
+  border-left: 3px solid var(--color-secondary);
+  background: #fffaf0;
+}
+
+.rate-total span {
+  color: #765d23;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rate-total strong {
+  color: var(--color-primary);
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.rate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.rate-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-panel);
+}
+
+.rate-card-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--color-secondary-hover);
+  background: #fff7e8;
+}
+
+.rate-card-copy {
+  min-width: 0;
+}
+
+.rate-card-copy h3 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 14px;
+}
+
+.rate-card-copy p {
+  margin: 4px 0 5px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.rate-card-copy code {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.rate-card-control {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rate-input-wrap {
+  position: relative;
+  flex: 1;
+}
+
+.rate-input-wrap > span {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  color: var(--text-muted);
+  font-size: 13px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.rate-input-wrap .form-input {
+  padding-left: 25px;
+}
+
+.rate-save {
+  width: auto;
+  min-width: 92px;
+  padding: 9px 11px;
+  font-size: 12px;
+}
+
+.rate-create-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.rate-create-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.rate-create-submit {
+  width: fit-content;
+}
+
+@media (max-width: 520px) {
+  .rate-card-control {
+    grid-column: 1 / -1;
+  }
+
+  .rate-save {
+    min-width: 88px;
+  }
+
+  .rate-create-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rate-create-submit {
+    width: 100%;
+  }
 }
 
 .access-denied {

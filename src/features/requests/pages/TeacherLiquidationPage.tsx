@@ -327,19 +327,33 @@ const TeacherLiquidationPage: React.FC = () => {
 
                       {/* Items breakdown */}
                       <div className="flex flex-col gap-3">
-                        {/* Viáticos */}
+                        {/* Alojamiento */}
                         <div className="flex justify-between items-center p-3.5 bg-white border border-gray-100 rounded-2xl shadow-xs">
                           <div>
                             <p className="font-bold text-primary text-sm">
-                              Viáticos por Comisión Exterior
+                              Alojamiento fuera de sede
                             </p>
                             <p className="text-muted text-xs mt-0.5">
-                              {calc.nights_outside} noches transcurridas afuera
-                              ($80.00/día)
+                              {calc.nights_outside} noches · ${calc.lodging_rate.toFixed(2)}/noche
                             </p>
                           </div>
                           <span className="font-mono font-bold text-primary text-base">
-                            ${calc.allowances_amount.toFixed(2)}
+                            ${calc.lodging_amount.toFixed(2)}
+                          </span>
+                        </div>
+
+                        {/* Alimentación */}
+                        <div className="flex justify-between items-center p-3.5 bg-white border border-gray-100 rounded-2xl shadow-xs">
+                          <div>
+                            <p className="font-bold text-primary text-sm">
+                              Alimentación
+                            </p>
+                            <p className="text-muted text-xs mt-0.5">
+                              {calc.nights_outside} días · ${calc.food_rate.toFixed(2)}/día
+                            </p>
+                          </div>
+                          <span className="font-mono font-bold text-primary text-base">
+                            ${calc.food_amount.toFixed(2)}
                           </span>
                         </div>
 
@@ -351,7 +365,7 @@ const TeacherLiquidationPage: React.FC = () => {
                             </p>
                             <p className="text-muted text-xs mt-0.5">
                               {calc.overtime_50_hours} horas laboradas
-                              post-jornada laboral ($5.00/hr)
+                              post-jornada laboral (${calc.overtime_50_rate.toFixed(2)}/hr)
                             </p>
                           </div>
                           <span className="font-mono font-bold text-primary text-base">
@@ -367,7 +381,7 @@ const TeacherLiquidationPage: React.FC = () => {
                             </p>
                             <p className="text-muted text-xs mt-0.5">
                               {calc.overtime_100_hours} horas laboradas fin de
-                              semana o feriado ($7.50/hr)
+                              semana o feriado (${calc.overtime_100_rate.toFixed(2)}/hr)
                             </p>
                           </div>
                           <span className="font-mono font-bold text-primary text-base">

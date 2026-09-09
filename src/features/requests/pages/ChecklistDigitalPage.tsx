@@ -103,6 +103,7 @@ const ChecklistDigitalPage: React.FC = () => {
 
   // Determine if any component is marked MALO
   const hasMaloComponent = Object.values(checklistStates).includes('MALO');
+  const isArrivalInspection = selectedSheet?.trip_status !== 'programado';
 
   // Group components by category
   const categories = Array.from(new Set(components.map((c) => c.category)));
@@ -536,9 +537,9 @@ const ChecklistDigitalPage: React.FC = () => {
                               Todo se encuentra en orden
                             </p>
                             <p className="text-xs text-green-700 mt-1">
-                              El checklist está limpio. El vehículo será
-                              autorizado para salir a ruta e iniciar la comisión
-                              asignada.
+                              {isArrivalInspection
+                                ? 'El checklist está limpio. Se registrará la llegada y se cerrará la hoja de ruta.'
+                                : 'El checklist está limpio. El vehículo será autorizado para salir a ruta e iniciar la comisión asignada.'}
                             </p>
                           </div>
                         </>
@@ -560,8 +561,12 @@ const ChecklistDigitalPage: React.FC = () => {
                       className="whitespace-nowrap px-6 py-3"
                     >
                       {hasMaloComponent
-                        ? 'Reportar Novedad y Derivar a Taller'
-                        : 'Aprobar Despacho y Salida'}
+                        ? isArrivalInspection
+                          ? 'Reportar Novedad de Llegada'
+                          : 'Reportar Novedad y Derivar a Taller'
+                        : isArrivalInspection
+                          ? 'Registrar Llegada y Cerrar Viaje'
+                          : 'Aprobar Despacho y Salida'}
                     </Button>
                   </div>
                 </div>

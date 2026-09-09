@@ -40,9 +40,15 @@ export interface CompensationCalculation {
   applied_rate_id: number;
   nights_outside: number;
   allowances_amount: number;
+  lodging_rate: number;
+  food_rate: number;
+  lodging_amount: number;
+  food_amount: number;
   overtime_50_hours: number;
+  overtime_50_rate: number;
   overtime_50_amount: number;
   overtime_100_hours: number;
+  overtime_100_rate: number;
   overtime_100_amount: number;
   total_payout: number;
   departure_real: string;
@@ -58,7 +64,11 @@ export interface DriverCompensation {
   overtime_100_amount: number;
   total_payout: number;
   payment_receipt_url: string;
-  payment_status: 'pendiente_comprobante' | 'verificado_movilidad';
+  payment_status:
+    | 'pendiente_comprobante'
+    | 'confirmado_conductor'
+    | 'en_disputa'
+    | 'verificado_movilidad';
   route_sheet: RouteSheetSummary;
 }
 

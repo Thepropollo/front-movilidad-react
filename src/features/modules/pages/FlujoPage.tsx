@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Check, X } from 'lucide-react';
 import { formatDateReadable, formatDateTimeReadable } from '@/lib/datetime';
 import { MOBILIZATION_TYPE_LABEL, REQUEST_STATUS_LABEL, TRIP_STATUS_LABEL, DRIVER_RESPONSE_LABEL, INVITATION_STATUS_LABEL, labelOf } from '@/lib/labels';
@@ -95,6 +95,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function FlujoPage() {
   const { roleIds } = useAuth();
+  const location = useLocation();
   const [solicitudes, setSolicitudes] = useState<
     Array<{ id: number; destination: string; status: string }>
   >([]);
@@ -121,17 +122,19 @@ export default function FlujoPage() {
     }
   };
 
-  const mapPath = roleIds.includes('secretaria')
-    ? '/app/secretaria/mapa'
-    : roleIds.includes('vicerrector')
-      ? '/app/vicerrector/mapa'
-      : roleIds.includes('docente')
-        ? '/app/docente/mapa'
-        : roleIds.includes('estudiante')
-          ? '/app/estudiante/mapa'
-          : roleIds.includes('conductor')
-            ? '/app/conductor/mapa'
-            : '/app/secretaria/mapa';
+  const mapPath = location.pathname.startsWith('/app/facultad/')
+    ? '/app/facultad/mapa'
+    : roleIds.includes('secretaria')
+      ? '/app/secretaria/mapa'
+      : roleIds.includes('vicerrector')
+        ? '/app/vicerrector/mapa'
+        : roleIds.includes('docente')
+          ? '/app/docente/mapa'
+          : roleIds.includes('estudiante')
+            ? '/app/estudiante/mapa'
+            : roleIds.includes('conductor')
+              ? '/app/conductor/mapa'
+              : '/app/secretaria/mapa';
 
   const participantsSummary = useMemo(() => {
     const rows = detail?.passengers ?? [];

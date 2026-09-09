@@ -20,6 +20,19 @@ import {
   type FuelOrder,
 } from '../api/fuel';
 
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const apiErrorMessage = (error: unknown, fallback: string) => {
+  const apiError = error as ApiError;
+  return apiError.response?.data?.message || fallback;
+};
+
 const GasStationDispatcherPage: React.FC = () => {
   const [orderCode, setOrderCode] = useState<string>('');
   const [order, setOrder] = useState<FuelOrder | null>(null);
@@ -62,12 +75,9 @@ const GasStationDispatcherPage: React.FC = () => {
           details.dispatched_fuel_type === 'diesel' ? 1.8 : 2.4;
         setTotalPaid((details.authorized_gallons * pricePerGal).toFixed(2));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setErrorMsg(
-        err.response?.data?.message ||
-          'Código de vale no encontrado en la base de datos.'
-      );
+      setErrorMsg(apiErrorMessage(err, 'Código de vale no encontrado en la base de datos.'));
     } finally {
       setSearching(false);
     }
@@ -109,12 +119,9 @@ const GasStationDispatcherPage: React.FC = () => {
       setSuccess(true);
       setOrder(null);
       setOrderCode('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setErrorMsg(
-        err.response?.data?.message ||
-          'Error al procesar el despacho de combustible.'
-      );
+      setErrorMsg(apiErrorMessage(err, 'Error al procesar el despacho de combustible.'));
     } finally {
       setSubmitting(false);
     }

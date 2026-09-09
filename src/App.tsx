@@ -6,6 +6,7 @@ import { LoginPage, RegisterPage } from '@features/auth';
 import {
   ChecklistDigitalPage,
   DriverFuelTicketsPage,
+  GasStationDispatcherPage,
   PendingFeedbackBanner,
   RequestFormPage,
   TripEvaluationPage,
@@ -38,6 +39,7 @@ import {
   ParticipantsPage,
   ReassignPage,
   ReportsPage,
+  RateConfigurationPage,
   StudentInvitationsPage,
   TripDetailPage,
 } from '@features/modules';
@@ -111,6 +113,7 @@ function AppContent() {
             <Route path="flota/estado" element={<FleetStatusPage />} />
             <Route path="taller" element={<WorkshopPanelPage />} />
             <Route path="economico" element={<TransportAuditPanelPage />} />
+            <Route path="tarifas" element={<RateConfigurationPage />} />
             <Route path="documentos" element={<ChecklistDigitalPage />} />
             <Route path="participantes" element={<ParticipantsPage />} />
             <Route path="autorizar" element={<AuthorizePage />} />
@@ -120,6 +123,10 @@ function AppContent() {
             <Route path="flota/conductores" element={<FleetDriversPage />} />
             <Route path="flota/vehiculos" element={<FleetVehiclesPage />} />
             <Route path="gasolineras" element={<GasStationsPage />} />
+            <Route
+              path="combustible/despacho"
+              element={<GasStationDispatcherPage />}
+            />
             <Route path="mapa" element={<MapPage />} />
             <Route path="reportes" element={<ReportsPage />} />
             <Route path="inspeccion" element={<ChecklistDigitalPage />} />
@@ -194,12 +201,15 @@ function AppContent() {
                 <RoleHomePage
                   focusRoles={['responsable_facultad']}
                   title="Panel de Facultad"
-                  subtitle="Supervise viajes de su unidad."
+                  subtitle="Solicite viajes y dé seguimiento a su unidad."
                 />
               }
             />
+            <Route path="solicitar" element={<RequestFormPage />} />
             <Route path="solicitudes" element={<DocumentsHistoryPage />} />
+            <Route path="seguimiento" element={<FlujoPage />} />
             <Route path="historial" element={<DocumentsHistoryPage />} />
+            <Route path="mapa" element={<MapPage />} />
             <Route path="reportes" element={<ReportsPage />} />
           </Route>
 

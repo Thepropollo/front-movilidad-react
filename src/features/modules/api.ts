@@ -60,4 +60,13 @@ export const modulesApi = {
     api.patch(`/estaciones-servicio/${id}`, body),
   workOrders: () => api.get('/ordenes-taller'),
   insumos: (q?: string) => api.get('/insumos', { params: { q } }),
+  rates: () => api.get('/tarifas'),
+  createRate: (data: {
+    rate_key: string;
+    rate_label: string;
+    rate_group: 'allowance' | 'fuel' | 'other';
+    rate_value: number;
+  }) => api.post('/tarifas', data),
+  updateRate: (id: number, rate_value: number) =>
+    api.put(`/tarifas/${id}`, { rate_value }),
 };

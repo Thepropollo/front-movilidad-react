@@ -1066,7 +1066,14 @@ export function TripDetailPage() {
     try {
       const { data } = await modulesApi.routeMap(id);
       const nextMarkers: MapMarker[] = [];
-      const origin = await geocodePlace(data.origin);
+      const safeGeocode = async (query: string) => {
+        try {
+          return await geocodePlace(query);
+        } catch {
+          return null;
+        }
+      };
+      const origin = await safeGeocode(data.origin);
       if (origin) {
         nextMarkers.push({ ...origin, kind: 'origin', label: `Origen: ${data.origin}` });
       }
@@ -1106,7 +1113,7 @@ export function TripDetailPage() {
           label: `Destino: ${data.destination_address || data.destination}`,
         });
       } else {
-        const destination = await geocodePlace(data.destination);
+        const destination = await safeGeocode(data.destination);
         if (destination) {
           nextMarkers.push({
             ...destination,

@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+certs/
+public/uleam-local-rootCA.pem
 
 # Editor directories and files
 .vscode/*
