@@ -1,50 +1,63 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppShell from './components/AppShell';
 import RoleRoute from './components/RoleRoute';
-import { LoginPage, RegisterPage } from '@features/auth';
-import {
-  ChecklistDigitalPage,
-  DriverFuelTicketsPage,
-  GasStationDispatcherPage,
-  PendingFeedbackBanner,
-  RequestFormPage,
-  TripEvaluationPage,
-  TeacherLiquidationPage,
-  TransportAuditPanelPage,
-} from '@features/requests';
-import { RectorPanelPage } from '@features/rector';
-import { TransportPanelPage } from '@features/transport';
-import { WorkshopPanelPage } from '@features/workshop';
 import RoleHomePage from '@features/shared/RoleHomePage';
 import NotFoundPage from '@features/shared/NotFoundPage';
-import {
-  AgendaPage,
-  AuthorizePage,
-  ConductorNoveltyPage,
-  ConductorPaymentsPage,
-  ConductorRouteMapPage,
-  ConductorTripsPage,
-  ConductorVehiclePage,
-  DisponibilidadPage,
-  DocumentsHistoryPage,
-  FleetDriversPage,
-  FleetStatusPage,
-  FleetVehiclesPage,
-  FlujoPage,
-  GasStationsPage,
-  LubricantsPage,
-  MapPage,
-  MechanicHistoryPage,
-  ParticipantsPage,
-  ReassignPage,
-  ReportsPage,
-  InstitutionalDocumentsPage,
-  RateConfigurationPage,
-  StudentInvitationsPage,
-  TripDetailPage,
-} from '@features/modules';
 import { homeForRoles } from './config/roles';
+
+const LoginPage = lazy(() => import('@features/auth/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@features/auth/pages/RegisterPage'));
+const ChecklistDigitalPage = lazy(() => import('@features/requests/pages/ChecklistDigitalPage'));
+const DriverFuelTicketsPage = lazy(() => import('@features/requests/pages/DriverFuelTicketsPage'));
+const GasStationDispatcherPage = lazy(() => import('@features/requests/pages/GasStationDispatcherPage'));
+const PendingFeedbackBanner = lazy(() => import('@features/requests/components/PendingFeedbackBanner'));
+const RequestFormPage = lazy(() => import('@features/requests/pages/RequestFormPage'));
+const TripEvaluationPage = lazy(() => import('@features/requests/pages/TripEvaluationPage'));
+const TeacherLiquidationPage = lazy(() => import('@features/requests/pages/TeacherLiquidationPage'));
+const TransportAuditPanelPage = lazy(() => import('@features/requests/pages/TransportAuditPanelPage'));
+const RectorPanelPage = lazy(() => import('@features/rector/pages/RectorPanelPage'));
+const TransportPanelPage = lazy(() => import('@features/transport/pages/TransportPanelPage'));
+const WorkshopPanelPage = lazy(() => import('@features/workshop/pages/WorkshopPanelPage'));
+const AgendaPage = lazy(() => import('@features/modules/pages/AgendaPage'));
+const AuthorizePage = lazy(() => import('@features/modules/pages/AuthorizePage'));
+const ConductorTripsPage = lazy(() => import('@features/modules/pages/ConductorTripsPage'));
+const ConductorRouteMapPage = lazy(() => import('@features/modules/pages/ConductorRouteMapPage'));
+const DisponibilidadPage = lazy(() => import('@features/modules/pages/DisponibilidadPage'));
+const FleetDriversPage = lazy(() => import('@features/modules/pages/FleetDriversPage'));
+const FleetStatusPage = lazy(() => import('@features/modules/pages/FleetStatusPage'));
+const FleetVehiclesPage = lazy(() => import('@features/modules/pages/FleetVehiclesPage'));
+const FlujoPage = lazy(() => import('@features/modules/pages/FlujoPage'));
+const GasStationsPage = lazy(() => import('@features/modules/pages/GasStationsPage'));
+const MapPage = lazy(() => import('@features/modules/pages/MapPage'));
+const ParticipantsPage = lazy(() => import('@features/modules/pages/ParticipantsPage'));
+const ReassignPage = lazy(() => import('@features/modules/pages/ReassignPage'));
+const ReportsPage = lazy(() => import('@features/modules/pages/ReportsPage'));
+const InstitutionalDocumentsPage = lazy(() => import('@features/modules/pages/InstitutionalDocumentsPage'));
+const RateConfigurationPage = lazy(() => import('@features/modules/pages/RateConfigurationPage'));
+const StudentInvitationsPage = lazy(() => import('@features/modules/pages/StudentInvitationsPage'));
+const ConductorNoveltyPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.ConductorNoveltyPage }))
+);
+const ConductorPaymentsPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.ConductorPaymentsPage }))
+);
+const ConductorVehiclePage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.ConductorVehiclePage }))
+);
+const DocumentsHistoryPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.DocumentsHistoryPage }))
+);
+const LubricantsPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.LubricantsPage }))
+);
+const MechanicHistoryPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.MechanicHistoryPage }))
+);
+const TripDetailPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.TripDetailPage }))
+);
 
 const allowRegister = import.meta.env.VITE_ALLOW_REGISTER === 'true';
 
@@ -57,7 +70,13 @@ function AppContent() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <>
+    <Suspense
+      fallback={
+        <div className="app-loading" role="status" aria-live="polite">
+          Cargando pantalla…
+        </div>
+      }
+    >
       {isAuthenticated && <PendingFeedbackBanner />}
       <Routes>
         <Route
@@ -300,7 +319,7 @@ function AppContent() {
         />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </>
+    </Suspense>
   );
 }
 
