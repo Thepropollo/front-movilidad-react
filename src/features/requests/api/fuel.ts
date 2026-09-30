@@ -54,6 +54,11 @@ export interface ServiceStation {
   active_agreement: boolean;
 }
 
+export interface FuelOrderCreateResult {
+  message: string;
+  fuel_order: FuelOrder;
+}
+
 export const fetchDriverFuelOrders = async (): Promise<FuelOrder[]> => {
   const response = await api.get('/mis-ordenes-combustible');
   return response.data;
@@ -85,7 +90,10 @@ export const fetchServiceStations = async (): Promise<ServiceStation[]> => {
 export const emitFuelOrder = async (data: {
   route_sheet_id: number;
   station_id: number;
-}): Promise<any> => {
-  const response = await api.post('/ordenes-combustible', data);
+}): Promise<FuelOrderCreateResult> => {
+  const response = await api.post<FuelOrderCreateResult>(
+    '/ordenes-combustible',
+    data
+  );
   return response.data;
 };
