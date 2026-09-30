@@ -36,8 +36,25 @@ api.interceptors.response.use(
       localStorage.removeItem('access_token');
       localStorage.removeItem('user_data');
       if (!window.location.pathname.startsWith('/login')) {
+        try {
+          sessionStorage.setItem(
+            'auth_redirect_to',
+            window.location.pathname.startsWith('/') &&
+              !window.location.pathname.startsWith('//')
+              ? window.location.pathname
+              : '/app'
+          );
+          sessionStorage.setItem(
+            'auth_notice',
+            'Tu sesión venció. Inicia sesión para continuar.'
+          );
+        } catch {
+          // Continue to login even when browser storage is unavailable.
+        }
         window.location.assign('/login');
       }
+    } else if (status === 403 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('app:forbidden'));
     }
     return Promise.reject(error);
   }

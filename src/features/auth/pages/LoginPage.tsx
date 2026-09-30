@@ -58,6 +58,15 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ssoNotice, setSsoNotice] = useState<string | null>(null);
+  const [authNotice] = useState(() => {
+    try {
+      const notice = sessionStorage.getItem('auth_notice');
+      sessionStorage.removeItem('auth_notice');
+      return notice;
+    } catch {
+      return null;
+    }
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
@@ -67,7 +76,17 @@ export default function Login() {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      navigate('/app');
+      let destination = '/app';
+      try {
+        const saved = sessionStorage.getItem('auth_redirect_to');
+        sessionStorage.removeItem('auth_redirect_to');
+        if (saved?.startsWith('/') && !saved.startsWith('//')) {
+          destination = saved;
+        }
+      } catch {
+        // Use the role-specific app home when browser storage is unavailable.
+      }
+      navigate(destination, { replace: true });
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : 'Correo o contraseña no válidos.'
@@ -141,6 +160,11 @@ export default function Login() {
           {error && (
             <div className="alert alert-danger" role="alert">
               {error}
+            </div>
+          )}
+          {authNotice && (
+            <div className="alert alert-info" role="status">
+              {authNotice}
             </div>
           )}
           {ssoNotice && (

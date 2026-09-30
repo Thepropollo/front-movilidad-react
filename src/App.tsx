@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppShell from './components/AppShell';
@@ -68,6 +68,13 @@ function AppHome() {
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  const [forbidden, setForbidden] = useState(false);
+
+  useEffect(() => {
+    const onForbidden = () => setForbidden(true);
+    window.addEventListener('app:forbidden', onForbidden);
+    return () => window.removeEventListener('app:forbidden', onForbidden);
+  }, []);
 
   return (
     <Suspense
@@ -78,6 +85,14 @@ function AppContent() {
       }
     >
       {isAuthenticated && <PendingFeedbackBanner />}
+      {forbidden && (
+        <div className="alert alert-danger" role="alert">
+          <span>No tienes permiso para completar esa acción.</span>
+          <button type="button" onClick={() => setForbidden(false)} aria-label="Cerrar aviso">
+            Cerrar
+          </button>
+        </div>
+      )}
       <Routes>
         <Route
           path="/"
