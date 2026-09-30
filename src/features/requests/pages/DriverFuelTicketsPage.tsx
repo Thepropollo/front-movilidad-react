@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Fuel,
-  QrCode,
   ClipboardCheck,
   MapPin,
   CheckCircle,
@@ -19,13 +18,20 @@ import {
   type ServiceStation,
 } from '../api/fuel';
 
+interface PendingSheetRecord {
+  id: number;
+  vehicle: { plate: string; brand: string };
+  request: { destination: string };
+}
+
 const DriverFuelTicketsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { roleIds } = useAuth();
+  const canManageFuel = roleIds.includes('secretaria');
   const [orders, setOrders] = useState<FuelOrder[]>([]);
   const [stations, setStations] = useState<ServiceStation[]>([]);
-  const [routeSheets, setRouteSheets] = useState<any[]>([]);
+  const [routeSheets, setRouteSheets] = useState<PendingSheetRecord[]>([]);
 
-  // Selection states for issuing a voucher (Jefe de Transporte only)
+  // Selection states for issuing a voucher (Secretaría only)
   const [selectedSheetId, setSelectedSheetId] = useState<string>('');
   const [selectedStationId, setSelectedStationId] = useState<string>('');
   const [issuing, setIssuing] = useState<boolean>(false);
@@ -42,25 +48,59 @@ const DriverFuelTicketsPage: React.FC = () => {
       setOrders(ordersData);
 
       // If Jefe de Transporte, load helper data for issuing new tickets
-      if (user?.role?.name === 'jefe_transporte') {
+      if (canManageFuel) {
         const [stationsData, sheetsResponse] = await Promise.all([
           fetchServiceStations(),
-          api.get('/inspecciones/pendientes'), // get sheets pending inspection to assign fuel
+          api.get<PendingSheetRecord[]>('/inspecciones/pendientes'), // get sheets pending inspection to assign fuel
         ]);
         setStations(stationsData);
         setRouteSheets(sheetsResponse.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setErrorMsg('Error al cargar vales de combustible. Por favor, recarga.');
+      const er = err as { response?: { data?: { message?: string } } };
+      setErrorMsg(
+        er.response?.data?.message ||
+          'Error al cargar vales de combustible. Por favor, recarga.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, [user]);
+    let ignore = false;
+    fetchDriverFuelOrders()
+      .then(async (ordersData) => {
+        if (!ignore) {
+          setOrders(ordersData);
+        }
+        if (canManageFuel) {
+          const [stationsData, sheetsResponse] = await Promise.all([
+            fetchServiceStations(),
+            api.get<PendingSheetRecord[]>('/inspecciones/pendientes'),
+          ]);
+          if (!ignore) {
+            setStations(stationsData);
+            setRouteSheets(sheetsResponse.data);
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          console.error(err);
+          setErrorMsg('Error al cargar vales de combustible. Por favor, recarga.');
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [canManageFuel]);
 
   const handleEmitVoucher = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,17 +119,12 @@ const DriverFuelTicketsPage: React.FC = () => {
       setSelectedSheetId('');
       setSelectedStationId('');
 
-      // Reload tickets list
-      const ordersData = await fetchDriverFuelOrders();
-      setOrders(ordersData);
-
-      // Reload route sheets list
-      const sheetsResponse = await api.get('/inspecciones/pendientes');
-      setRouteSheets(sheetsResponse.data);
-    } catch (err: any) {
+      await loadData();
+    } catch (err: unknown) {
       console.error(err);
+      const er = err as { response?: { data?: { message?: string } } };
       setErrorMsg(
-        err.response?.data?.message || 'Error al emitir el vale de combustible.'
+        er.response?.data?.message || 'Error al emitir el vale de combustible.'
       );
     } finally {
       setIssuing(false);
@@ -109,7 +144,7 @@ const DriverFuelTicketsPage: React.FC = () => {
             Vales de Combustible ULEAM
           </h1>
           <p className="text-muted mt-1">
-            {user?.role?.name === 'jefe_transporte'
+            {canManageFuel
               ? 'Administración y emisión de vales digitales autorizados de abastecimiento.'
               : 'Tus boletos digitales activos de abastecimiento para comisiones institucionales.'}
           </p>
@@ -148,8 +183,8 @@ const DriverFuelTicketsPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Columna Izquierda: Emisión de Vale (Solo Jefe de Transporte) */}
-          {user?.role?.name === 'jefe_transporte' && (
+          {/* Columna Izquierda: Emisión de Vale (solo Secretaría) */}
+          {canManageFuel && (
             <div className="xl:col-span-1 flex flex-col gap-6">
               <div className="glass-panel p-6 bg-white/50">
                 <h2 className="section-title flex items-center gap-2 mb-4">
@@ -227,10 +262,10 @@ const DriverFuelTicketsPage: React.FC = () => {
 
           {/* Columna Derecha: Vista de Boletos/Tickets */}
           <div
-            className={`${user?.role?.name === 'jefe_transporte' ? 'xl:col-span-2' : 'xl:col-span-3'}`}
+            className={`${canManageFuel ? 'xl:col-span-2' : 'xl:col-span-3'}`}
           >
             <h2 className="section-title flex items-center gap-2 mb-6">
-              <QrCode size={18} className="text-primary-brand" />
+              <ClipboardCheck size={18} className="text-primary-brand" />
               Tus Vales Digitales Activos / Historial
             </h2>
 
@@ -348,39 +383,26 @@ const DriverFuelTicketsPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Ticket Right Side: QR Code Area */}
+                      {/* Ticket Right Side: código del vale */}
                       <div className="p-6 md:w-44 flex flex-col items-center justify-center bg-gray-50/50 shrink-0">
-                        <div className="relative p-2.5 bg-white border border-gray-150 rounded-2xl shadow-xs">
-                          {/* Simulated QR Code matrix box */}
-                          <div
-                            className={`w-28 h-28 relative flex flex-col justify-between p-1 bg-white transition-all ${
-                              isConsumed ? 'blur-[1.5px] opacity-25' : ''
-                            }`}
-                            style={{
-                              backgroundImage:
-                                'radial-gradient(black 30%, transparent 30%)',
-                              backgroundSize: '8px 8px',
-                            }}
-                          >
-                            {/* QR corners mock */}
-                            <div className="absolute top-1 left-1 w-6 h-6 border-4 border-black bg-white"></div>
-                            <div className="absolute top-1 right-1 w-6 h-6 border-4 border-black bg-white"></div>
-                            <div className="absolute bottom-1 left-1 w-6 h-6 border-4 border-black bg-white"></div>
-                            <div className="absolute bottom-1 right-1 w-4 h-4 bg-black"></div>
-                          </div>
-
-                          {/* Watermark diagonal overlay if consumed */}
+                        <div className="w-full rounded-2xl border border-gray-200 bg-white p-4 text-center shadow-xs">
+                          <ClipboardCheck
+                            className="mx-auto mb-2 text-primary-brand"
+                            size={26}
+                            aria-hidden="true"
+                          />
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                            Código del vale
+                          </p>
+                          <p className="mt-1 break-all text-center font-mono font-bold text-sm text-primary">
+                            {order.order_code}
+                          </p>
                           {isConsumed && (
-                            <div className="absolute inset-0 bg-gray-200/80 flex items-center justify-center rounded-2xl overflow-hidden">
-                              <span className="text-gray-500 border-2 border-dashed border-gray-400 py-1 px-2 rotate-12 font-black tracking-widest text-sm uppercase">
-                                CONSUMIDO
-                              </span>
-                            </div>
+                            <span className="mt-3 inline-flex rounded-full border border-gray-300 px-2 py-1 text-[10px] font-bold text-gray-600">
+                              DESPACHADO
+                            </span>
                           )}
                         </div>
-                        <p className="text-center font-mono font-bold text-xs mt-3 text-primary">
-                          {order.order_code}
-                        </p>
                       </div>
                     </div>
                   );
