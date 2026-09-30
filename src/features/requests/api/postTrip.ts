@@ -72,13 +72,42 @@ export interface DriverCompensation {
   route_sheet: RouteSheetSummary;
 }
 
+export interface ArrivalActResult {
+  message: string;
+  route_sheet: RouteSheetSummary;
+}
+
+export interface TripEvaluationResult {
+  message: string;
+  evaluation: {
+    id: number;
+    route_sheet_id: number;
+    passenger_id: number;
+    driver_rating: number;
+    vehicle_rating: number;
+    comments: string | null;
+  };
+}
+
+export interface CompensationResult {
+  message: string;
+  compensation: DriverCompensation;
+}
+
+export interface CompensationApprovalResult extends CompensationResult {
+  route_sheet: RouteSheetSummary;
+}
+
 export const submitArrivalAct = async (data: {
   hoja_ruta_id: number;
   mecanico_o_guardia_id: number;
   kilometraje_garita: number;
   nivel_combustible: string;
-}): Promise<any> => {
-  const response = await api.post('/actas-recepcion-llegada', data);
+}): Promise<ArrivalActResult> => {
+  const response = await api.post<ArrivalActResult>(
+    '/actas-recepcion-llegada',
+    data
+  );
   return response.data;
 };
 
@@ -88,8 +117,8 @@ export const submitEvaluation = async (data: {
   calificacion_conductor: number;
   calificacion_vehiculo: number;
   comments?: string;
-}): Promise<any> => {
-  const response = await api.post('/evaluaciones', data);
+}): Promise<TripEvaluationResult> => {
+  const response = await api.post<TripEvaluationResult>('/evaluaciones', data);
   return response.data;
 };
 
@@ -124,8 +153,8 @@ export const calculateCompensation = async (
 export const submitLiquidation = async (
   routeSheetId: number,
   data: { comprobante_pago_url: string }
-): Promise<any> => {
-  const response = await api.post(
+): Promise<CompensationResult> => {
+  const response = await api.post<CompensationResult>(
     `/compensaciones/${routeSheetId}/liquidar`,
     data
   );
@@ -134,7 +163,9 @@ export const submitLiquidation = async (
 
 export const approveLiquidation = async (
   routeSheetId: number
-): Promise<any> => {
-  const response = await api.post(`/compensaciones/${routeSheetId}/aprobar`);
+): Promise<CompensationApprovalResult> => {
+  const response = await api.post<CompensationApprovalResult>(
+    `/compensaciones/${routeSheetId}/aprobar`
+  );
   return response.data;
 };

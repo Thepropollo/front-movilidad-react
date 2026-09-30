@@ -1,8 +1,30 @@
 import { useEffect, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, User, UserCheck, UserX, ShieldCheck } from 'lucide-react';
 import Input from '@/components/Input';
-import { yesNo } from '@/lib/labels';
+import Button from '@/components/Button';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
+
+interface DriverRecord {
+  id: number;
+  national_id: string;
+  first_name?: string;
+  last_name?: string;
+  name?: string;
+  email?: string;
+  contract_type?: string;
+  license_type?: string;
+  current_points?: number;
+  points?: number;
+  expiration_date?: string;
+  is_available: boolean;
+  user?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  } | null;
+  licenses?: Array<{ license_type?: string }>;
+}
 
 const empty = {
   national_id: '',
@@ -16,14 +38,8 @@ const empty = {
   is_available: true,
 };
 
-const actionBtn: React.CSSProperties = {
-  width: 'auto',
-  padding: '8px 16px',
-  fontSize: 14,
-};
-
 export default function FleetDriversPage() {
-  const [drivers, setDrivers] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<DriverRecord[]>([]);
   const [form, setForm] = useState(empty);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -36,7 +52,22 @@ export default function FleetDriversPage() {
   };
 
   useEffect(() => {
-    void load().catch(() => setError('No se pudieron cargar conductores.'));
+    let ignore = false;
+    modulesApi
+      .drivers()
+      .then(({ data }) => {
+        if (!ignore) {
+          setDrivers(data || []);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setError('No se pudieron cargar conductores.');
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const reset = () => {
@@ -44,7 +75,7 @@ export default function FleetDriversPage() {
     setEditingId(null);
   };
 
-  const startEdit = (d: any) => {
+  const startEdit = (d: DriverRecord) => {
     setEditingId(d.id);
     setMsg(null);
     setError(null);
@@ -101,7 +132,7 @@ export default function FleetDriversPage() {
     }
   };
 
-  const toggleAvailability = async (d: any) => {
+  const toggleAvailability = async (d: DriverRecord) => {
     setMsg(null);
     setError(null);
     try {
@@ -129,26 +160,91 @@ export default function FleetDriversPage() {
       })
     : drivers;
 
+  const availableCount = drivers.filter((d) => d.is_available).length;
+  const fullPointsCount = drivers.filter((d) => (d.current_points ?? 30) >= 20).length;
+
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Flota</p>
-        <h1>Conductores</h1>
-        <p className="module-lead">
-          Registrar, editar y desactivar conductores con licencia.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Gestión de Flota"
+        badgeVariant="indigo"
+        title="Directorio de Choferes Institucionales"
+        description="Habilitación, control de puntos de licencia y turnos operativos de los conductores autorizados para la flota ULEAM."
+        metricValue={`${drivers.length ? Math.round((availableCount / drivers.length) * 100) : 100}%`}
+        metricLabel="DISPONIBILIDAD"
+        actionLabel="Nuevo Conductor"
+        onAction={() => reset()}
+      />
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Choferes"
+          value={drivers.length}
+          hint="Personal registrado"
+          icon={<User size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Habilitados"
+          value={availableCount}
+          hint="Listos para ruta"
+          icon={<UserCheck size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="Puntos Plenos"
+          value={fullPointsCount}
+          hint="≥ 20 puntos"
+          icon={<ShieldCheck size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="No Disponibles"
+          value={drivers.length - availableCount}
+          hint="En descanso o sanción"
+          icon={<UserX size={16} />}
+          tone={drivers.length - availableCount > 0 ? 'warn' : 'neutral'}
+        />
+      </div>
+
+      {/* Quick Resource Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <ResourceCard
+          title="Matriz de Disponibilidad"
+          subtitle="Seguimiento de turnos y comisiones en tiempo real"
+          icon={<UserCheck size={18} />}
+          href="/app/secretaria/disponibilidad"
+        />
+        <ResourceCard
+          title="Catálogo de Vehículos"
+          subtitle="Asignar y emparejar unidades vehiculares de flota"
+          icon={<User size={18} />}
+          href="/app/secretaria/flota/vehiculos"
+        />
+        <ResourceCard
+          title="Hojas de Ruta"
+          subtitle="Emitir comisiones y órdenes de movilización"
+          icon={<ShieldCheck size={18} />}
+          href="/app/secretaria/asignar"
+        />
+      </div>
+
       {msg && <div className="alert alert-success">{msg}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       <form
-        className="module-panel"
+        className="sgv-dark-form-card mb-6"
         onSubmit={(e) => void submit(e)}
-        style={{ marginBottom: 16 }}
       >
-        <h2 style={{ marginBottom: 16 }}>
-          {editingId ? 'Editar conductor' : 'Registrar nuevo conductor'}
-        </h2>
+        <div className="sgv-dark-form-header">
+          <h2 className="sgv-dark-form-title">
+            {editingId ? 'Editar conductor' : 'Registrar nuevo conductor'}
+          </h2>
+          <p className="sgv-dark-form-subtitle">
+            Credenciales institucionales, categoría de licencia y habilitación operativa
+          </p>
+        </div>
         <div
           style={{
             display: 'grid',
@@ -258,29 +354,38 @@ export default function FleetDriversPage() {
             </label>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-primary"
-            type="submit"
-            style={{ width: 'auto', padding: '14px 28px' }}
-          >
-            {editingId ? 'Guardar cambios' : 'Registrar conductor'}
-          </button>
+        <div className="sgv-dark-divider">
           {editingId && (
-            <button
-              className="btn btn-secondary"
+            <Button
+              variant="dark-cancel"
               type="button"
               onClick={reset}
-              style={{ width: 'auto', padding: '14px 28px' }}
+              fullWidth={false}
             >
               Cancelar
-            </button>
+            </Button>
           )}
+          <Button
+            variant="dark-submit"
+            type="submit"
+            fullWidth={false}
+          >
+            {editingId ? 'Guardar cambios' : 'Registrar conductor'}
+          </Button>
         </div>
       </form>
 
-      <div className="module-panel">
-        <h2>Conductores registrados</h2>
+      <div className="sgv-dark-table-card p-6">
+        <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
+          <div>
+            <h2 className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+              Conductores registrados
+            </h2>
+            <p className="font-mono text-xs text-slate-500 mt-0.5">
+              Nómina de choferes institucionales y estatus de disponibilidad
+            </p>
+          </div>
+        </div>
         <Input
           id="driver-search"
           label="Buscar conductor"
@@ -290,39 +395,72 @@ export default function FleetDriversPage() {
           icon={<Search size={18} aria-hidden="true" />}
           containerStyle={{ marginBottom: 16 }}
         />
-        <div style={{ overflowX: 'auto' }}>
-          <table className="ops-table" style={{ minWidth: 680 }}>
+        <div className="sgv-dark-table-wrapper">
+          <table className="sgv-dark-table">
             <thead>
               <tr>
-                <th>Nombre</th>
-                <th>Disponible</th>
+                <th>Conductor</th>
+                <th>Disponibilidad</th>
                 <th>Licencia</th>
-                <th>Acciones</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredDrivers.length > 0 ? (
-                filteredDrivers.map((d) => (
+                filteredDrivers.map((d, idx) => (
                   <tr key={d.id}>
                     <td>
-                      {d.user?.first_name || d.name} {d.user?.last_name}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`sgv-avatar-squircle ${
+                            idx % 3 === 0
+                              ? 'is-purple'
+                              : idx % 3 === 1
+                              ? 'is-mint'
+                              : 'is-amber'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <div>
+                          <span className="font-mono font-bold text-slate-900 block">
+                            {d.user?.first_name || d.name} {d.user?.last_name}
+                          </span>
+                          <span className="font-mono text-xs text-slate-500">
+                            {d.user?.email || d.national_id || '—'}
+                          </span>
+                        </div>
+                      </div>
                     </td>
-                    <td>{yesNo(d.is_available ?? d.is_selectable)}</td>
                     <td>
-                      {d.license_type || d.licenses?.[0]?.license_type || '—'}
+                      <span
+                        className={`sgv-pill-capsule ${
+                          d.is_available ? 'is-active' : 'is-suspended'
+                        }`}
+                      >
+                        {d.is_available ? 'Disponible' : 'No disponible'}
+                      </span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <span className="font-mono text-slate-700">
+                        {d.license_type || d.licenses?.[0]?.license_type || '—'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <div className="inline-flex gap-2 justify-end">
                         <button
-                          className="btn btn-secondary"
-                          style={actionBtn}
+                          className="btn-dark-cancel text-xs cursor-pointer"
+                          style={{ padding: '6px 12px' }}
                           onClick={() => startEdit(d)}
                         >
                           Editar
                         </button>
                         <button
-                          className={d.is_available ? 'btn btn-outline' : 'btn btn-success'}
-                          style={actionBtn}
+                          className={
+                            d.is_available
+                              ? 'btn-dark-cancel text-xs cursor-pointer'
+                              : 'btn-dark-submit text-xs cursor-pointer'
+                          }
+                          style={{ padding: '6px 12px' }}
                           onClick={() => void toggleAvailability(d)}
                         >
                           {d.is_available ? 'Desactivar' : 'Activar'}
@@ -333,7 +471,10 @@ export default function FleetDriversPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td
+                    colSpan={4}
+                    className="text-center py-8 font-mono text-slate-400 text-sm"
+                  >
                     {driverSearch.trim()
                       ? 'No se encontraron conductores con esa búsqueda.'
                       : 'No hay conductores registrados.'}

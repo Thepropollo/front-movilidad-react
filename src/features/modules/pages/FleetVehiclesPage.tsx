@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Car, ShieldCheck, Wrench, AlertTriangle } from 'lucide-react';
 import Input from '@/components/Input';
+import Button from '@/components/Button';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
 import {
   DOCUMENT_STATUS_META,
   EMPTY_VEHICLE_DOCUMENTS,
@@ -10,7 +12,23 @@ import {
   getVehicleDocument,
   type VehicleDocumentDraft,
   type VehicleDocumentType,
+  type VehicleDocument,
 } from '../vehicleDocuments';
+
+interface VehicleRecord {
+  id: number;
+  plate: string;
+  brand: string;
+  model: string;
+  year: number;
+  color?: string;
+  fuel_type?: string;
+  current_mileage?: number;
+  next_oil_change_mileage?: number;
+  operational_status: string;
+  registration_number?: string;
+  documents?: Record<string, VehicleDocument>;
+}
 
 const empty = {
   plate: '',
@@ -25,14 +43,8 @@ const empty = {
   registration_number: '',
 };
 
-const actionBtn: React.CSSProperties = {
-  width: 'auto',
-  padding: '8px 16px',
-  fontSize: 14,
-};
-
 export default function FleetVehiclesPage() {
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleRecord[]>([]);
   const [form, setForm] = useState(empty);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -46,7 +58,22 @@ export default function FleetVehiclesPage() {
   };
 
   useEffect(() => {
-    void load().catch(() => setError('No se pudieron cargar vehículos.'));
+    let ignore = false;
+    modulesApi
+      .vehicles()
+      .then(({ data }) => {
+        if (!ignore) {
+          setVehicles(data || []);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setError('No se pudieron cargar vehículos.');
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const reset = () => {
@@ -55,7 +82,7 @@ export default function FleetVehiclesPage() {
     setEditingId(null);
   };
 
-  const startEdit = (v: any) => {
+  const startEdit = (v: VehicleRecord) => {
     setEditingId(v.id);
     setMsg(null);
     setError(null);
@@ -147,7 +174,7 @@ export default function FleetVehiclesPage() {
     }
   };
 
-  const toggleStatus = async (v: any) => {
+  const toggleStatus = async (v: VehicleRecord) => {
     setMsg(null);
     setError(null);
     const nextStatus = v.operational_status === 'inactivo' ? 'disponible' : 'inactivo';
@@ -172,26 +199,94 @@ export default function FleetVehiclesPage() {
       )
     : vehicles;
 
+  const availableCount = vehicles.filter((v) => v.operational_status === 'disponible').length;
+  const maintenanceCount = vehicles.filter((v) =>
+    ['en_taller', 'mantenimiento', 'bloqueado_aceite'].includes(v.operational_status)
+  ).length;
+  const inactiveCount = vehicles.filter((v) => v.operational_status === 'inactivo').length;
+
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Flota</p>
-        <h1>Vehículos</h1>
-        <p className="module-lead">
-          Registrar vehículos y mantener al día sus permisos, revisión técnica y matrícula.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Flota Institucional"
+        badgeVariant="indigo"
+        title="Inventario y Control de Flota Vehicular"
+        description="Parque automotor institucional, control de kilometraje, estado de operatividad y permisos de circulación técnica."
+        metricValue={`${vehicles.length ? Math.round((availableCount / vehicles.length) * 100) : 100}%`}
+        metricLabel="OPERATIVIDAD"
+        actionLabel="Registrar Unidad"
+        onAction={() => reset()}
+      />
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Unidades"
+          value={vehicles.length}
+          hint="Parque automotor"
+          icon={<Car size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Operativos"
+          value={availableCount}
+          hint="Listos para ruta"
+          icon={<ShieldCheck size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="En Taller / Aceite"
+          value={maintenanceCount}
+          hint="Revisión técnica"
+          icon={<Wrench size={16} />}
+          tone={maintenanceCount > 0 ? 'warn' : 'neutral'}
+        />
+        <StatCard
+          label="Inactivos"
+          value={inactiveCount}
+          hint="Fuera de servicio"
+          icon={<AlertTriangle size={16} />}
+          tone={inactiveCount > 0 ? 'danger' : 'neutral'}
+        />
+      </div>
+
+      {/* Quick Resource Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <ResourceCard
+          title="Auditoría Documental"
+          subtitle="Monitoreo de SOAT, matrículas y vigencias"
+          icon={<ShieldCheck size={18} />}
+          href="/app/secretaria/flota/estado"
+        />
+        <ResourceCard
+          title="Matriz de Disponibilidad"
+          subtitle="Ver qué choferes y autos están libres hoy"
+          icon={<Car size={18} />}
+          href="/app/secretaria/disponibilidad"
+        />
+        <ResourceCard
+          title="Taller de Mantenimiento"
+          subtitle="Libro de novedades y órdenes mecánicas"
+          icon={<Wrench size={18} />}
+          href="/app/secretaria/taller"
+        />
+      </div>
+
       {msg && <div className="alert alert-success">{msg}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       <form
-        className="module-panel"
+        className="sgv-dark-form-card mb-6"
         onSubmit={(e) => void submit(e)}
-        style={{ marginBottom: 16 }}
       >
-        <h2 style={{ marginBottom: 16 }}>
-          {editingId ? 'Editar vehículo' : 'Registrar nuevo vehículo'}
-        </h2>
+        <div className="sgv-dark-form-header">
+          <h2 className="sgv-dark-form-title">
+            {editingId ? 'Editar vehículo' : 'Registrar nuevo vehículo'}
+          </h2>
+          <p className="sgv-dark-form-subtitle">
+            Ingresa las especificaciones mecánicas y vigencia de permisos de la unidad
+          </p>
+        </div>
         <div
           style={{
             display: 'grid',
@@ -347,29 +442,38 @@ export default function FleetVehiclesPage() {
             ))}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-primary"
-            type="submit"
-            style={{ width: 'auto', padding: '14px 28px' }}
-          >
-            {editingId ? 'Guardar cambios' : 'Registrar vehículo'}
-          </button>
+        <div className="sgv-dark-divider">
           {editingId && (
-            <button
-              className="btn btn-secondary"
+            <Button
+              variant="dark-cancel"
               type="button"
               onClick={reset}
-              style={{ width: 'auto', padding: '14px 28px' }}
+              fullWidth={false}
             >
               Cancelar
-            </button>
+            </Button>
           )}
+          <Button
+            variant="dark-submit"
+            type="submit"
+            fullWidth={false}
+          >
+            {editingId ? 'Guardar cambios' : 'Registrar vehículo'}
+          </Button>
         </div>
       </form>
 
-      <div className="module-panel">
-        <h2>Vehículos registrados</h2>
+      <div className="sgv-dark-table-card p-6">
+        <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
+          <div>
+            <h2 className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+              Vehículos registrados
+            </h2>
+            <p className="font-mono text-xs text-slate-500 mt-0.5">
+              Inventario de la flota vehicular y vigencia documental
+            </p>
+          </div>
+        </div>
         <Input
           id="vehicle-search"
           label="Buscar vehículo"
@@ -379,8 +483,8 @@ export default function FleetVehiclesPage() {
           icon={<Search size={18} aria-hidden="true" />}
           containerStyle={{ marginBottom: 16 }}
         />
-        <div style={{ overflowX: 'auto' }}>
-          <table className="ops-table" style={{ minWidth: 780 }}>
+        <div className="sgv-dark-table-wrapper">
+          <table className="sgv-dark-table">
             <thead>
               <tr>
                 <th>Placa</th>
@@ -388,56 +492,64 @@ export default function FleetVehiclesPage() {
                 {VEHICLE_DOCUMENT_TYPES.map(({ type, shortLabel }) => (
                   <th key={type}>{shortLabel}</th>
                 ))}
-                <th>Acciones</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredVehicles.length > 0 ? (
-                filteredVehicles.map((v) => (
+                filteredVehicles.map((v, idx) => (
                   <tr key={v.id}>
-                    <td>{v.plate}</td>
+                    <td className="font-mono font-bold text-slate-900">{v.plate}</td>
                     <td>
-                      {v.brand} {v.model}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`sgv-avatar-squircle ${
+                            idx % 3 === 0
+                              ? 'is-mint'
+                              : idx % 3 === 1
+                              ? 'is-lavender'
+                              : 'is-amber'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <div>
+                          <span className="font-mono font-semibold text-slate-900 block">
+                            {v.brand} {v.model}
+                          </span>
+                          <span className="font-mono text-xs text-slate-500">
+                            Año {v.year} · {v.color}
+                          </span>
+                        </div>
+                      </div>
                     </td>
                     {VEHICLE_DOCUMENT_TYPES.map(({ type }) => {
                       const status = getDocumentStatus(v, type);
                       const meta = DOCUMENT_STATUS_META[status] ?? DOCUMENT_STATUS_META.missing;
                       const document = getVehicleDocument(v, type);
+                      const pillTone =
+                        status === 'valid'
+                          ? 'is-active'
+                          : status === 'expiring'
+                          ? 'is-warn'
+                          : 'is-danger';
                       return (
                         <td key={type}>
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              padding: '4px 8px',
-                              borderRadius: 999,
-                              color: meta.color,
-                              background: meta.background,
-                              fontSize: 12,
-                              fontWeight: 700,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
+                          <span className={`sgv-pill-capsule ${pillTone}`}>
                             {meta.label}
                           </span>
                           {document?.expiration_date && (
-                            <small
-                              style={{
-                                display: 'block',
-                                marginTop: 4,
-                                color: 'var(--text-muted)',
-                              }}
-                            >
+                            <small className="block font-mono text-[11px] text-slate-500 mt-1">
                               Vence: {document.expiration_date}
                             </small>
                           )}
                         </td>
                       );
                     })}
-                    <td>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <td className="text-right">
+                      <div className="inline-flex gap-2 justify-end">
                         <button
-                          className="btn btn-secondary"
-                          style={actionBtn}
+                          className="btn-dark-cancel text-xs cursor-pointer"
+                          style={{ padding: '6px 12px' }}
                           onClick={() => startEdit(v)}
                         >
                           Editar
@@ -445,10 +557,10 @@ export default function FleetVehiclesPage() {
                         <button
                           className={
                             v.operational_status === 'inactivo'
-                              ? 'btn btn-success'
-                              : 'btn btn-outline'
+                              ? 'btn-dark-submit text-xs cursor-pointer'
+                              : 'btn-dark-cancel text-xs cursor-pointer'
                           }
-                          style={actionBtn}
+                          style={{ padding: '6px 12px' }}
                           onClick={() => void toggleStatus(v)}
                         >
                           {v.operational_status === 'inactivo'
@@ -461,7 +573,10 @@ export default function FleetVehiclesPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td
+                    colSpan={3 + VEHICLE_DOCUMENT_TYPES.length}
+                    className="text-center py-8 font-mono text-slate-400 text-sm"
+                  >
                     {vehicleSearch.trim()
                       ? 'No se encontraron vehículos con esa búsqueda.'
                       : 'No hay vehículos registrados.'}

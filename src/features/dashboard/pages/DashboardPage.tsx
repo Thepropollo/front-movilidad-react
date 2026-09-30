@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Power,
   User,
@@ -8,11 +8,60 @@ import {
   FileText,
   Car,
   CheckSquare,
+  Calendar,
+  Wrench,
+  Fuel,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import api from '@/services/api';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
+
+type DashboardData = {
+  title: string;
+  subtitle: string;
+  kpis: Array<{
+    key: string;
+    label: string;
+    value: number | string;
+    tone: 'ok' | 'warn' | 'danger' | 'info';
+    href?: string;
+    hint?: string;
+  }>;
+  queue: Array<{
+    key: string;
+    label: string;
+    value: number;
+    href: string;
+    hint?: string;
+  }>;
+};
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const [dashData, setDashData] = useState<DashboardData | null>(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+    api
+      .get('/dashboard/metrics')
+      .then(({ data }) => {
+        if (!ignore) {
+          setDashData(data);
+        }
+      })
+      .catch((err) => {
+        console.error('Error al cargar métricas del dashboard:', err);
+      })
+      .finally(() => {
+        if (!ignore) setLoadingMetrics(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -20,13 +69,6 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
-  };
-
-  // Valores mock de métricas para la demostración de la lógica dinámica
-  const metrics = {
-    pendientes: 0,
-    operativos: 0,
-    activas: 0,
   };
 
   return (
@@ -55,6 +97,25 @@ const Dashboard: React.FC = () => {
           <span>Cerrar Sesión</span>
         </button>
       </header>
+
+      {/* Hero Metric Banner Card */}
+      <div className="mb-8">
+        <HeroMetricCard
+          headline="Bienvenido al Sistema de Gestión Vehicular"
+          author={`${user?.first_name || ''} ${user?.last_name || ''} · ${user?.role?.name || 'Usuario'} · ${user?.faculty_institution || 'ULEAM'}`}
+          tag={{
+            icon: <Shield size={13} />,
+            label: `Rol: ${user?.role?.name || 'Usuario'}`,
+          }}
+          metricValue={
+            dashData?.kpis?.[0]
+              ? String(dashData.kpis[0].value)
+              : (loadingMetrics ? '...' : '0')
+          }
+          metricLabel={dashData?.kpis?.[0]?.label.toUpperCase() || 'TAREAS PENDIENTES'}
+          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+        />
+      </div>
 
       <h2
         style={{
@@ -330,63 +391,116 @@ const Dashboard: React.FC = () => {
         Métricas del Sistema
       </h2>
 
-      <div className="grid-3">
-        <div className="glass-panel info-card">
-          <div className="info-card-header">
-            <FileText size={20} />
-            <h3>Solicitudes</h3>
-          </div>
-          <p>
-            {metrics.pendientes}{' '}
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 'normal',
-                color: 'var(--text-muted)',
-              }}
-            >
-              {metrics.pendientes === 1 ? 'Pendiente' : 'Pendientes'}
-            </span>
-          </p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {dashData?.kpis && dashData.kpis.length > 0 ? (
+          dashData.kpis.map((kpi) => (
+            <StatCard
+              key={kpi.key}
+              label={kpi.label}
+              value={kpi.value}
+              hint={kpi.hint || 'Actualizado en tiempo real'}
+              tone={kpi.tone || 'info'}
+              href={kpi.href}
+            />
+          ))
+        ) : (
+          <>
+            <StatCard
+              label="Solicitudes"
+              value={loadingMetrics ? '...' : 0}
+              hint="En espera de atención"
+              icon={<FileText size={16} />}
+              tone="info"
+              href="/app/solicitudes"
+            />
+            <StatCard
+              label="Vehículos"
+              value={loadingMetrics ? '...' : 0}
+              hint="Operativos en flota"
+              icon={<Car size={16} />}
+              tone="ok"
+              href="/app/flota/vehiculos"
+            />
+            <StatCard
+              label="Órdenes de Trabajo"
+              value={loadingMetrics ? '...' : 0}
+              hint="En taller y mantenimiento"
+              icon={<CheckSquare size={16} />}
+              tone="neutral"
+              href="/app/mantenimiento"
+            />
+            <StatCard
+              label="Alertas Operativas"
+              value={loadingMetrics ? '...' : 0}
+              hint="Novedades activas"
+              icon={<AlertTriangle size={16} />}
+              tone="warn"
+              href="/app/novedades"
+            />
+          </>
+        )}
+      </div>
 
-        <div className="glass-panel info-card">
-          <div className="info-card-header">
-            <Car size={20} />
-            <h3>Vehículos</h3>
-          </div>
-          <p>
-            {metrics.operativos}{' '}
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 'normal',
-                color: 'var(--text-muted)',
-              }}
-            >
-              {metrics.operativos === 1 ? 'Operativo' : 'Operativos'}
-            </span>
-          </p>
-        </div>
+      <h2
+        style={{
+          fontSize: '18px',
+          fontWeight: 600,
+          color: 'var(--color-primary)',
+          marginBottom: '16px',
+          textAlign: 'left',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}
+      >
+        <span
+          style={{
+            width: '10px',
+            height: '10px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--color-secondary)',
+          }}
+        ></span>
+        Accesos Operativos Rápidos
+      </h2>
 
-        <div className="glass-panel info-card">
-          <div className="info-card-header">
-            <CheckSquare size={20} />
-            <h3>Órdenes</h3>
-          </div>
-          <p>
-            {metrics.activas}{' '}
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 'normal',
-                color: 'var(--text-muted)',
-              }}
-            >
-              {metrics.activas === 1 ? 'Activa' : 'Activas'}
-            </span>
-          </p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ResourceCard
+          title="Emisión de Hojas de Ruta"
+          subtitle="Asignación logística y despacho de comisiones"
+          icon={<FileText size={18} />}
+          href="/transporte/panel"
+        />
+        <ResourceCard
+          title="Agenda Institucional"
+          subtitle="Calendario de salidas y disponibilidad vehicular"
+          icon={<Calendar size={18} />}
+          href="/agenda"
+        />
+        <ResourceCard
+          title="Taller de Mantenimiento"
+          subtitle="Diagnósticos técnicos y repuestos de flota"
+          icon={<Wrench size={18} />}
+          href="/transporte/taller"
+        />
+        <ResourceCard
+          title="Vales de Combustible"
+          subtitle="Emisión y auditoría de recargas de combustible"
+          icon={<Fuel size={18} />}
+          href="/transporte/vales-combustible"
+        />
+        <ResourceCard
+          title="Auditoría y Liquidaciones"
+          subtitle="Aprobación de liquidaciones y comprobantes post-viaje"
+          icon={<Shield size={18} />}
+          href="/transporte/liquidaciones-auditoria"
+        />
+        <ResourceCard
+          title="Parque Automotor"
+          subtitle="Catálogo de vehículos, SOAT y matrículas"
+          icon={<Car size={18} />}
+          href="/transporte/vehiculos"
+        />
       </div>
     </div>
   );

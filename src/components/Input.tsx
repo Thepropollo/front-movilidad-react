@@ -31,8 +31,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         style={containerStyle}
       >
         {label && (
-            <label htmlFor={inputId} className="form-label">
+          <label htmlFor={inputId} className="form-label">
             {label}
+            {props.required && (
+              <span className="form-required-asterisk" aria-hidden="true">
+                *
+              </span>
+            )}
           </label>
         )}
         <div className="input-container">

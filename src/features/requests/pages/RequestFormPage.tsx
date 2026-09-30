@@ -19,6 +19,12 @@ import Modal from '@/components/Modal';
 import { formatDateReadable } from '@/lib/datetime';
 import { geocodePlace } from '@/lib/geo';
 import { MOBILIZATION_TYPE_LABEL, REQUEST_STATUS_LABEL, labelOf } from '@/lib/labels';
+import ProcessPhaseLine, {
+  type ProcessPhase,
+} from '@/features/shared/ProcessPhaseLine';
+import { useAlerts } from '@/context/AlertsContext';
+import { useAuth } from '@/context/AuthContext';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
 
 interface RequestData {
   id: number;
@@ -34,9 +40,13 @@ interface RequestData {
   estimated_days: number;
   projected_cost: number;
   status: string;
+  phases?: ProcessPhase[];
 }
 
 const RequestForm: React.FC = () => {
+  const { refresh: refreshAlerts } = useAlerts();
+  const { roleIds } = useAuth();
+  const isFacultyRequest = roleIds.includes('responsable_facultad') && !roleIds.includes('docente');
   // Form fields
   const [mobilizationType, setMobilizationType] = useState<string>('interna');
   const [origin, setOrigin] = useState<string>('MANTA');
@@ -64,11 +74,23 @@ const RequestForm: React.FC = () => {
   // UI state
   const [loading, setLoading] = useState<boolean>(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [errors, setErrors] = useState<any>(null);
+  const [errors, setErrors] = useState<Record<string, string[]> | null>(null);
 
   // Modal / pre-calculation state
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [preCalcData, setPreCalcData] = useState<any>(null);
+  const [preCalcData, setPreCalcData] = useState<{
+    message?: string;
+    requires_confirmation?: boolean;
+    estimated_days?: number;
+    projected_cost?: number;
+    calculation_details?: {
+      daily_rate?: number;
+      extra_hours_cost?: number;
+      fuel_estimate?: number;
+      subtotal?: number;
+    };
+    request?: RequestData;
+  } | null>(null);
 
   // Past requests
   const [pastRequests, setPastRequests] = useState<RequestData[]>([]);
@@ -84,7 +106,18 @@ const RequestForm: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchRequests();
+    let ignore = false;
+    api
+      .get('/solicitudes')
+      .then((response) => {
+        if (!ignore) setPastRequests(response.data);
+      })
+      .catch((err) => {
+        console.error('Error al obtener solicitudes:', err);
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const requestPayload = (fundsAccepted: boolean) => ({
@@ -154,13 +187,21 @@ const RequestForm: React.FC = () => {
         setPreCalcData(response.data);
         setShowModal(true);
       }
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.errors) {
-        setErrors(err.response.data.errors);
+    } catch (err: unknown) {
+      const apiErr = err as {
+        response?: {
+          data?: {
+            errors?: Record<string, string[]>;
+            message?: string;
+          };
+        };
+      };
+      if (apiErr.response?.data?.errors) {
+        setErrors(apiErr.response.data.errors);
       } else {
         setErrors({
           general: [
-            err.response?.data?.message || 'Error al procesar la solicitud',
+            apiErr.response?.data?.message || 'Error al procesar la solicitud',
           ],
         });
       }
@@ -178,6 +219,7 @@ const RequestForm: React.FC = () => {
       const response = await api.post('/solicitudes', requestPayload(true));
 
       setSuccessMsg(response.data.message);
+      refreshAlerts();
       // Reset form
       setDestination('');
       setTravelReason('');
@@ -191,14 +233,22 @@ const RequestForm: React.FC = () => {
       setShowDestinationMap(false);
 
       // Refresh requests list
-      fetchRequests();
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.errors) {
-        setErrors(err.response.data.errors);
+      void fetchRequests();
+    } catch (err: unknown) {
+      const apiErr = err as {
+        response?: {
+          data?: {
+            errors?: Record<string, string[]>;
+            message?: string;
+          };
+        };
+      };
+      if (apiErr.response?.data?.errors) {
+        setErrors(apiErr.response.data.errors);
       } else {
         setErrors({
           general: [
-            err.response?.data?.message || 'Error al procesar la solicitud',
+            apiErr.response?.data?.message || 'Error al procesar la solicitud',
           ],
         });
       }
@@ -207,42 +257,94 @@ const RequestForm: React.FC = () => {
     }
   };
 
-  const STATUS_BADGE: Record<string, string> = {
-    pendiente: 'bg-blue-100 text-blue-800',
-    pendiente_secretaria: 'bg-blue-100 text-blue-800',
-    pendiente_rectorado: 'bg-amber-100 text-amber-900',
-    autorizada_secretaria: 'bg-blue-100 text-blue-800',
-    aprobado_rectorado: 'bg-purple-100 text-purple-800',
-    aprobada: 'bg-green-100 text-green-800',
-    rechazada: 'bg-red-100 text-red-800',
+  const getStatusBadge = (status: string) => {
+    let toneClass = 'is-invited';
+    if (status.includes('aprob') || status === 'autorizada_secretaria') toneClass = 'is-active';
+    else if (status.includes('pend')) toneClass = 'is-suspended';
+    else if (status.includes('rechaz')) toneClass = 'is-danger';
+    else if (status.includes('viaje')) toneClass = 'is-invited';
+
+    return (
+      <span className={`sgv-pill-capsule ${toneClass}`}>
+        {labelOf(REQUEST_STATUS_LABEL, status)}
+      </span>
+    );
   };
 
-  const getStatusBadge = (status: string) => (
-    <span
-      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-        STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-800'
-      }`}
-    >
-      {labelOf(REQUEST_STATUS_LABEL, status)}
-    </span>
-  );
+  const approvedCount = pastRequests.filter((r) =>
+    ['aprobada_secretaria', 'aprobada_rector', 'asignada', 'en_ruta', 'finalizada'].includes(r.status)
+  ).length;
+  const pendingCount = pastRequests.filter((r) =>
+    ['pendiente_secretaria', 'pendiente_rector'].includes(r.status)
+  ).length;
+  const projectedCostSum = pastRequests.reduce((sum, r) => sum + (Number(r.projected_cost) || 0), 0);
 
   return (
     <div
-      className="operational-page request-page glass-panel wide-container mx-auto"
+      className="operational-page request-page wide-container mx-auto flex flex-col gap-6"
       style={{ textAlign: 'left' }}
     >
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-primary flex items-center gap-2">
-            <FileText className="text-secondary" size={28} />
-            Solicitud de Movilización
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Registra tu comisión de servicio y simula los viáticos proyectados.
-          </p>
-        </div>
+      <HeroMetricCard
+        badge="Solicitudes y Viáticos"
+        badgeVariant="indigo"
+        title="Solicitud Oficial de Movilización y Simulación"
+        description="Registre su requerimiento de movilización académica o administrativa. El sistema proyecta automáticamente los costos de comisión, viáticos fuera de sede y valida la disponibilidad institucional."
+        metricValue={String(pastRequests.length)}
+        metricLabel="MIS SOLICITUDES"
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Solicitudes"
+          value={pastRequests.length}
+          tone="info"
+          icon={<FileText size={18} />}
+          hint="Historial acumulado de comisiones"
+        />
+        <StatCard
+          label="En Revisión"
+          value={pendingCount}
+          tone={pendingCount > 0 ? 'warn' : 'neutral'}
+          icon={<AlertTriangle size={18} />}
+          hint={pendingCount > 0 ? 'Pendiente Secretaría / Rectorado' : 'Sin solicitudes en cola'}
+        />
+        <StatCard
+          label="Aprobadas / Activas"
+          value={approvedCount}
+          tone="ok"
+          icon={<CheckCircle size={18} />}
+          hint="Con autorización institucional"
+        />
+        <StatCard
+          label="Viáticos Proyectados"
+          value={`$${projectedCostSum.toFixed(2)}`}
+          tone="neutral"
+          icon={<Calendar size={18} />}
+          hint="Cálculo acumulado de comisiones"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <ResourceCard
+          title="Mis solicitudes"
+          description="Consulte el estado de las solicitudes de su unidad."
+          icon={<Calendar size={20} />}
+          href={isFacultyRequest ? '/app/facultad/solicitudes' : '/app/docente/historial'}
+        />
+        {!isFacultyRequest && (
+          <ResourceCard
+            title="Liquidación Docente"
+            description="Consulte el proceso disponible para comisiones finalizadas."
+            icon={<FileCheck2 size={20} />}
+            href="/app/docente/liquidar"
+          />
+        )}
+        <ResourceCard
+          title="Documentos y Normativa"
+          description="Descargue reglamentos, formularios PST-01 y resoluciones vigentes."
+          icon={<FileText size={20} />}
+          href={isFacultyRequest ? '/app/facultad/documentos' : '/app/docente/documentos'}
+        />
       </div>
 
       {successMsg && (
@@ -282,54 +384,47 @@ const RequestForm: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Form panel */}
-        <div className="lg:col-span-6 glass-panel p-8 self-start bg-white">
-          <h2 className="text-xl font-bold text-primary mb-6 border-b pb-2">
-            Datos del Viaje
-          </h2>
+        <div className="lg:col-span-6 sgv-dark-form-card self-start">
+          <div className="sgv-dark-form-header">
+            <h2 className="sgv-dark-form-title">Datos del Viaje</h2>
+            <p className="sgv-dark-form-subtitle">
+              Ingresa los detalles de tu comisión de servicio institucional para simular viáticos
+            </p>
+          </div>
 
           <form onSubmit={handleSimulate} className="space-y-4">
             <div className="form-group">
               <label className="form-label">Tipo de movilización</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setMobilizationType('interna')}
-                  className={`flex flex-col items-center gap-1 rounded-xl border p-4 text-left transition-all cursor-pointer ${
-                    mobilizationType === 'interna'
-                      ? 'border-secondary bg-secondary/10 ring-1 ring-secondary'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  className={`sgv-choice-card ${
+                    mobilizationType === 'interna' ? 'is-selected' : ''
                   }`}
                 >
-                  <Car
-                    size={22}
-                    className={
-                      mobilizationType === 'interna'
-                        ? 'text-secondary'
-                        : 'text-gray-400'
-                    }
-                  />
-                  <span className="font-bold text-primary text-sm">Interna</span>
-                  <span className="text-xs text-muted">Provincial</span>
+                  <div className="sgv-choice-icon" aria-hidden="true">
+                    <Car size={22} />
+                  </div>
+                  <div className="sgv-choice-body">
+                    <strong>Movilización Interna</strong>
+                    <span>Comisión dentro de Manabí</span>
+                  </div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setMobilizationType('externa')}
-                  className={`flex flex-col items-center gap-1 rounded-xl border p-4 text-left transition-all cursor-pointer ${
-                    mobilizationType === 'externa'
-                      ? 'border-secondary bg-secondary/10 ring-1 ring-secondary'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  className={`sgv-choice-card ${
+                    mobilizationType === 'externa' ? 'is-selected' : ''
                   }`}
                 >
-                  <Plane
-                    size={22}
-                    className={
-                      mobilizationType === 'externa'
-                        ? 'text-secondary'
-                        : 'text-gray-400'
-                    }
-                  />
-                  <span className="font-bold text-primary text-sm">Externa</span>
-                  <span className="text-xs text-muted">Fuera de la provincia</span>
+                  <div className="sgv-choice-icon" aria-hidden="true">
+                    <Plane size={22} />
+                  </div>
+                  <div className="sgv-choice-body">
+                    <strong>Comisión Externa</strong>
+                    <span>Fuera de provincia · Requiere Rectorado</span>
+                  </div>
                 </button>
               </div>
             </div>
@@ -367,7 +462,7 @@ const RequestForm: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  className="btn btn-outline destination-map-toggle"
+                  className="btn-dark-cancel destination-map-toggle text-xs"
                   onClick={() => {
                     setShowDestinationMap((visible) => !visible);
                     setLocationError(null);
@@ -395,7 +490,7 @@ const RequestForm: React.FC = () => {
                     />
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="dark-cancel"
                       fullWidth={false}
                       isLoading={locatingDestination}
                       onClick={() => void locateDestination()}
@@ -414,7 +509,7 @@ const RequestForm: React.FC = () => {
                     height={240}
                   />
                   {destinationPoint.lat !== null && destinationPoint.lng !== null && (
-                    <p className="destination-coordinates">
+                    <p className="destination-coordinates font-mono text-xs text-slate-400">
                       Punto seleccionado: {destinationPoint.lat.toFixed(6)},{' '}
                       {destinationPoint.lng.toFixed(6)}
                     </p>
@@ -547,88 +642,123 @@ const RequestForm: React.FC = () => {
               </select>
             </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={loading}
-              icon={<FileCheck2 size={16} />}
-              style={{ width: '100%', marginTop: '12px' }}
-            >
-              Registrar y Simular
-            </Button>
+            <div className="sgv-dark-divider">
+              <Button
+                type="button"
+                variant="dark-cancel"
+                fullWidth={false}
+                onClick={() => {
+                  setDestination('');
+                  setTravelReason('');
+                  setDepartureDate('');
+                  setDepartureTime('');
+                  setReturnDate('');
+                  setReturnTime('');
+                  setOrigin('MANTA');
+                  setDestinationAddress('');
+                }}
+              >
+                Limpiar
+              </Button>
+              <Button
+                type="submit"
+                variant="dark-submit"
+                fullWidth={false}
+                isLoading={loading}
+                icon={<FileCheck2 size={16} />}
+              >
+                Registrar y Simular
+              </Button>
+            </div>
           </form>
         </div>
 
         {/* List panel */}
-        <div className="lg:col-span-6 glass-panel p-8 bg-white">
-          <div className="flex justify-between items-center mb-6 border-b pb-2">
-            <h2 className="text-xl font-bold text-primary">
-              Historial de Solicitudes
-            </h2>
-             <button
-               onClick={fetchRequests}
-               className="text-gray-400 hover:text-secondary transition"
-               title="Actualizar listado"
-               aria-label="Actualizar historial de solicitudes"
-             >
+        <div className="lg:col-span-6 sgv-dark-table-card p-6 sm:p-8 self-start">
+          <div className="flex justify-between items-center mb-6 pb-3 border-b border-slate-200">
+            <div>
+              <h2 className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+                Historial de Solicitudes
+              </h2>
+              <p className="font-mono text-xs text-slate-500 mt-1">
+                Registro cronológico de comisiones solicitadas
+              </p>
+            </div>
+            <button
+              onClick={fetchRequests}
+              className="p-2 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+              title="Actualizar listado"
+              aria-label="Actualizar historial de solicitudes"
+            >
               <RefreshCw size={18} />
             </button>
           </div>
 
           {pastRequests.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="mx-auto text-gray-300 mb-4" size={48} />
-              <p className="text-gray-500 font-medium">
+              <FileText className="mx-auto text-slate-300 mb-4" size={48} />
+              <p className="font-mono text-slate-600 font-medium">
                 Aún no has registrado solicitudes de movilización.
               </p>
-              <p className="text-gray-400 text-sm mt-1">
-                Completa el formulario de la izquierda para ingresar tu primera
-                solicitud.
+              <p className="font-mono text-slate-400 text-xs mt-1">
+                Completa el formulario de la izquierda para ingresar tu primera solicitud.
               </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {pastRequests.map((req) => (
-                <div
-                  key={req.id}
-                  className="rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition bg-gray-50/40"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-bold text-primary text-sm flex items-center gap-2">
-                        {req.origin}
-                        <ArrowRight size={14} className="text-gray-400 shrink-0" />
-                        {req.destination}
-                      </p>
-                       <p className="text-xs text-gray-500 mt-1">
-                        <Calendar size={12} className="inline mr-1" />
-                        {formatDateReadable(req.departure_date)}
-                        {req.departure_time ? ` · ${req.departure_time}` : ''}
-                        <span className="mx-1">→</span>
-                        {formatDateReadable(req.return_date)}
-                        {req.return_time ? ` · ${req.return_time}` : ''}
-                        <span className="mx-1">·</span>
-                         {req.estimated_days} d
-                       </p>
-                       {req.destination_address && (
-                         <p className="text-xs text-gray-500 mt-1 flex items-start gap-1">
-                           <MapPin size={12} className="mt-0.5 shrink-0" />
-                           <span>{req.destination_address}</span>
-                         </p>
-                       )}
+              {pastRequests.map((req, idx) => {
+                const squircleColors = ['is-mint', 'is-lavender', 'is-purple', 'is-amber', 'is-blue'];
+                const avatarVariant = squircleColors[idx % squircleColors.length];
+                return (
+                  <div
+                    key={req.id}
+                    className="rounded-xl border border-slate-200 p-4 hover:border-slate-300 transition bg-slate-50/50 hover:bg-slate-50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className={`sgv-avatar-squircle ${avatarVariant} mt-0.5`} aria-hidden="true" />
+                        <div className="min-w-0">
+                          <p className="font-mono font-bold text-slate-900 text-sm flex items-center gap-2">
+                            {req.origin}
+                            <ArrowRight size={14} className="text-slate-400 shrink-0" />
+                            {req.destination}
+                          </p>
+                          <p className="font-mono text-xs text-slate-500 mt-1">
+                            <Calendar size={12} className="inline mr-1 text-slate-400" />
+                            {formatDateReadable(req.departure_date)}
+                            {req.departure_time ? ` · ${req.departure_time}` : ''}
+                            <span className="mx-1 text-slate-300">→</span>
+                            {formatDateReadable(req.return_date)}
+                            {req.return_time ? ` · ${req.return_time}` : ''}
+                            <span className="mx-1 text-slate-300">·</span>
+                            {req.estimated_days} d
+                          </p>
+                          {req.destination_address && (
+                            <p className="font-mono text-xs text-slate-500 mt-1 flex items-start gap-1">
+                              <MapPin size={12} className="mt-0.5 shrink-0 text-slate-400" />
+                              <span className="truncate">{req.destination_address}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div>{getStatusBadge(req.status)}</div>
                     </div>
-                    {getStatusBadge(req.status)}
+                    {req.phases && req.phases.length > 0 && (
+                      <div className="mt-3">
+                        <ProcessPhaseLine phases={req.phases} compact />
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
+                      <span className="font-mono text-xs text-slate-500 uppercase">
+                        {labelOf(MOBILIZATION_TYPE_LABEL, req.mobilization_type)}
+                      </span>
+                      <span className="font-mono font-bold text-emerald-600 text-sm">
+                        ${Number(req.projected_cost).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                    <span className="text-xs text-gray-500">
-                      {labelOf(MOBILIZATION_TYPE_LABEL, req.mobilization_type)}
-                    </span>
-                    <span className="font-bold text-primary text-sm">
-                      ${Number(req.projected_cost).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -642,113 +772,48 @@ const RequestForm: React.FC = () => {
         footer={
           <>
             <Button
-              variant="secondary"
+              variant="dark-cancel"
               onClick={() => setShowModal(false)}
-              style={{ width: 'auto' }}
+              fullWidth={false}
             >
               Cancelar y Editar
             </Button>
             <Button
-              variant="gold"
+              variant="dark-submit"
               onClick={handleConfirm}
-              style={{ width: 'auto' }}
+              fullWidth={false}
             >
               Confirmar y Declarar
             </Button>
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div
-            style={{
-              display: 'flex',
-              gap: '12px',
-              alignItems: 'center',
-              backgroundColor: '#fffbeb',
-              border: '1px solid #fef3c7',
-              padding: '12px',
-              borderRadius: '8px',
-            }}
-          >
-            <AlertTriangle className="text-amber-600 shrink-0" size={24} />
-            <div>
-              <p
-                style={{
-                  fontSize: '13px',
-                  color: '#92400e',
-                  margin: 0,
-                  fontWeight: 700,
-                }}
-              >
-                Revisión de costos estimados de viáticos
-              </p>
-            </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3 p-3 bg-amber-50/90 border border-amber-200/80 rounded-xl">
+            <AlertTriangle className="text-amber-600 shrink-0" size={22} aria-hidden="true" />
+            <p className="text-xs font-bold text-amber-900 m-0">
+              Revisión previa de viáticos institucionales según normativa vigente
+            </p>
           </div>
 
-          <p
-            style={{
-              fontSize: '14px',
-              color: '#4b5563',
-              lineHeight: '1.5',
-              whiteSpace: 'pre-line',
-              margin: 0,
-            }}
-          >
+          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line m-0">
             {preCalcData?.message}
           </p>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '16px',
-              backgroundColor: '#f9fafb',
-              border: '1px solid #e5e7eb',
-              padding: '16px',
-              borderRadius: '8px',
-            }}
-          >
+          <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
             <div>
-              <span
-                style={{
-                  fontSize: '10px',
-                  color: '#9ca3af',
-                  fontWeight: 'bold',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                }}
-              >
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                 Días Estimados
               </span>
-              <span
-                style={{
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  color: '#111827',
-                }}
-              >
+              <span className="text-lg font-bold text-slate-900 font-mono">
                 {preCalcData?.estimated_days} día(s)
               </span>
             </div>
             <div>
-              <span
-                style={{
-                  fontSize: '10px',
-                  color: '#9ca3af',
-                  fontWeight: 'bold',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                }}
-              >
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                 Costo Proyectado
               </span>
-              <span
-                style={{
-                  fontSize: '18px',
-                  fontWeight: 'extrabold',
-                  color: 'var(--color-primary)',
-                }}
-              >
+              <span className="text-xl font-extrabold text-primary font-mono">
                 ${Number(preCalcData?.projected_cost).toFixed(2)}
               </span>
             </div>

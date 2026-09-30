@@ -1,50 +1,63 @@
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppShell from './components/AppShell';
 import RoleRoute from './components/RoleRoute';
-import { LoginPage, RegisterPage, LandingPage } from '@features/auth';
-import {
-  ChecklistDigitalPage,
-  DriverFuelTicketsPage,
-  GasStationDispatcherPage,
-  PendingFeedbackBanner,
-  RequestFormPage,
-  TripEvaluationPage,
-  TeacherLiquidationPage,
-  TransportAuditPanelPage,
-} from '@features/requests';
-import { RectorPanelPage } from '@features/rector';
-import { TransportPanelPage } from '@features/transport';
-import { WorkshopPanelPage } from '@features/workshop';
 import RoleHomePage from '@features/shared/RoleHomePage';
 import NotFoundPage from '@features/shared/NotFoundPage';
-import {
-  AgendaPage,
-  AuthorizePage,
-  ConductorNoveltyPage,
-  ConductorPaymentsPage,
-  ConductorRouteMapPage,
-  ConductorTripsPage,
-  ConductorVehiclePage,
-  DisponibilidadPage,
-  DocumentsHistoryPage,
-  FleetDriversPage,
-  FleetStatusPage,
-  FleetVehiclesPage,
-  FlujoPage,
-  GasStationsPage,
-  LubricantsPage,
-  MapPage,
-  MechanicHistoryPage,
-  ParticipantsPage,
-  ReassignPage,
-  ReportsPage,
-  InstitutionalDocumentsPage,
-  RateConfigurationPage,
-  StudentInvitationsPage,
-  TripDetailPage,
-} from '@features/modules';
-import { homeForRoles } from './config/roles';
+import { homeForRoles, type RoleId } from './config/roles';
+
+const LoginPage = lazy(() => import('@features/auth/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@features/auth/pages/RegisterPage'));
+const ChecklistDigitalPage = lazy(() => import('@features/requests/pages/ChecklistDigitalPage'));
+const DriverFuelTicketsPage = lazy(() => import('@features/requests/pages/DriverFuelTicketsPage'));
+const GasStationDispatcherPage = lazy(() => import('@features/requests/pages/GasStationDispatcherPage'));
+const PendingFeedbackBanner = lazy(() => import('@features/requests/components/PendingFeedbackBanner'));
+const RequestFormPage = lazy(() => import('@features/requests/pages/RequestFormPage'));
+const TripEvaluationPage = lazy(() => import('@features/requests/pages/TripEvaluationPage'));
+const TeacherLiquidationPage = lazy(() => import('@features/requests/pages/TeacherLiquidationPage'));
+const TransportAuditPanelPage = lazy(() => import('@features/requests/pages/TransportAuditPanelPage'));
+const RectorPanelPage = lazy(() => import('@features/rector/pages/RectorPanelPage'));
+const TransportPanelPage = lazy(() => import('@features/transport/pages/TransportPanelPage'));
+const WorkshopPanelPage = lazy(() => import('@features/workshop/pages/WorkshopPanelPage'));
+const AgendaPage = lazy(() => import('@features/modules/pages/AgendaPage'));
+const AuthorizePage = lazy(() => import('@features/modules/pages/AuthorizePage'));
+const ConductorTripsPage = lazy(() => import('@features/modules/pages/ConductorTripsPage'));
+const ConductorRouteMapPage = lazy(() => import('@features/modules/pages/ConductorRouteMapPage'));
+const DisponibilidadPage = lazy(() => import('@features/modules/pages/DisponibilidadPage'));
+const FleetDriversPage = lazy(() => import('@features/modules/pages/FleetDriversPage'));
+const FleetStatusPage = lazy(() => import('@features/modules/pages/FleetStatusPage'));
+const FleetVehiclesPage = lazy(() => import('@features/modules/pages/FleetVehiclesPage'));
+const FlujoPage = lazy(() => import('@features/modules/pages/FlujoPage'));
+const GasStationsPage = lazy(() => import('@features/modules/pages/GasStationsPage'));
+const MapPage = lazy(() => import('@features/modules/pages/MapPage'));
+const ParticipantsPage = lazy(() => import('@features/modules/pages/ParticipantsPage'));
+const ReassignPage = lazy(() => import('@features/modules/pages/ReassignPage'));
+const ReportsPage = lazy(() => import('@features/modules/pages/ReportsPage'));
+const InstitutionalDocumentsPage = lazy(() => import('@features/modules/pages/InstitutionalDocumentsPage'));
+const RateConfigurationPage = lazy(() => import('@features/modules/pages/RateConfigurationPage'));
+const StudentInvitationsPage = lazy(() => import('@features/modules/pages/StudentInvitationsPage'));
+const ConductorNoveltyPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.ConductorNoveltyPage }))
+);
+const ConductorPaymentsPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.ConductorPaymentsPage }))
+);
+const ConductorVehiclePage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.ConductorVehiclePage }))
+);
+const DocumentsHistoryPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.DocumentsHistoryPage }))
+);
+const LubricantsPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.LubricantsPage }))
+);
+const MechanicHistoryPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.MechanicHistoryPage }))
+);
+const TripDetailPage = lazy(() =>
+  import('@features/modules/pages/ConductorOpsPages').then((module) => ({ default: module.TripDetailPage }))
+);
 
 const allowRegister = import.meta.env.VITE_ALLOW_REGISTER === 'true';
 
@@ -53,18 +66,76 @@ function AppHome() {
   return <Navigate to={homeForRoles(roleIds)} replace />;
 }
 
+function RoleAwareRedirect({
+  destinations,
+  priority = [
+    'secretaria',
+    'vicerrector',
+    'responsable_facultad',
+    'docente',
+    'conductor',
+    'mecanico',
+    'estudiante',
+  ],
+}: {
+  destinations: Partial<Record<RoleId, string>>;
+  priority?: RoleId[];
+}) {
+  const { roleIds } = useAuth();
+  const destination = priority.find(
+    (role) => roleIds.includes(role) && destinations[role]
+  );
+  return <Navigate to={destination ? destinations[destination]! : homeForRoles(roleIds)} replace />;
+}
+
+function NewRequestRedirect() {
+  return (
+    <RoleAwareRedirect
+      priority={['responsable_facultad', 'docente', 'secretaria', 'vicerrector', 'conductor', 'mecanico', 'estudiante']}
+      destinations={{
+        responsable_facultad: '/app/facultad/solicitar',
+        docente: '/app/docente/solicitar',
+      }}
+    />
+  );
+}
+
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  const [forbidden, setForbidden] = useState(false);
+
+  useEffect(() => {
+    const onForbidden = () => setForbidden(true);
+    window.addEventListener('app:forbidden', onForbidden);
+    return () => window.removeEventListener('app:forbidden', onForbidden);
+  }, []);
 
   return (
-    <>
+    <Suspense
+      fallback={
+        <div className="app-loading" role="status" aria-live="polite">
+          Cargando pantalla…
+        </div>
+      }
+    >
       {isAuthenticated && <PendingFeedbackBanner />}
+      {forbidden && (
+        <div className="alert alert-danger" role="alert">
+          <span>No tienes permiso para completar esa acción.</span>
+          <button type="button" onClick={() => setForbidden(false)} aria-label="Cerrar aviso">
+            Cerrar
+          </button>
+        </div>
+      )}
       <Routes>
         <Route
           path="/"
-          element={isAuthenticated ? <AppHome /> : <LandingPage />}
+          element={isAuthenticated ? <AppHome /> : <LoginPage />}
         />
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/login"
+          element={isAuthenticated ? <AppHome /> : <LoginPage />}
+        />
         <Route
           path="/register"
           element={
@@ -91,6 +162,93 @@ function AppContent() {
           }
         >
           <Route index element={<AppHome />} />
+          <Route path="solicitudes/nueva" element={<NewRequestRedirect />} />
+          <Route
+            path="solicitudes"
+            element={
+              <RoleAwareRedirect
+                destinations={{
+                  secretaria: '/app/secretaria/solicitudes',
+                  responsable_facultad: '/app/facultad/solicitudes',
+                  docente: '/app/docente/historial',
+                }}
+              />
+            }
+          />
+          <Route
+            path="documentos"
+            element={
+              <RoleAwareRedirect
+                destinations={{
+                  secretaria: '/app/secretaria/documentos',
+                  conductor: '/app/conductor/documentos',
+                  mecanico: '/app/mecanico/documentos',
+                  docente: '/app/docente/documentos',
+                  responsable_facultad: '/app/facultad/documentos',
+                  vicerrector: '/app/vicerrector/documentos',
+                  estudiante: '/app/estudiante/documentos',
+                }}
+              />
+            }
+          />
+          <Route
+            path="secretaria/asignacion"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/asignar' }} />}
+          />
+          <Route
+            path="admin/flota/choferes"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/flota/conductores' }} />}
+          />
+          <Route
+            path="admin/flota/vehiculos"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/flota/vehiculos' }} />}
+          />
+          <Route
+            path="admin/flota/disponibilidad"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/disponibilidad' }} />}
+          />
+          <Route
+            path="admin/flota/gasolineras"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/gasolineras' }} />}
+          />
+          <Route
+            path="operaciones/mapa"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/mapa' }} />}
+          />
+          <Route
+            path="transporte/auditoria"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/economico' }} />}
+          />
+          <Route
+            path="conductor/ruta-guiada"
+            element={<RoleAwareRedirect destinations={{ conductor: '/app/conductor/hoja-ruta' }} />}
+          />
+          <Route
+            path="conductor/vales-combustible"
+            element={
+              <RoleAwareRedirect
+                destinations={{
+                  secretaria: '/app/secretaria/combustible/despacho',
+                  conductor: '/app/conductor/combustible',
+                }}
+              />
+            }
+          />
+          <Route
+            path="mantenimiento"
+            element={
+              <RoleAwareRedirect
+                destinations={{
+                  secretaria: '/app/secretaria/taller',
+                  mecanico: '/app/mecanico/ordenes',
+                }}
+              />
+            }
+          />
+          <Route
+            path="novedades"
+            element={<RoleAwareRedirect destinations={{ conductor: '/app/conductor/novedades' }} />}
+          />
 
           <Route
             path="secretaria"
@@ -102,7 +260,7 @@ function AppContent() {
                 <RoleHomePage
                   focusRoles={['secretaria']}
                   title="Panel de Secretaría"
-                  subtitle="Tablero operativo, cola de trabajo y respaldos PDF."
+                  subtitle="Planifique, asigne y controle la flota institucional."
                 />
               }
             />
@@ -138,7 +296,7 @@ function AppContent() {
                 <RoleHomePage
                   focusRoles={['conductor']}
                   title="Panel del Conductor"
-                  subtitle="Ejecute viajes y reporte su unidad."
+                  subtitle="Acepte el viaje, recorra la ruta y reporte la unidad."
                 />
               }
             />
@@ -159,7 +317,7 @@ function AppContent() {
                 <RoleHomePage
                   focusRoles={['mecanico']}
                   title="Panel de Mantenimiento"
-                  subtitle="Órdenes, inspecciones y lubricantes."
+                  subtitle="Mantenimiento preventivo y correctivo de la flota."
                 />
               }
             />
@@ -178,7 +336,7 @@ function AppContent() {
                 <RoleHomePage
                   focusRoles={['docente']}
                   title="Panel Docente"
-                  subtitle="Solicite, invite participantes y liquide."
+                  subtitle="Solicite el vehículo, siga el trámite y conserve el PDF."
                 />
               }
             />
@@ -204,7 +362,7 @@ function AppContent() {
                 <RoleHomePage
                   focusRoles={['responsable_facultad']}
                   title="Panel de Facultad"
-                  subtitle="Solicite viajes y dé seguimiento a su unidad."
+                  subtitle="Solicite en línea y siga el trámite de su facultad."
                 />
               }
             />
@@ -227,7 +385,7 @@ function AppContent() {
                 <RoleHomePage
                   focusRoles={['vicerrector']}
                   title="Panel Vicerrector"
-                  subtitle="Apruebe viajes externos."
+                  subtitle="Autorice viajes externos y deje constancia digital."
                 />
               }
             />
@@ -248,7 +406,7 @@ function AppContent() {
                 <RoleHomePage
                   focusRoles={['estudiante']}
                   title="Panel Estudiante"
-                  subtitle="Confirme participación y califique viajes."
+                  subtitle="Confirme si viaja y consulte el servicio asignado."
                 />
               }
             />
@@ -263,18 +421,67 @@ function AppContent() {
         </Route>
 
         <Route path="/dashboard" element={<Navigate to="/app" replace />} />
-        <Route
-          path="/solicitar"
-          element={<Navigate to="/app/docente/solicitar" replace />}
-        />
+        <Route path="/solicitar" element={<NewRequestRedirect />} />
         <Route
           path="/rectorado"
           element={<Navigate to="/app/vicerrector/pendientes" replace />}
         />
+        <Route path="/transporte" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/asignar' }} />} />
+        <Route path="/transporte/panel" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/asignar' }} />} />
+        <Route path="/transporte/disponibilidad" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/disponibilidad' }} />} />
         <Route
-          path="/transporte"
-          element={<Navigate to="/app/secretaria/asignar" replace />}
+          path="/transporte/vales-combustible"
+          element={
+            <RoleAwareRedirect
+              destinations={{
+                secretaria: '/app/secretaria/combustible/despacho',
+                conductor: '/app/conductor/combustible',
+              }}
+            />
+          }
         />
+        <Route path="/transporte/liquidaciones-auditoria" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/economico' }} />} />
+        <Route path="/transporte/vehiculos" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/flota/vehiculos' }} />} />
+        <Route
+          path="/transporte/taller"
+          element={
+            <RoleAwareRedirect
+              destinations={{
+                secretaria: '/app/secretaria/taller',
+                mecanico: '/app/mecanico/ordenes',
+              }}
+            />
+          }
+        />
+        <Route path="/transporte/flota/estado" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/flota/estado' }} />} />
+        <Route
+          path="/transporte/insumos"
+          element={
+            <RoleAwareRedirect
+              destinations={{
+                secretaria: '/app/secretaria/taller',
+                mecanico: '/app/mecanico/lubricantes',
+              }}
+            />
+          }
+        />
+        <Route
+          path="/transporte/historial-documentos"
+          element={
+            <RoleAwareRedirect
+              destinations={{
+                secretaria: '/app/secretaria/documentos',
+                conductor: '/app/conductor/documentos',
+                mecanico: '/app/mecanico/documentos',
+                docente: '/app/docente/documentos',
+                responsable_facultad: '/app/facultad/documentos',
+                vicerrector: '/app/vicerrector/documentos',
+                estudiante: '/app/estudiante/documentos',
+              }}
+            />
+          }
+        />
+        <Route path="/agenda" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/agenda' }} />} />
         <Route
           path="/taller"
           element={<Navigate to="/app/mecanico/ordenes" replace />}
@@ -297,7 +504,7 @@ function AppContent() {
         />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </>
+    </Suspense>
   );
 }
 

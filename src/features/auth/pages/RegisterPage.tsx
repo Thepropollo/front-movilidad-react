@@ -59,10 +59,10 @@ const Register: React.FC = () => {
   return (
     <div className="auth-wrapper auth-register">
       <div className="auth-header" style={{ marginBottom: '24px' }}>
-        <Link to="/" className="auth-back">
-          Volver al inicio
+        <Link to="/login" className="auth-back">
+          Volver al acceso
         </Link>
-        <h1 className="auth-logo">ULEAM Movilidad</h1>
+        <h1 className="auth-logo">SIGMOV-ULEAM</h1>
         <p className="auth-subtitle">
           Alta de docente o estudiante (sin roles privilegiados)
         </p>

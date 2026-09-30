@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   Star,
   ShieldAlert,
@@ -34,23 +34,26 @@ const PendingFeedbackBanner: React.FC = () => {
   const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const checkPending = async () => {
-    if (!user) return;
+  const loadPendingTrip = useCallback(async (): Promise<RouteSheetSummary | null> => {
+    if (!user) return null;
     try {
       const data = await fetchPendingEvaluations();
-      if (data.length > 0) {
-        setCurrentTrip(data[0]);
-      } else {
-        setCurrentTrip(null);
-      }
+      return data[0] ?? null;
     } catch (err) {
       console.error('Error checking pending evaluations:', err);
+      return null;
     }
-  };
+  }, [user]);
 
   useEffect(() => {
-    checkPending();
-  }, [user]);
+    let active = true;
+    void loadPendingTrip().then((trip) => {
+      if (active) setCurrentTrip(trip);
+    });
+    return () => {
+      active = false;
+    };
+  }, [loadPendingTrip]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +80,7 @@ const PendingFeedbackBanner: React.FC = () => {
         setVehicleRating(0);
         setComments('');
         setSuccess(false);
-        checkPending();
+        void loadPendingTrip().then(setCurrentTrip);
       }, 2000);
     } catch (err) {
       console.error('Error submitting feedback:', err);

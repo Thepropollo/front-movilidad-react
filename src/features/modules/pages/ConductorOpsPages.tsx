@@ -17,6 +17,7 @@ import {
   Wallet,
   RefreshCw,
   UserRound,
+  Clock,
 } from 'lucide-react';
 import { geocodePlace, getCurrentPosition, isLikelyEcuadorCoordinate } from '@/lib/geo';
 import { formatDateTimeReadable } from '@/lib/datetime';
@@ -28,12 +29,22 @@ import {
   COMPENSATION_STATUS_LABEL,
   labelOf,
 } from '@/lib/labels';
-import { modulesApi } from '../api';
+import {
+  modulesApi,
+  type DriverCompensationRecord,
+  type DriverTripRecord,
+  type DriverVehicleResponse,
+  type MobilizationRequestSummary,
+  type RouteStopRecord,
+  type SupplyInventoryRecord,
+  type WorkOrderRecord,
+} from '../api';
+import { HeroMetricCard, StatCard } from '@/components/Cards';
 
 export function ConductorStopsPage() {
-  const [trips, setTrips] = useState<any[]>([]);
+  const [trips, setTrips] = useState<DriverTripRecord[]>([]);
   const [selected, setSelected] = useState<number | ''>('');
-  const [stops, setStops] = useState<any[]>([]);
+  const [stops, setStops] = useState<RouteStopRecord[]>([]);
   const [form, setForm] = useState({
     location: '',
     odometer_km: '',
@@ -49,7 +60,7 @@ export function ConductorStopsPage() {
       .myTrips()
       .then((r) =>
         setTrips(
-          (r.data || []).filter((t: any) => t.driver_response === 'aceptado')
+          (r.data || []).filter((t) => t.driver_response === 'aceptado')
         )
       );
   }, []);
@@ -101,15 +112,15 @@ export function ConductorStopsPage() {
   };
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Mis viajes</p>
-        <h1>Registrar hoja de ruta</h1>
-        <p className="module-lead">
-          Paradas con GPS del dispositivo. Esas coordenadas alimentan el mapa de
-          rutas.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Mis Viajes"
+        badgeVariant="indigo"
+        title="Registrar Paradas de Hoja de Ruta"
+        description="Registro de hitos y coordenadas GPS del dispositivo durante el trayecto. Esas coordenadas alimentan la trazabilidad y el mapa cartográfico oficial."
+        metricValue={selected ? String(stops.length) : `${trips.length} Viajes`}
+        metricLabel={selected ? 'PARADAS REGISTRADAS' : 'VIAJES ASIGNADOS'}
+      />
       {msg && <div className="alert alert-info" role="status">{msg}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="module-panel" style={{ marginBottom: 16 }}>
@@ -202,16 +213,22 @@ export function ConductorStopsPage() {
 }
 
 export function ConductorPaymentsPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<DriverCompensationRecord[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [obs, setObs] = useState<Record<number, string>>({});
   const [disputing, setDisputing] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const load = async () => {
-    const { data } = await modulesApi.myCompensations();
-    setRows(data || []);
+    setLoading(true);
+    try {
+      const { data } = await modulesApi.myCompensations();
+      setRows(data || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -251,14 +268,44 @@ export function ConductorPaymentsPage() {
     }[s] ?? 'pay-status st-pending');
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Mis pagos</p>
-        <h1>Viáticos y pagos</h1>
-        <p className="module-lead">
-          Confirme o dispute los montos de sus comisiones de viaje.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Mis Pagos"
+        badgeVariant="emerald"
+        title="Liquidación de Haberes y Viáticos"
+        description="Confirme o dispute los montos de sus comisiones de viaje. Revise el detalle liquidado por movilización, alimentación y alojamiento institucional."
+        metricValue={`$${rows.reduce((acc, r) => acc + (Number(r.total_payout) || 0), 0).toFixed(2)}`}
+        metricLabel="TOTAL LIQUIDADO"
+        actionLabel="Actualizar"
+        onAction={() => void load()}
+        actionLoading={loading || busy !== null}
+      />
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Por Confirmar"
+          value={rows.filter((r) => r.payment_status === 'pendiente_comprobante').length}
+          hint="Requiere su revisión"
+          icon={<Clock size={16} />}
+          tone={rows.filter((r) => r.payment_status === 'pendiente_comprobante').length > 0 ? 'warn' : 'neutral'}
+        />
+        <StatCard
+          label="Aceptados"
+          value={rows.filter((r) => ['confirmado_conductor', 'verificado_movilidad'].includes(r.payment_status)).length}
+          hint="Conformidad otorgada"
+          icon={<CheckCircle2 size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="En Disputa"
+          value={rows.filter((r) => r.payment_status === 'en_disputa').length}
+          hint="En revisión por transporte"
+          icon={<AlertTriangle size={16} />}
+          tone={rows.filter((r) => r.payment_status === 'en_disputa').length > 0 ? 'danger' : 'neutral'}
+        />
+      </div>
+
       {msg && <div className="alert alert-info" role="status">{msg}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
@@ -400,7 +447,7 @@ export function ConductorNoveltyPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [mine, setMine] = useState<any>(null);
+  const [mine, setMine] = useState<DriverVehicleResponse | null>(null);
 
   useEffect(() => {
     void modulesApi.myVehicle().then((r) => {
@@ -437,14 +484,15 @@ export function ConductorNoveltyPage() {
   const v = mine?.vehicle;
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Mi vehículo</p>
-        <h1>Reportar novedad</h1>
-        <p className="module-lead">
-          Reporte averías, accidentes o anomalías de su unidad.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Mi Vehículo"
+        badgeVariant="amber"
+        title="Reportar Novedad o Incidencia Operativa"
+        description="Reporte averías mecánicas, siniestros o anomalías de su unidad vehicular para atención inmediata de mantenimiento y taller."
+        metricValue={v ? `${v.current_mileage} km` : 'SIN UNIDAD'}
+        metricLabel="KILOMETRAJE ACTUAL"
+      />
 
       {msg && <div className="alert alert-info" role="status">{msg}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
@@ -553,16 +601,20 @@ export function ConductorNoveltyPage() {
 }
 
 export function ConductorVehiclePage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DriverVehicleResponse | null>(null);
   useEffect(() => {
     void modulesApi.myVehicle().then((r) => setData(r.data));
   }, []);
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Mi vehículo</p>
-        <h1>Estado del vehículo asignado</h1>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Mi Vehículo"
+        badgeVariant="indigo"
+        title="Estado del Vehículo Asignado"
+        description="Inspección del estado técnico, kilometraje acumulado y distancia restante para el próximo mantenimiento preventivo de la unidad."
+        metricValue={data?.vehicle ? `${data.km_to_maintenance ?? 0} km` : '—'}
+        metricLabel="KM PARA MANTENIMIENTO"
+      />
       <div className="module-panel">
         {!data?.vehicle ? (
           <p>{data?.message || 'Sin asignación activa.'}</p>
@@ -594,7 +646,7 @@ const MAINTENANCE_TYPE_LABEL: Record<string, string> = {
 };
 
 export function MechanicHistoryPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<WorkOrderRecord[]>([]);
   const [q, setQ] = useState('');
   const [type, setType] = useState('todos');
   const [status, setStatus] = useState('todos');
@@ -616,14 +668,40 @@ export function MechanicHistoryPage() {
   });
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Mantenimiento</p>
-        <h1>Historial de mantenimientos</h1>
-        <p className="module-lead">
-          Órdenes de trabajo realizadas en la flota.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Mantenimiento"
+        badgeVariant="indigo"
+        title="Historial Mecánico y Órdenes de Trabajo"
+        description="Registro de intervenciones técnicas, mantenimientos preventivos y órdenes de trabajo ejecutadas en la flota institucional."
+        metricValue={String(rows.length)}
+        metricLabel="ÓRDENES REGISTRADAS"
+      />
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Órdenes Abiertas"
+          value={rows.filter((r) => !r.exit_date).length}
+          hint="En proceso en taller"
+          icon={<Wrench size={16} />}
+          tone={rows.some((r) => !r.exit_date) ? 'info' : 'neutral'}
+        />
+        <StatCard
+          label="Preventivos"
+          value={rows.filter((r) => r.maintenance_type === 'preventivo').length}
+          hint="Revisiones programadas"
+          icon={<CheckCircle2 size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Finalizadas"
+          value={rows.filter((r) => Boolean(r.exit_date)).length}
+          hint="Vehículos dados de alta"
+          icon={<CheckCircle2 size={16} />}
+          tone="ok"
+        />
+      </div>
 
       <div className="module-panel">
         <div className="filters-row">
@@ -725,12 +803,12 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
   agotado: { label: 'Agotado', cls: 'agotado' },
 };
 
-function supplyName(r: any): string {
-  return r.supply_name || r.name || r.description || 'Insumo';
+function supplyName(r: SupplyInventoryRecord): string {
+  return r.supply_name;
 }
 
-function supplyStock(r: any): number {
-  return Number(r.current_stock ?? r.stock ?? r.quantity ?? 0);
+function supplyStock(r: SupplyInventoryRecord): number {
+  return r.current_stock;
 }
 
 function supplyCategory(n: string): string {
@@ -755,20 +833,13 @@ function stockStatus(s: number): string {
 }
 
 export function LubricantsPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<SupplyInventoryRecord[]>([]);
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('todos');
   const [status, setStatus] = useState('todos');
 
-  const toRows = (payload: unknown) =>
-    Array.isArray(payload)
-      ? payload
-      : Array.isArray((payload as { data?: unknown[] } | null)?.data)
-        ? ((payload as { data: unknown[] }).data as any[])
-        : [];
-
   useEffect(() => {
-    void modulesApi.insumos().then((r) => setRows(toRows(r.data)));
+    void modulesApi.insumos().then((r) => setRows(r.data.data));
   }, []);
 
   const filtered = rows.filter((r) => {
@@ -785,29 +856,39 @@ export function LubricantsPage() {
   const outCount = rows.filter((r) => stockStatus(supplyStock(r)) === 'agotado').length;
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Mantenimiento</p>
-        <h1>Provisión de lubricantes</h1>
-        <p className="module-lead">
-          Inventario de aceites, filtros y fluidos disponibles para las órdenes
-          de trabajo.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Mantenimiento"
+        badgeVariant="amber"
+        title="Inventario y Provisión de Lubricantes"
+        description="Inventario de aceites, filtros y fluidos disponibles para órdenes de trabajo preventivas y correctivas de la flota institucional."
+        metricValue={String(rows.length - outCount)}
+        metricLabel="INSUMOS EN STOCK"
+      />
 
-      <div className="supply-kpis">
-        <div className="supply-kpi">
-          <span className="supply-kpi-value">{rows.length}</span>
-          <span className="supply-kpi-label">Insumos totales</span>
-        </div>
-        <div className="supply-kpi supply-kpi-warn">
-          <span className="supply-kpi-value">{lowCount}</span>
-          <span className="supply-kpi-label">Stock bajo</span>
-        </div>
-        <div className="supply-kpi supply-kpi-danger">
-          <span className="supply-kpi-value">{outCount}</span>
-          <span className="supply-kpi-label">Agotados</span>
-        </div>
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Insumos Totales"
+          value={rows.length}
+          hint="En inventario"
+          icon={<Package size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Stock Bajo"
+          value={lowCount}
+          hint="Reponer pronto"
+          icon={<AlertTriangle size={16} />}
+          tone={lowCount > 0 ? 'warn' : 'neutral'}
+        />
+        <StatCard
+          label="Agotados"
+          value={outCount}
+          hint="Sin existencias"
+          icon={<AlertTriangle size={16} />}
+          tone={outCount > 0 ? 'danger' : 'neutral'}
+        />
       </div>
 
       <div className="module-panel">
@@ -871,7 +952,7 @@ export function LubricantsPage() {
                   </div>
                   <div className="supply-info">
                     <p className="supply-name">{n}</p>
-                    <span className="supply-unit">{r.measurement_unit || r.unit || 'u'}</span>
+                    <span className="supply-unit">{r.measurement_unit}</span>
                   </div>
                   <div className="supply-stock">
                     <span className="supply-stock-value">{supplyStock(r)}</span>
@@ -888,7 +969,7 @@ export function LubricantsPage() {
 }
 
 export function DocumentsHistoryPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<MobilizationRequestSummary[]>([]);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('todos');
   const [type, setType] = useState('todos');
@@ -908,14 +989,15 @@ export function DocumentsHistoryPage() {
   });
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Documentos</p>
-        <h1>Historial de documentos / viajes</h1>
-        <p className="module-lead">
-          Solicitudes y estados documentales del flujo.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Documentos"
+        badgeVariant="indigo"
+        title="Historial de Documentos y Viajes"
+        description="Trazabilidad documental, estados de solicitudes y verificación de soportes en el flujo institucional."
+        metricValue={String(filtered.length)}
+        metricLabel="DOCUMENTOS TOTALES"
+      />
       <div className="module-panel">
         <div className="filters-row">
           <label style={{ flex: '1 1 200px' }}>
@@ -1133,23 +1215,30 @@ export function TripDetailPage() {
   };
 
   useEffect(() => {
-    void loadTrips();
+    const timer = setTimeout(() => {
+      void loadTrips();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (selectedId) void loadDetail(Number(selectedId));
+    if (!selectedId) return;
+    const timer = setTimeout(() => {
+      void loadDetail(Number(selectedId));
+    }, 0);
+    return () => clearTimeout(timer);
   }, [selectedId]);
 
   return (
-    <section className="module-page tracking-page">
-      <header className="module-header">
-        <p className="module-kicker">Seguimiento operativo</p>
-        <h1>Seguimiento del viaje</h1>
-        <p className="module-lead">
-          Consulte el estado, la ruta, las paradas registradas y los recursos
-          asignados a cada comisión.
-        </p>
-      </header>
+    <section className="module-page tracking-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Seguimiento Operativo"
+        badgeVariant="indigo"
+        title="Seguimiento del Viaje y Hoja de Ruta"
+        description="Consulte el estado, la ruta, las paradas registradas y los recursos asignados a cada comisión institucional."
+        metricValue={selectedId ? `#${selectedId}` : `${trips.length} Viajes`}
+        metricLabel={selectedId ? 'VIAJE EN CONSULTA' : 'VIAJES ASIGNADOS'}
+      />
 
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
 

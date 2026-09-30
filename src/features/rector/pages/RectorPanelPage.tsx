@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Check, X, RefreshCw, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Check, X, RefreshCw, AlertTriangle, Clock, CheckCircle2, FileCheck } from 'lucide-react';
 import api from '@/services/api';
+import HeroMetricCard from '@/components/HeroMetricCard';
+import Button from '@/components/Button';
+import Modal from '@/components/Modal';
+import ProcessPhaseLine, {
+  type ProcessPhase,
+} from '@/features/shared/ProcessPhaseLine';
+import { useAlerts } from '@/context/AlertsContext';
 
 interface RequestData {
   id: number;
@@ -13,6 +20,7 @@ interface RequestData {
   estimated_days: number;
   projected_cost: number;
   status: string;
+  phases?: ProcessPhase[];
   requester?: {
     first_name: string;
     last_name: string;
@@ -21,9 +29,14 @@ interface RequestData {
 }
 
 const RectorPanel: React.FC = () => {
+  const { refresh } = useAlerts();
   const [requests, setRequests] = useState<RequestData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [errors, setErrors] = useState<string | null>(null);
+
+  // Approval modal state
+  const [confirmApproveId, setConfirmApproveId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Rejection state
   const [rejectingId, setRejectingId] = useState<number | null>(null);
@@ -35,9 +48,11 @@ const RectorPanel: React.FC = () => {
     try {
       const response = await api.get('/solicitudes');
       setRequests(response.data);
-    } catch (err: any) {
+      refresh();
+    } catch (err: unknown) {
+      const er = err as { response?: { data?: { message?: string } } };
       setErrors(
-        err.response?.data?.message ||
+        er.response?.data?.message ||
           'Error al obtener solicitudes para rectorado.'
       );
     } finally {
@@ -46,24 +61,48 @@ const RectorPanel: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchRequests();
-  }, []);
+    let ignore = false;
+    api.get('/solicitudes')
+      .then((res) => {
+        if (!ignore) {
+          setRequests(res.data);
+          refresh();
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          const er = err as { response?: { data?: { message?: string } } };
+          setErrors(er.response?.data?.message || 'Error al obtener solicitudes para rectorado.');
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
 
-  const handleApprove = async (id: number) => {
-    if (
-      !window.confirm(
-        '¿Está seguro de aprobar esta solicitud de movilización externa?'
-      )
-    )
-      return;
+    return () => {
+      ignore = true;
+    };
+  }, [refresh]);
+
+  const handleApproveClick = (id: number) => {
+    setActionError(null);
+    setConfirmApproveId(id);
+  };
+
+  const executeApprove = async () => {
+    if (!confirmApproveId) return;
     setLoading(true);
+    setActionError(null);
     try {
-      await api.patch(`/solicitudes/${id}/aprobar-rectorado`, {
+      await api.patch(`/solicitudes/${confirmApproveId}/aprobar-rectorado`, {
         action: 'approve',
       });
-      fetchRequests();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Error al aprobar la solicitud.');
+      setConfirmApproveId(null);
+      await fetchRequests();
+    } catch (err: unknown) {
+      const er = err as { response?: { data?: { message?: string } } };
+      setActionError(er.response?.data?.message || 'Error al aprobar la solicitud.');
+    } finally {
       setLoading(false);
     }
   };
@@ -71,10 +110,11 @@ const RectorPanel: React.FC = () => {
   const handleRejectSubmit = async (e: React.FormEvent, id: number) => {
     e.preventDefault();
     if (!justification.trim()) {
-      alert('Debe ingresar una justificación para rechazar la solicitud.');
+      setActionError('Debe ingresar una justificación para rechazar la solicitud.');
       return;
     }
     setLoading(true);
+    setActionError(null);
     try {
       await api.patch(`/solicitudes/${id}/aprobar-rectorado`, {
         action: 'reject',
@@ -82,38 +122,92 @@ const RectorPanel: React.FC = () => {
       });
       setRejectingId(null);
       setJustification('');
-      fetchRequests();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Error al rechazar la solicitud.');
+      await fetchRequests();
+    } catch (err: unknown) {
+      const er = err as { response?: { data?: { message?: string } } };
+      setActionError(er.response?.data?.message || 'Error al rechazar la solicitud.');
+    } finally {
       setLoading(false);
     }
   };
 
   const pendingRequests = requests.filter(
-    (r) => r.status === 'pendiente_rectorado'
+    (r: RequestData) => r.status === 'pendiente_rectorado'
   );
   const processedRequests = requests.filter(
-    (r) => r.status === 'aprobado_rectorado' || r.status === 'rechazada'
+    (r: RequestData) => r.status === 'aprobado_rectorado' || r.status === 'rechazada'
   );
 
   return (
     <div className="operational-page approval-page max-w-6xl w-full mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-gray-200 pb-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-primary flex items-center gap-2">
-            <ShieldAlert className="text-secondary" size={28} />
-            Aprobaciones del Rectorado
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Autorización jerárquica de comisiones y viáticos para viajes fuera
-            de la provincia.
-          </p>
+      {/* Hero Metric Banner Card (Image 2 format) */}
+      <div className="mb-6">
+        <HeroMetricCard
+          headline="Aprobaciones del Rectorado"
+          author="Autorización Jerárquica de Movilización Externa y Viáticos Institucionales"
+          tag={{
+            icon: <ShieldAlert size={13} />,
+            label: `${pendingRequests.length} Solicitudes Pendientes de Firma`,
+          }}
+          metricValue={pendingRequests.length}
+          metricLabel="Por Autorizar"
+          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+        />
+      </div>
+
+      {/* Modern Statistics Cards Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-xs font-semibold text-amber-600 uppercase tracking-wider">
+              Pendientes
+            </span>
+            <Clock size={16} className="text-amber-500" />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+              {pendingRequests.length}
+            </strong>
+            <span className="font-mono text-[11px] text-amber-600 font-semibold">Requieren firma</span>
+          </div>
         </div>
+
+        <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+              Procesadas
+            </span>
+            <CheckCircle2 size={16} className="text-emerald-500" />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+              {processedRequests.length}
+            </strong>
+            <span className="font-mono text-[11px] text-emerald-600 font-semibold">Aprobadas / Resueltas</span>
+          </div>
+        </div>
+
+        <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              Total Solicitudes
+            </span>
+            <FileCheck size={16} className="text-zinc-400" />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+              {requests.length}
+            </strong>
+            <span className="font-mono text-[11px] text-zinc-400">Total registradas</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end mb-4">
         <button
           onClick={fetchRequests}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition cursor-pointer font-mono"
         >
           <RefreshCw className={loading ? 'animate-spin' : ''} size={16} />
           <span>Actualizar</span>
@@ -165,6 +259,11 @@ const RectorPanel: React.FC = () => {
                         <h3 className="text-lg font-bold text-primary mt-1.5">
                           {req.origin} &rarr; {req.destination}
                         </h3>
+                        {req.phases && req.phases.length > 0 && (
+                          <div className="mt-2">
+                            <ProcessPhaseLine phases={req.phases} compact />
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-gray-400 block uppercase font-bold">
@@ -269,7 +368,7 @@ const RectorPanel: React.FC = () => {
                         Rechazar
                       </button>
                       <button
-                        onClick={() => handleApprove(req.id)}
+                        onClick={() => handleApproveClick(req.id)}
                         className="flex-1 py-2 px-3 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow"
                       >
                         <Check size={14} />
@@ -295,10 +394,10 @@ const RectorPanel: React.FC = () => {
               No se han procesado solicitudes anteriormente.
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow border overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-gray-500">
-                  <thead className="text-xs uppercase bg-gray-50 text-gray-700">
+                  <thead className="text-xs uppercase bg-slate-50 text-slate-700">
                     <tr>
                       <th className="px-4 py-3">Solicitante / Facultad</th>
                       <th className="px-4 py-3">Ruta</th>
@@ -307,40 +406,40 @@ const RectorPanel: React.FC = () => {
                       <th className="px-4 py-3">Estado</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-100">
                     {processedRequests.map((req) => (
-                      <tr key={req.id} className="hover:bg-gray-50 transition">
+                      <tr key={req.id} className="hover:bg-slate-50/70 transition">
                         <td className="px-4 py-3.5">
-                          <div className="font-semibold text-gray-900">
+                          <div className="font-semibold text-slate-900">
                             {req.requester?.first_name}{' '}
                             {req.requester?.last_name}
                           </div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-slate-400">
                             {req.requester?.faculty_institution}
                           </div>
                         </td>
                         <td className="px-4 py-3.5">
-                          <div className="font-medium text-gray-800">
+                          <div className="font-medium text-slate-800">
                             {req.origin} &rarr; {req.destination}
                           </div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-slate-400">
                             {req.departure_date} al {req.return_date}
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 text-right font-bold text-primary">
+                        <td className="px-4 py-3.5 text-right font-bold text-primary font-mono">
                           ${Number(req.projected_cost).toFixed(2)}
                         </td>
-                        <td className="px-4 py-3.5 text-gray-500 text-xs">
+                        <td className="px-4 py-3.5 text-slate-500 text-xs">
                           {req.estimated_days} día(s)
                         </td>
                         <td className="px-4 py-3.5">
                           {req.status === 'aprobado_rectorado' ? (
-                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <span className="sgv-badge is-ok">
                               Aprobado
                             </span>
                           ) : (
                             <span
-                              className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800 cursor-help"
+                              className="sgv-badge is-danger cursor-help"
                               title={
                                 req.travel_reason
                                   .split('[RECHAZADO POR RECTORADO: ')[1]
@@ -360,6 +459,45 @@ const RectorPanel: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de confirmación para aprobación */}
+      <Modal
+        isOpen={confirmApproveId !== null}
+        onClose={() => setConfirmApproveId(null)}
+        title="Autorizar Comisión de Movilización Externa"
+        footer={
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmApproveId(null)}
+              style={{ width: 'auto' }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="gold"
+              onClick={executeApprove}
+              isLoading={loading}
+              style={{ width: 'auto' }}
+            >
+              Confirmar y Autorizar
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-slate-600 leading-relaxed m-0">
+            Está por emitir la aprobación jerárquica de Vicerrectorado para la movilización fuera de la provincia.
+            Esta acción registrará la conformidad institucional y notificará automáticamente a la Dirección de Transporte
+            para la emisión de la Hoja de Ruta y asignación de recursos.
+          </p>
+          {actionError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-semibold">
+              {actionError}
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Fuel,
@@ -19,6 +19,8 @@ import {
   dispatchFuelOrder,
   type FuelOrder,
 } from '../api/fuel';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
+import { modulesApi } from '@/features/modules/api';
 
 type ApiError = {
   response?: {
@@ -47,6 +49,23 @@ const GasStationDispatcherPage: React.FC = () => {
   const [success, setSuccess] = useState<boolean>(false);
   const [lastDispatchedCode, setLastDispatchedCode] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [stationCount, setStationCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    modulesApi
+      .stations()
+      .then(({ data }) => {
+        if (!ignore && Array.isArray(data)) {
+          setStationCount(data.length);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleSearchOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,25 +155,66 @@ const GasStationDispatcherPage: React.FC = () => {
 
   return (
     <div
-      className="glass-panel wide-container mx-auto"
+      className="wide-container mx-auto flex flex-col gap-6"
       style={{ textAlign: 'left' }}
     >
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="title-primary flex items-center gap-3">
-            <Landmark className="text-secondary-brand" size={28} />
-            Simulador de Despacho en Gasolinera
-          </h1>
-          <p className="text-muted mt-1">
-            Interfaz interactiva externa para que las estaciones de servicio
-            validen y liquiden vales digitales.
-          </p>
-        </div>
+      <HeroMetricCard
+        badge="Estaciones Aliadas"
+        badgeVariant="indigo"
+        title="Terminal de Despacho y Liquidación en Gasolinera"
+        description="Terminal interactivo de validación en tiempo real para estaciones de servicio en convenio. Ingrese el código alfanumérico del vale institucional para verificar cupo autorizado, tipo de combustible y asentar el despacho."
+        metricValue={order ? `${order.authorized_gallons} Gal` : 'ACTIVO'}
+        metricLabel={order ? 'CUPO EN CONSULTA' : 'ESTADO TERMINAL'}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Estado Terminal"
+          value="EN LÍNEA"
+          tone="ok"
+          icon={<Fuel size={18} />}
+          hint="Conexión en tiempo real ULEAM"
+        />
+        <StatCard
+          label="Vale en Consulta"
+          value={order ? `#${order.order_code}` : 'NINGUNO'}
+          tone={order ? 'info' : 'neutral'}
+          icon={<Award size={18} />}
+          hint={order ? `${order.authorized_gallons} Galones autorizados` : 'Ingrese código para validar'}
+        />
+        <StatCard
+          label="Tipo Combustible"
+          value={order ? labelOf(FUEL_TYPE_LABEL, order.dispatched_fuel_type) : '—'}
+          tone="neutral"
+          icon={<Car size={18} />}
+          hint={order?.route_sheet?.vehicle?.plate ? `Placa: ${order.route_sheet.vehicle.plate}` : 'Consulte un vale emitido'}
+        />
+        <StatCard
+          label="Estaciones Aliadas"
+          value={stationCount !== null ? `${stationCount} Convenios` : 'Convenio'}
+          tone="ok"
+          icon={<Landmark size={18} />}
+          hint="Red institucional ULEAM"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <ResourceCard
+          title="Estaciones Aliadas"
+          description="Catálogo de gasolineras con convenio vigente y cupos mensuales."
+          icon={<Landmark size={20} />}
+          href="/app/secretaria/gasolineras"
+        />
+        <ResourceCard
+          title="Auditoría de Transporte"
+          description="Supervisión de consumos reales de combustible y facturas liquidadas."
+          icon={<ShieldAlert size={20} />}
+          href="/app/secretaria/economico"
+        />
       </div>
 
       {errorMsg && (
-        <div className="error-banner mb-6 flex items-start gap-3">
+        <div className="error-banner flex items-start gap-3">
           <AlertTriangle
             className="text-danger flex-shrink-0 mt-0.5"
             size={18}

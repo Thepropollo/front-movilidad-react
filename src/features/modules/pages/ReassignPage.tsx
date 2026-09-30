@@ -1,12 +1,65 @@
 import { useEffect, useState } from 'react';
+import {
+  AlertTriangle,
+  CalendarCheck,
+  CheckCircle2,
+  Truck,
+  UserCheck,
+  Users,
+  Car,
+  Clock,
+} from 'lucide-react';
 import { DRIVER_RESPONSE_LABEL, labelOf } from '@/lib/labels';
 import { formatDateReadable } from '@/lib/datetime';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
+
+interface TripRecord {
+  id: number;
+  driver_response: string;
+  driver_reject_reason?: string;
+  request?: {
+    id?: number;
+    destination?: string;
+    origin?: string;
+    departure_date?: string;
+  };
+  driver?: {
+    id?: number;
+    user?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  };
+  vehicle?: {
+    id?: number;
+    plate?: string;
+    brand?: string;
+    model?: string;
+  };
+}
+
+interface DriverRecord {
+  id: number;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  is_selectable?: boolean;
+  status_details?: string;
+}
+
+interface VehicleRecord {
+  id: number;
+  plate: string;
+  brand: string;
+  model: string;
+  is_selectable?: boolean;
+}
 
 export default function ReassignPage() {
-  const [trips, setTrips] = useState<any[]>([]);
-  const [drivers, setDrivers] = useState<any[]>([]);
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [trips, setTrips] = useState<TripRecord[]>([]);
+  const [drivers, setDrivers] = useState<DriverRecord[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleRecord[]>([]);
   const [form, setForm] = useState<
     Record<number, { driver_id: string; vehicle_id: string }>
   >({});
@@ -18,30 +71,40 @@ export default function ReassignPage() {
   const loadTrips = async () => {
     const { data } = await modulesApi.myTrips();
     setTrips(
-      (data || []).filter((x: any) =>
+      ((data || []) as TripRecord[]).filter((x) =>
         ['rechazado', 'pendiente'].includes(x.driver_response)
       )
     );
   };
 
   useEffect(() => {
-    setLoading(true);
+    let ignore = false;
     Promise.all([
       modulesApi.myTrips(),
       modulesApi.drivers(),
       modulesApi.vehicles(),
     ])
       .then(([t, d, v]) => {
-        setTrips(
-          (t.data || []).filter((x: any) =>
-            ['rechazado', 'pendiente'].includes(x.driver_response)
-          )
-        );
-        setDrivers(d.data || []);
-        setVehicles(v.data || []);
+        if (!ignore) {
+          setTrips(
+            ((t.data || []) as TripRecord[]).filter((x) =>
+              ['rechazado', 'pendiente'].includes(x.driver_response)
+            )
+          );
+          setDrivers((d.data || []) as DriverRecord[]);
+          setVehicles((v.data || []) as VehicleRecord[]);
+        }
       })
-      .catch(() => setError('No se pudo cargar reasignaciones.'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!ignore) setError('No se pudo cargar reasignaciones.');
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const submit = async (id: number) => {
@@ -69,121 +132,167 @@ export default function ReassignPage() {
     }
   };
 
-  return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Operación diaria</p>
-        <h1>Reasignar conductor</h1>
-        <p className="module-lead">
-          Viajes rechazados o pendientes de aceptación que requieren un nuevo
-          conductor o vehículo.
-        </p>
-      </header>
+  const rechazadosCount = trips.filter((t) => t.driver_response === 'rechazado').length;
+  const pendientesCount = trips.filter((t) => t.driver_response === 'pendiente').length;
+  const availableDriversCount = drivers.filter((d) => d.is_selectable).length;
+  const availableVehiclesCount = vehicles.filter((v) => v.is_selectable).length;
 
-      {msg && <div className="alert alert-success">{msg}</div>}
-      {error && <div className="alert alert-danger" role="alert">{error}</div>}
+  return (
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Centro de Reasignaciones"
+        badgeVariant="amber"
+        title="Reasignación Operativa de Choferes y Flota"
+        description="Gestión inmediata de comisiones con rechazo o pendientes de confirmación. Reasigne un chofer disponible o reemplace la unidad vehicular para asegurar el cumplimiento oportuno de la agenda."
+        metricValue={String(trips.length)}
+        metricLabel="COMISIONES POR REASIGNAR"
+        actionLabel="Actualizar Lista"
+        onAction={() => void loadTrips()}
+        actionLoading={loading}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total por Reasignar"
+          value={trips.length}
+          tone={trips.length > 0 ? 'danger' : 'neutral'}
+          icon={<AlertTriangle size={18} />}
+          hint={trips.length > 0 ? `${pendientesCount} pendientes / ${rechazadosCount} rechazos` : 'Sin comisiones pendientes'}
+        />
+        <StatCard
+          label="Rechazos Confirmados"
+          value={rechazadosCount}
+          tone={rechazadosCount > 0 ? 'danger' : 'neutral'}
+          icon={<Clock size={18} />}
+          hint="Chofer no disponible para el viaje"
+        />
+        <StatCard
+          label="Choferes Habilitados"
+          value={availableDriversCount}
+          tone="ok"
+          icon={<UserCheck size={18} />}
+          hint={`${drivers.length} choferes en nómina`}
+        />
+        <StatCard
+          label="Vehículos Listos"
+          value={availableVehiclesCount}
+          tone="info"
+          icon={<Truck size={18} />}
+          hint={`${vehicles.length} vehículos en inventario`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <ResourceCard
+          title="Directorio de Choferes"
+          description="Consulte puntuaciones, estado de licencias y disponibilidad en tiempo real."
+          icon={<Users size={20} />}
+          href="/app/secretaria/flota/conductores"
+        />
+        <ResourceCard
+          title="Flota Vehicular"
+          description="Inspeccione unidades operativas, kilometraje y mantenimientos programados."
+          icon={<Car size={20} />}
+          href="/app/secretaria/flota/vehiculos"
+        />
+        <ResourceCard
+          title="Agenda de Comisiones"
+          description="Visualice el calendario institucional y la programación completa de salidas."
+          icon={<CalendarCheck size={20} />}
+          href="/app/secretaria/agenda"
+        />
+      </div>
+
+      {msg && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-mono flex items-center gap-2">
+          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+          <span>{msg}</span>
+        </div>
+      )}
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-mono flex items-center gap-2" role="alert">
+          <AlertTriangle size={16} className="text-rose-600 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {loading ? (
-        <div className="module-panel" style={{ textAlign: 'center', padding: 48 }}>
-          <span
-            className="spinner"
-            style={{
-              display: 'inline-block',
-              width: 36,
-              height: 36,
-              marginBottom: 12,
-            }}
-          />
-          <p className="ops-muted">Cargando viajes por reasignar…</p>
+        <div className="module-panel flex flex-col items-center justify-center py-16">
+          <span className="spinner w-9 h-9 mb-3" />
+          <p className="ops-muted font-mono text-xs">Cargando viajes por reasignar…</p>
         </div>
       ) : trips.length === 0 ? (
-        <div className="module-panel" style={{ textAlign: 'center', padding: 48 }}>
-          <p className="ops-muted" style={{ fontSize: 16 }}>
+        <div className="module-panel flex flex-col items-center justify-center py-16 text-center">
+          <CheckCircle2 size={40} className="text-emerald-500 mb-2" />
+          <p className="text-base font-semibold text-zinc-900">
             No hay viajes por reasignar.
           </p>
-          <p className="ops-muted">
-            Todos los conductores han aceptado sus asignaciones.
+          <p className="ops-muted text-sm mt-1">
+            Todos los conductores han aceptado sus asignaciones o no existen alertas activas.
           </p>
         </div>
       ) : (
         trips.map((t) => {
           const current = form[t.id] || { driver_id: '', vehicle_id: '' };
           const canSubmit = Boolean(current.driver_id);
-          const statusBadge =
-            t.driver_response === 'rechazado' ? 'alert-danger' : 'alert-info';
+          const isRejected = t.driver_response === 'rechazado';
           return (
-            <div key={t.id} className="module-panel" style={{ marginBottom: 16 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 8,
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 12,
-                }}
-              >
-                <h2 style={{ margin: 0, fontSize: 18 }}>
-                  #{t.id} · {t.request?.destination}
+            <div key={t.id} className="module-panel shadow-sm border border-zinc-200 rounded-xl p-5 mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4 border-b border-zinc-100 pb-3">
+                <h2 className="text-lg font-bold font-mono text-zinc-900 m-0">
+                  #{t.id} · {t.request?.destination || 'Sin destino'}
                 </h2>
                 <span
-                  className={`alert ${statusBadge}`}
-                  style={{
-                    margin: 0,
-                    padding: '4px 12px',
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
+                  className={`px-3 py-1 text-xs font-mono font-bold rounded-full ${
+                    isRejected
+                      ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                      : 'bg-amber-100 text-amber-800 border border-amber-200'
+                  }`}
                 >
                   {labelOf(DRIVER_RESPONSE_LABEL, t.driver_response)}
                 </span>
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: 12,
-                  marginBottom: 12,
-                }}
-              >
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                 <div>
-                  <span className="ops-muted">Origen</span>
-                  <p style={{ margin: '2px 0 0', fontWeight: 600 }}>
+                  <span className="ops-muted text-xs font-mono block">Origen</span>
+                  <p className="text-sm font-semibold text-zinc-800 m-0 mt-0.5">
                     {t.request?.origin || '—'}
                   </p>
                 </div>
                 <div>
-                  <span className="ops-muted">Salida</span>
-                  <p style={{ margin: '2px 0 0', fontWeight: 600 }}>
+                  <span className="ops-muted text-xs font-mono block">Salida</span>
+                  <p className="text-sm font-semibold text-zinc-800 m-0 mt-0.5">
                     {formatDateReadable(t.request?.departure_date)}
                   </p>
                 </div>
                 <div>
-                  <span className="ops-muted">Conductor actual</span>
-                  <p style={{ margin: '2px 0 0', fontWeight: 600 }}>
-                    {t.driver?.user?.first_name} {t.driver?.user?.last_name}
+                  <span className="ops-muted text-xs font-mono block">Conductor actual</span>
+                  <p className="text-sm font-semibold text-zinc-800 m-0 mt-0.5">
+                    {t.driver?.user?.first_name || ''} {t.driver?.user?.last_name || ''}
                   </p>
                 </div>
                 <div>
-                  <span className="ops-muted">Vehículo actual</span>
-                  <p style={{ margin: '2px 0 0', fontWeight: 600 }}>
+                  <span className="ops-muted text-xs font-mono block">Vehículo actual</span>
+                  <p className="text-sm font-semibold text-zinc-800 m-0 mt-0.5">
                     {t.vehicle?.plate || '—'}
                   </p>
                 </div>
               </div>
 
               {t.driver_reject_reason && (
-                <p className="ops-muted" style={{ marginBottom: 12 }}>
+                <div className="p-3 bg-rose-50/70 border border-rose-200/60 rounded-lg text-xs font-mono text-rose-800 mb-4">
                   <strong>Motivo del rechazo:</strong> {t.driver_reject_reason}
-                </p>
+                </div>
               )}
 
-              <div className="filters-row" style={{ marginBottom: 0 }}>
-                <label style={{ flex: '1 1 220px' }}>
-                  Nuevo conductor
+              <div className="flex flex-wrap items-end gap-3 pt-2">
+                <label className="flex-1 min-w-[220px]">
+                  <span className="text-xs font-mono font-semibold text-zinc-700 block mb-1">
+                    Nuevo conductor *
+                  </span>
                   <select
-                    className="form-select"
+                    className="form-select w-full"
                     value={current.driver_id}
                     onChange={(e) =>
                       setForm((s) => ({
@@ -193,7 +302,7 @@ export default function ReassignPage() {
                     }
                   >
                     <option value="">Seleccione conductor…</option>
-                    {drivers.map((d: any) => (
+                    {drivers.map((d) => (
                       <option
                         key={d.id}
                         value={d.id}
@@ -206,10 +315,12 @@ export default function ReassignPage() {
                     ))}
                   </select>
                 </label>
-                <label style={{ flex: '1 1 220px' }}>
-                  Nuevo vehículo (opcional)
+                <label className="flex-1 min-w-[220px]">
+                  <span className="text-xs font-mono font-semibold text-zinc-700 block mb-1">
+                    Nuevo vehículo (opcional)
+                  </span>
                   <select
-                    className="form-select"
+                    className="form-select w-full"
                     value={current.vehicle_id}
                     onChange={(e) =>
                       setForm((s) => ({
@@ -219,7 +330,7 @@ export default function ReassignPage() {
                     }
                   >
                     <option value="">Mantener actual</option>
-                    {vehicles.map((v: any) => (
+                    {vehicles.map((v) => (
                       <option
                         key={v.id}
                         value={v.id}
@@ -233,8 +344,7 @@ export default function ReassignPage() {
                 </label>
                 <button
                   type="button"
-                  className="btn btn-primary"
-                  style={{ width: 'auto', padding: '12px 24px' }}
+                  className="btn btn-primary h-[42px] px-6 text-xs font-mono uppercase tracking-wider"
                   disabled={!canSubmit || savingId === t.id}
                   onClick={() => void submit(t.id)}
                 >

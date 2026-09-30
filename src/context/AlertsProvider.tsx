@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { AlertsContext, type AlertItem } from './AlertsContext';
@@ -19,13 +19,13 @@ export const AlertsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const firstLoad = useRef(true);
 
-  const applyPayload = (data: AlertsPayload | null) => {
+  const applyPayload = useCallback((data: AlertsPayload | null) => {
     setAlerts(data?.alerts ?? []);
     setUnreadCount(data?.unread_count ?? 0);
     setImportantUnreadCount(data?.important_unread_count ?? 0);
-  };
+  }, []);
 
-  const fetchAlerts = (silent = false) => {
+  const fetchAlerts = useCallback((silent = false) => {
     if (!silent) setLoading(true);
     api
       .get('/alertas')
@@ -34,12 +34,12 @@ export const AlertsProvider: React.FC<{ children: React.ReactNode }> = ({
       .finally(() => {
         if (!silent) setLoading(false);
       });
-  };
+  }, [applyPayload]);
 
   useEffect(() => {
     fetchAlerts(!firstLoad.current);
     firstLoad.current = false;
-  }, [location.pathname]);
+  }, [fetchAlerts, location.pathname]);
 
   useEffect(() => {
     const timer = window.setInterval(() => fetchAlerts(true), 20000);
@@ -49,7 +49,7 @@ export const AlertsProvider: React.FC<{ children: React.ReactNode }> = ({
       window.clearInterval(timer);
       window.removeEventListener('focus', onFocus);
     };
-  }, []);
+  }, [fetchAlerts]);
 
   const markRead = async (id: number) => {
     const target = alerts.find((a) => a.id === id);

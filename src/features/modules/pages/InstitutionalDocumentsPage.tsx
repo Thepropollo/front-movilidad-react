@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { Download, Eye, FileUp, FileText, PenLine, Eraser } from 'lucide-react';
+import { Download, Eye, FileUp, FileText, PenLine, Eraser, FileCheck, Layers, ShieldCheck, Wrench, FolderArchive } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
+import { downloadApiFile, fetchApiBlob } from '@/services/download';
 import { modulesApi } from '../api';
 import Modal from '@/components/Modal';
+import ResourceCard from '@/components/ResourceCard';
+import { HeroMetricCard } from '@/components/Cards';
 
 type Catalog = Record<string, { code: string; label: string }>;
 
@@ -31,15 +34,6 @@ type DocRow = {
   request?: { destination?: string };
   signature_slots?: SignatureSlot[];
 };
-
-function authHeaders(): HeadersInit {
-  const token = localStorage.getItem('access_token');
-  return { Authorization: `Bearer ${token}` };
-}
-
-function apiBase(): string {
-  return (api.defaults.baseURL || 'http://localhost:8000/api').replace(/\/$/, '');
-}
 
 export default function InstitutionalDocumentsPage() {
   const { roleIds } = useAuth();
@@ -101,14 +95,34 @@ export default function InstitutionalDocumentsPage() {
   };
 
   useEffect(() => {
-    void load().catch(() => setError('No se pudieron cargar documentos.'));
-  }, []);
+    let ignore = false;
+    Promise.all([
+      api.get('/documentos/catalogo'),
+      api.get('/documentos'),
+      modulesApi.listSolicitudes().catch(() => ({ data: [] })),
+    ])
+      .then(async ([{ data: cat }, { data: list }, solicitudesRes]) => {
+        if (ignore) return;
+        setCatalog(cat || {});
+        setDocs(list || []);
+        setSolicitudes(solicitudesRes.data || []);
+        if (isMechanic || isSecretaria) {
+          const { data: ot } = await modulesApi.workOrders().catch(() => ({ data: [] }));
+          if (ignore) return;
+          setOrders(ot || []);
+          const { data: nov } = await modulesApi.listNovelties().catch(() => ({ data: { issues: [] } }));
+          if (ignore) return;
+          setIssues(nov?.issues || []);
+        }
+      })
+      .catch(() => {
+        if (!ignore) setError('No se pudieron cargar documentos.');
+      });
 
-  useEffect(() => {
-    if (allowedTypes.length && !allowedTypes.includes(type)) {
-      setType(allowedTypes[0]);
-    }
-  }, [allowedTypes, type]);
+    return () => {
+      ignore = true;
+    };
+  }, [isMechanic, isSecretaria]);
 
   useEffect(() => {
     return () => {
@@ -117,11 +131,7 @@ export default function InstitutionalDocumentsPage() {
   }, [previewUrl]);
 
   const fetchBlob = async (id: number) => {
-    const res = await fetch(`${apiBase()}/documentos/${id}/archivo`, {
-      headers: authHeaders(),
-    });
-    if (!res.ok) throw new Error('No se pudo abrir el documento.');
-    return res.blob();
+    return fetchApiBlob(`/documentos/${id}/archivo`);
   };
 
   const openDocument = async (doc: DocRow, nextMode: 'view' | 'sign') => {
@@ -146,13 +156,20 @@ export default function InstitutionalDocumentsPage() {
   };
 
   const downloadById = async (id: number, filename: string) => {
+    await downloadApiFile(`/documentos/${id}/archivo`, filename);
+  };
+
+  const shareById = async (id: number, filename: string) => {
     const blob = await fetchBlob(id);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    const file = new File([blob], filename, {
+      type: blob.type || 'application/pdf',
+    });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    }
+    await downloadById(id, filename);
+    setMsg('Documento descargado. Puede compartirlo desde su dispositivo.');
   };
 
   const generate = async () => {
@@ -277,6 +294,9 @@ export default function InstitutionalDocumentsPage() {
       setError('Debe aceptar que revisó el documento.');
       return;
     }
+    if (!window.confirm('¿Confirmas que deseas firmar digitalmente este documento?')) {
+      return;
+    }
     setBusy(true);
     setMsg(null);
     setError(null);
@@ -308,15 +328,15 @@ export default function InstitutionalDocumentsPage() {
   const canSignActive = (active?.signature_slots || []).some((s) => s.can_sign);
 
   return (
-    <section className="module-page" aria-labelledby="docs-title">
-      <header className="module-header">
-        <p className="module-kicker">Formatos institucionales</p>
-        <h1 id="docs-title">Documentos PDF</h1>
-        <p className="module-lead">
-          Abra el documento, revíselo en pantalla y firme encima. También puede
-          adjuntar el papel ya sellado por ULEAM.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6" aria-labelledby="docs-title">
+      <HeroMetricCard
+        badge="Formatos Institucionales"
+        badgeVariant="indigo"
+        title="Documentación Oficial y Firmas Digitales"
+        description="Gestión, visualización y firma digital de salvoconductos, órdenes de movilización, hojas de ruta y comprobantes institucionales."
+        metricValue={String(docs.length)}
+        metricLabel="DOCUMENTOS ARCHIVADOS"
+      />
 
       {msg && (
         <div className="alert alert-success" role="status">
@@ -328,6 +348,55 @@ export default function InstitutionalDocumentsPage() {
           {error}
         </div>
       )}
+
+      {/* Quick Resource Cards Grid (Image 1 reference) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 my-2">
+        <ResourceCard
+          title="SOPs / Movilización"
+          subtitle="Procedimientos operativos estándar y salvoconductos institucionales"
+          icon={<FileCheck size={18} />}
+          badge="Oficial"
+          onClick={() => setType('orden_movilizacion')}
+        />
+        <ResourceCard
+          title="Contracts / Hojas de Ruta"
+          subtitle="Control de recorrido, kilometraje y confirmación del conductor"
+          icon={<FileText size={18} />}
+          badge="Ruta"
+          onClick={() => setType('hoja_ruta')}
+        />
+        <ResourceCard
+          title="Templates / Actas"
+          subtitle="Formatos de entrega de unidades y descargo de responsabilidades"
+          icon={<Layers size={18} />}
+          badge="Plantilla"
+          onClick={() => setType('acta_entrega')}
+        />
+        <ResourceCard
+          title="Policies / Reglamentos"
+          subtitle="Políticas institucionales de uso de vehículos oficiales ULEAM"
+          icon={<ShieldCheck size={18} />}
+          badge="Norma"
+          onClick={() => setType('libro_novedades')}
+        />
+        <ResourceCard
+          title="Knowledge Base / Taller"
+          subtitle="Órdenes de trabajo preventivo y provisión de lubricantes"
+          icon={<Wrench size={18} />}
+          badge="Taller"
+          onClick={() => setType('orden_taller')}
+        />
+        <ResourceCard
+          title="Archive / Histórico"
+          subtitle="Expedientes de movilización archivados y firmados digitalmente"
+          icon={<FolderArchive size={18} />}
+          badge="Archivo"
+          onClick={() => {
+            const table = document.querySelector('.ops-table');
+            table?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        />
+      </div>
 
       <div className="module-panel report-filters">
         <label htmlFor="doc-type">
@@ -423,68 +492,130 @@ export default function InstitutionalDocumentsPage() {
         </div>
       </div>
 
-      <div className="module-panel" style={{ marginTop: 16, overflowX: 'auto' }}>
+      <div className="sgv-table-card" style={{ marginTop: 20 }}>
         {docs.length === 0 ? (
-          <p className="ops-muted">Aún no hay documentos emitidos o archivados.</p>
+          <div className="p-8 text-center text-slate-400 text-sm">
+            Aún no hay documentos emitidos o archivados en el repositorio.
+          </div>
         ) : (
-          <table className="ops-table">
-            <caption className="sr-only">
-              Documentos institucionales emitidos o archivados
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Formato</th>
-                <th scope="col">Solicitud</th>
-                <th scope="col">Firmas</th>
-                <th scope="col">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {docs.map((d) => {
-                const slots = d.signature_slots || [];
-                const signedCount = slots.filter((s) => s.signed).length;
-                const canSign = slots.some((s) => s.can_sign);
-                return (
-                  <tr key={d.id}>
-                    <td>#{d.id}</td>
-                    <td>{catalog[d.document_type]?.label || d.document_type}</td>
-                    <td>{d.request_id ? `#${d.request_id} ${d.request?.destination || ''}` : '—'}</td>
-                    <td>
-                      {slots.length === 0 ? '—' : `${signedCount}/${slots.length}`}
-                      <div className="ops-muted" style={{ fontSize: 12 }}>
-                        {slots.filter((s) => s.signed).map((s) => `${s.label}${s.valid ? ' ✓' : ''}`).join(' · ') ||
-                          'Sin firmar'}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                      <button type="button" className="btn btn-outline" onClick={() => void openDocument(d, 'view')}>
-                        <Eye size={14} aria-hidden /> Ver
-                      </button>
-                      {canSign && (
-                        <button
-                          type="button"
-                          className="btn btn-primary"
-                          onClick={() => void openDocument(d, 'sign')}
-                        >
-                          <PenLine size={14} aria-hidden /> Firmar
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="btn btn-outline"
-                        onClick={() => void downloadById(d.id, d.original_filename)}
-                      >
-                        <Download size={14} aria-hidden /> PDF
-                      </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="sgv-table">
+              <caption className="sr-only">
+                Documentos institucionales emitidos o archivados
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Formato Institucional</th>
+                  <th scope="col">Solicitud Vinculada</th>
+                  <th scope="col">Firmas Digitales</th>
+                  <th scope="col" className="text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {docs.map((d) => {
+                  const slots = d.signature_slots || [];
+                  const signedCount = slots.filter((s) => s.signed).length;
+                  const canSign = slots.some((s) => s.can_sign);
+                  return (
+                    <tr key={d.id}>
+                      <td className="font-mono font-semibold text-slate-800">#{d.id}</td>
+                      <td>
+                        <span className="font-semibold text-primary block">
+                          {catalog[d.document_type]?.label || d.document_type}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {catalog[d.document_type]?.code || 'DOC-ULEAM'}
+                        </span>
+                      </td>
+                      <td>
+                        {d.request_id ? (
+                          <div>
+                            <span className="font-medium text-slate-800">
+                              #{d.request_id}
+                            </span>
+                            {d.request?.destination && (
+                              <span className="text-xs text-slate-500 block">
+                                {d.request.destination}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td>
+                        {slots.length === 0 ? (
+                          <span className="text-slate-400">—</span>
+                        ) : (
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs font-bold text-slate-700">
+                                {signedCount}/{slots.length}
+                              </span>
+                              <span
+                                className={`sgv-badge ${
+                                  signedCount === slots.length
+                                    ? 'is-ok'
+                                    : signedCount > 0
+                                    ? 'is-gold'
+                                    : 'is-warn'
+                                }`}
+                              >
+                                {signedCount === slots.length
+                                  ? 'Completado'
+                                  : 'Firmas pendientes'}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-400">
+                              {slots
+                                .filter((s) => s.signed)
+                                .map((s) => `${s.label}${s.valid ? ' ✓' : ''}`)
+                                .join(' · ') || 'Sin firmar'}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="text-right">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: 13, width: 'auto' }}
+                            onClick={() => void openDocument(d, 'view')}
+                          >
+                            <Eye size={13} aria-hidden /> Ver
+                          </button>
+                          {canSign && (
+                            <button
+                              type="button"
+                              className="btn btn-gold"
+                              style={{ padding: '6px 12px', fontSize: 13, width: 'auto' }}
+                              onClick={() => void openDocument(d, 'sign')}
+                            >
+                              <PenLine size={13} aria-hidden /> Firmar
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: 13, width: 'auto' }}
+                            onClick={() =>
+                              void downloadById(d.id, d.original_filename).catch(() =>
+                                setError('No se pudo descargar el documento.')
+                              )
+                            }
+                          >
+                            <Download size={13} aria-hidden /> PDF
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -503,6 +634,32 @@ export default function InstitutionalDocumentsPage() {
                 <PenLine size={16} /> Pasar a firmar
               </button>
             )}
+            {active && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() =>
+                    void downloadById(active.id, active.original_filename).catch(() =>
+                      setError('No se pudo descargar el documento.')
+                    )
+                  }
+                >
+                  <Download size={16} /> Descargar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() =>
+                    void shareById(active.id, active.original_filename).catch(() =>
+                      setError('No se pudo compartir el documento.')
+                    )
+                  }
+                >
+                  Compartir
+                </button>
+              </>
+            )}
             {mode === 'sign' && (
               <button type="button" className="btn btn-primary" onClick={() => void submitSign()} disabled={busy}>
                 <PenLine size={16} /> Confirmar firma digital
@@ -514,14 +671,27 @@ export default function InstitutionalDocumentsPage() {
         <div className="sign-desk">
           <div className="sign-preview">
             {previewUrl ? (
-              <iframe title="Documento institucional" src={previewUrl} />
+              <div className="h-full min-h-[420px] flex flex-col items-center justify-center gap-3 p-6 text-center bg-white">
+                <FileText size={36} className="text-primary-brand" aria-hidden />
+                <p className="ops-muted">
+                  Abra el documento en el visor del dispositivo para revisarlo.
+                </p>
+                <a
+                  className="btn btn-primary"
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Abrir documento
+                </a>
+              </div>
             ) : (
               <p className="ops-muted">Cargando documento…</p>
             )}
             {mode === 'sign' && (
               <div className="sign-overlay">
                 <div className="sign-overlay-head">
-                  <strong>Firme aquí, encima del documento</strong>
+                  <strong>Trazo de firma digital</strong>
                   <button type="button" className="btn btn-outline" onClick={clearSignature}>
                     <Eraser size={14} /> Borrar
                   </button>

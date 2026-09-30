@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Lock, LogIn } from 'lucide-react';
+import {
+  BadgeCheck,
+  Car,
+  ClipboardPen,
+  Eye,
+  EyeOff,
+  Lock,
+  LogIn,
+  Mail,
+  UserRound,
+  Wrench,
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-
-const ULEAM_DOMAINS = ['uleam.edu.ec', 'live.uleam.edu.ec'];
 
 const ENABLE_DEMO = import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true';
 const ALLOW_REGISTER = import.meta.env.VITE_ALLOW_REGISTER === 'true';
@@ -14,34 +23,74 @@ const DEMO_ACCOUNTS = [
   { role: 'Vicerrector', email: 'vicerrector@uleam.edu.ec' },
   { role: 'Conductor', email: 'conductor1@uleam.edu.ec' },
   { role: 'Mecánico', email: 'mecanico@uleam.edu.ec' },
-  { role: 'Dual C+M', email: 'conductor.mecanico@uleam.edu.ec' },
   { role: 'Facultad', email: 'decano@uleam.edu.ec' },
   { role: 'Estudiante', email: 'e1314433382@live.uleam.edu.ec' },
 ] as const;
 
-const Login: React.FC = () => {
+const REQUEST_STEPS = [
+  {
+    icon: ClipboardPen,
+    label: 'Solicitar',
+    text: 'Trámite digital, sin oficio en papel.',
+  },
+  {
+    icon: BadgeCheck,
+    label: 'Autorizar',
+    text: 'Internas, externas y salidas próximas.',
+  },
+  {
+    icon: Car,
+    label: 'Asignar',
+    text: 'Vehículo y conductor según disponibilidad.',
+  },
+  {
+    icon: Wrench,
+    label: 'Controlar',
+    text: 'Flota, mantenimiento, combustible y reportes.',
+  },
+] as const;
+
+export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ssoNotice, setSsoNotice] = useState<string | null>(null);
+  const [authNotice] = useState(() => {
+    try {
+      const notice = sessionStorage.getItem('auth_notice');
+      sessionStorage.removeItem('auth_notice');
+      return notice;
+    } catch {
+      return null;
+    }
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     setError(null);
     setSsoNotice(null);
     setIsSubmitting(true);
-
     try {
       await login(email, password);
-      navigate('/app');
+      let destination = '/app';
+      try {
+        const saved = sessionStorage.getItem('auth_redirect_to');
+        sessionStorage.removeItem('auth_redirect_to');
+        if (saved?.startsWith('/') && !saved.startsWith('//')) {
+          destination = saved;
+        }
+      } catch {
+        // Use the role-specific app home when browser storage is unavailable.
+      }
+      navigate(destination, { replace: true });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Credenciales inválidas.';
-      setError(message);
+      setError(
+        err instanceof Error ? err.message : 'Correo o contraseña no válidos.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -54,164 +103,213 @@ const Login: React.FC = () => {
     setSsoNotice(null);
   };
 
-  const handleUleamSso = () => {
-    setError(null);
-    setSsoNotice(
-      'En el servidor institucional el acceso usará Microsoft Entra ID (cuenta ULEAM / @live.uleam.edu.ec). En este entorno de desarrollo usa el login local con usuarios seed.'
-    );
-  };
-
   return (
-    <main className="auth-wrapper">
-      <div className="auth-header">
-        <Link to="/" className="auth-back">
-          Volver al inicio
-        </Link>
-        <img
-          className="auth-mark"
-          src="/brand/logo-uleam.png"
-          alt="Escudo institucional ULEAM"
-          width={72}
-          height={72}
-        />
-        <p className="auth-kicker">Universidad Laica Eloy Alfaro de Manabí</p>
-        <h1 className="auth-logo">ULEAM Movilidad</h1>
-        <p className="auth-subtitle">
-          Sistema de movilización institucional. Solicite viajes, autorice,
-          firme documentos y reciba el detalle de cada aviso.
-        </p>
-        <ul className="auth-highlights">
-          <li>Pantalla pensada para computador y para teclado</li>
-          <li>Documentos visibles antes de firmar</li>
-          <li>Notificaciones con origen, destino y qué hacer</li>
-        </ul>
-      </div>
-
-      <div className="glass-panel auth-card">
-        <h2 id="login-title" style={{ marginBottom: '8px', fontWeight: 600 }}>
-          Iniciar sesión
-        </h2>
-        <p className="auth-hint">
-          Dominios institucionales:{' '}
-          {ULEAM_DOMAINS.map((d) => `@${d}`).join(' · ')}
-        </p>
-
-        {error && (
-          <div className="alert alert-danger" role="alert">
-            <span>{error}</span>
+    <div className="login-page">
+      <a className="skip-link" href="#login-form">
+        Saltar al formulario
+      </a>
+      <header className="login-top">
+        <div className="login-brandmark">
+          <img
+            src="/brand/logo-uleam-horizontal.png"
+            alt="Universidad Laica Eloy Alfaro de Manabí"
+            className="login-brandmark-logo"
+          />
+          <div className="login-brandmark-divider" aria-hidden />
+          <div className="login-brandmark-text">
+            <strong>SIGMOV · ULEAM</strong>
+            <small>Sistema Institucional de Gestión y Movilidad</small>
           </div>
-        )}
-        {ssoNotice && (
-          <div className="alert alert-info" role="status">
-            <span>{ssoNotice}</span>
-          </div>
-        )}
-
-        <button
-          type="button"
-          className="btn btn-uleam-sso"
-          onClick={handleUleamSso}
-        >
-          Entrar con cuenta ULEAM
-        </button>
-
-        <div className="auth-divider" aria-hidden>
-          <span>o acceso local de prueba</span>
         </div>
+        <div className="login-top-right">
+          <span className="login-portal-badge">
+            <span className="login-badge-dot" aria-hidden />
+            Portal Institucional
+          </span>
+        </div>
+      </header>
 
-        <form onSubmit={(e) => void handleSubmit(e)} noValidate aria-labelledby="login-title">
-          <div className="form-group">
-            <label className="form-label" htmlFor="email">
-              Correo institucional
-            </label>
-            <div className="input-container">
-              <User className="input-icon" size={18} aria-hidden />
-              <input
-                id="email"
-                type="email"
-                className="form-input"
-                placeholder="usuario@uleam.edu.ec"
-                autoComplete="username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isSubmitting}
-              />
-            </div>
+      <div className="login-layout">
+        <section className="login-story" aria-labelledby="login-story-title">
+          <img
+            className="login-campus"
+            src="/entrada-uleam.jpg"
+            alt="Entrada principal del campus matriz de la ULEAM en Manta"
+          />
+          <div className="login-story-copy">
+            <p className="login-kicker">Universidad Laica Eloy Alfaro de Manabí</p>
+            <h1 id="login-story-title">Gestión de logística y movilidad</h1>
+            <p className="login-lead">
+              Plataforma digital para planificar, autorizar, asignar y dar
+              seguimiento a la flota vehicular institucional.
+            </p>
+            <ul className="login-ops">
+              {REQUEST_STEPS.map((item) => (
+                <li key={item.label}>
+                  <item.icon size={20} aria-hidden />
+                  <div className="login-op-text">
+                    <strong>{item.label}</strong>
+                    <span>{item.text}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
+        </section>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="password">
-              Contraseña
-            </label>
-            <div className="input-container">
-              <Lock className="input-icon" size={18} aria-hidden />
-              <input
-                id="password"
-                type="password"
-                className="form-input"
-                placeholder="••••••••"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isSubmitting}
-              />
+        <main className="login-card">
+          <header className="login-card-head">
+            <h2 id="login-title">Acceso institucional</h2>
+            <p>Ingrese con sus credenciales institucionales para continuar.</p>
+          </header>
+
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
             </div>
-          </div>
+          )}
+          {authNotice && (
+            <div className="alert alert-info" role="status">
+              {authNotice}
+            </div>
+          )}
+          {ssoNotice && (
+            <div className="alert alert-info" role="status">
+              {ssoNotice}
+            </div>
+          )}
+
+          <form
+            id="login-form"
+            className="login-form"
+            onSubmit={(event) => void handleSubmit(event)}
+            noValidate
+            aria-labelledby="login-title"
+          >
+            <div className="form-group">
+              <label className="form-label" htmlFor="email">
+                Correo institucional
+              </label>
+              <div className="input-container">
+                <Mail className="input-icon" size={18} aria-hidden />
+                <input
+                  id="email"
+                  type="email"
+                  className="form-input"
+                  placeholder="usuario@uleam.edu.ec"
+                  autoComplete="username"
+                  inputMode="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                  disabled={isSubmitting}
+                  aria-invalid={error ? true : undefined}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="password">
+                Contraseña
+              </label>
+              <div className="input-container">
+                <Lock className="input-icon" size={18} aria-hidden />
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  className="form-input login-password"
+                  placeholder="Ingrese su contraseña"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  className="login-eye"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} aria-hidden />
+                  ) : (
+                    <Eye size={18} aria-hidden />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary login-submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                'Verificando…'
+              ) : (
+                <>
+                  <LogIn size={18} aria-hidden />
+                  Ingresar
+                </>
+              )}
+            </button>
+          </form>
 
           <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ marginTop: '10px' }}
-            disabled={isSubmitting}
+            type="button"
+            className="btn btn-uleam-sso"
+            onClick={() =>
+              setSsoNotice(
+                'En el entorno institucional el ingreso se realiza con Microsoft Entra ID (cuenta ULEAM). En esta defensa se usa el acceso local con correo universitario.'
+              )
+            }
           >
-            {isSubmitting ? (
-              <span>Iniciando sesión…</span>
-            ) : (
-              <>
-                <LogIn size={18} aria-hidden />
-                <span>Ingresar</span>
-              </>
-            )}
+            <UserRound size={18} aria-hidden />
+            Ingresar con cuenta ULEAM
           </button>
-        </form>
 
-        {ENABLE_DEMO && (
-          <div className="auth-demo-roles" aria-label="Cuentas demo por rol">
-            <p className="auth-demo-hint">
-              Solo entorno de prueba (no usar en producción)
-            </p>
-            <div className="auth-demo-grid">
-              {DEMO_ACCOUNTS.map((account) => (
-                <button
-                  key={account.email}
-                  type="button"
-                  className="auth-demo-chip"
-                  onClick={() => fillDemo(account.email)}
-                  disabled={isSubmitting}
-                >
-                  {account.role}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {ALLOW_REGISTER && (
-          <p
-            style={{
-              marginTop: '20px',
-              fontSize: '14px',
-              color: 'var(--text-muted)',
-            }}
-          >
-            ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
+          <p className="login-hint">
+            Uso exclusivo de la comunidad universitaria. Dirección Administrativa
+            / Transporte · Manta.
           </p>
-        )}
-      </div>
-    </main>
-  );
-};
 
-export default Login;
+          {ENABLE_DEMO && (
+            <details className="login-demo">
+              <summary>Cuentas de demostración académica</summary>
+              <p>
+                Rellenan el formulario con usuarios de prueba. Contraseña:{' '}
+                <code>password</code>.
+              </p>
+              <div className="auth-demo-grid">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    className="auth-demo-chip"
+                    onClick={() => fillDemo(account.email)}
+                    disabled={isSubmitting}
+                  >
+                    {account.role}
+                  </button>
+                ))}
+              </div>
+            </details>
+          )}
+
+          {ALLOW_REGISTER && (
+            <p className="login-register">
+              ¿Docente o estudiante nuevo?{' '}
+              <Link to="/register">Solicitar alta</Link>
+            </p>
+          )}
+        </main>
+      </div>
+
+      <footer className="login-foot">
+        <p>© Universidad Laica Eloy Alfaro de Manabí · Dirección de Transporte y Movilidad</p>
+        <p>Campus Matriz Manta · Manabí, Ecuador</p>
+      </footer>
+    </div>
+  );
+}

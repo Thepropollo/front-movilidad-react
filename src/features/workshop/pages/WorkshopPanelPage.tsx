@@ -13,6 +13,8 @@ import {
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Modal from '@/components/Modal';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
+import { useAuth } from '@/context/AuthContext';
 import {
   fetchWorkshopData,
   fetchSupplies,
@@ -25,6 +27,7 @@ import {
 } from '../api/workshop';
 
 const WorkshopPanelPage: React.FC = () => {
+  const { roleIds } = useAuth();
   const [issues, setIssues] = useState<IssueLog[]>([]);
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [mechanics, setMechanics] = useState<
@@ -70,7 +73,7 @@ const WorkshopPanelPage: React.FC = () => {
       setIssues(workshopData.issues);
       setWorkOrders(workshopData.work_orders);
       setMechanics(mechanicsData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       setErrorMsg('Error al conectar con el taller. Por favor, recarga.');
     } finally {
@@ -79,7 +82,29 @@ const WorkshopPanelPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData();
+    let ignore = false;
+    Promise.all([fetchWorkshopData(), fetchMechanicsList()])
+      .then(([workshopData, mechanicsData]) => {
+        if (!ignore) {
+          setIssues(workshopData.issues);
+          setWorkOrders(workshopData.work_orders);
+          setMechanics(mechanicsData);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          console.error(err);
+          setErrorMsg('Error al conectar con el taller. Por favor, recarga.');
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   // Search supplies autocomplete
@@ -140,13 +165,12 @@ const WorkshopPanelPage: React.FC = () => {
       setIsOrderModalOpen(false);
 
       // Reload lists
-      const workshopData = await fetchWorkshopData();
-      setIssues(workshopData.issues);
-      setWorkOrders(workshopData.work_orders);
-    } catch (err: any) {
+      await loadData();
+    } catch (err: unknown) {
       console.error(err);
+      const er = err as { response?: { data?: { message?: string } } };
       setErrorMsg(
-        err.response?.data?.message || 'Error al iniciar la orden de trabajo.'
+        er.response?.data?.message || 'Error al iniciar la orden de trabajo.'
       );
     } finally {
       setOrderSubmitting(false);
@@ -205,13 +229,12 @@ const WorkshopPanelPage: React.FC = () => {
       setIsCloseModalOpen(false);
 
       // Reload lists
-      const workshopData = await fetchWorkshopData();
-      setIssues(workshopData.issues);
-      setWorkOrders(workshopData.work_orders);
-    } catch (err: any) {
+      await loadData();
+    } catch (err: unknown) {
       console.error(err);
+      const er = err as { response?: { data?: { message?: string } } };
       setErrorMsg(
-        err.response?.data?.message || 'Error al cerrar la orden de trabajo.'
+        er.response?.data?.message || 'Error al cerrar la orden de trabajo.'
       );
     } finally {
       setCloseSubmitting(false);
@@ -256,6 +279,100 @@ const WorkshopPanelPage: React.FC = () => {
           <p className="text-danger-text text-sm">{errorMsg}</p>
         </div>
       )}
+
+      {/* Hero Metric Banner Card */}
+      <div className="mb-6">
+        <HeroMetricCard
+          headline="Panel Técnico de Taller y Mantenimiento"
+          author="Gestión de Diagnósticos, Órdenes de Reparación y Repuestos de Flota"
+          tag={{
+            icon: <Wrench size={13} />,
+            label: `${issues.filter((i) => i.status !== 'solventado').length} Novedades Activas Reportadas`,
+          }}
+          metricValue={issues.filter((i) => i.status !== 'solventado').length}
+          metricLabel="Novedades"
+          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+        />
+      </div>
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Novedades Abiertas"
+          value={issues.filter((i) => i.status !== 'solventado').length}
+          hint="En espera de revisión"
+          icon={<AlertTriangle size={16} />}
+          tone={issues.filter((i) => i.status !== 'solventado').length > 0 ? 'warn' : 'neutral'}
+        />
+        <StatCard
+          label="Órdenes Activas"
+          value={workOrders.filter((o) => !o.exit_date).length}
+          hint="En proceso técnico"
+          icon={<Wrench size={16} />}
+          tone={workOrders.filter((o) => !o.exit_date).length > 0 ? 'info' : 'neutral'}
+        />
+        <StatCard
+          label="Preventivos"
+          value={workOrders.filter((o) => o.maintenance_type === 'preventivo').length}
+          hint="Mantenimientos"
+          icon={<Settings size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Órdenes Cerradas"
+          value={workOrders.filter((o) => Boolean(o.exit_date)).length}
+          hint="Unidades solventadas"
+          icon={<CheckCircle2 size={16} />}
+          tone="ok"
+        />
+      </div>
+
+      {/* Quick Resource Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        {roleIds.includes('secretaria') ? (
+          <>
+            <ResourceCard
+              title="Catálogo de Vehículos"
+              subtitle="Historial mecánico y kilometraje actual de la flota"
+              icon={<ShieldAlert size={18} />}
+              href="/app/secretaria/flota/vehiculos"
+            />
+            <ResourceCard
+              title="Disponibilidad de Flota"
+              subtitle="Consulte las unidades disponibles para asignación."
+              icon={<Wrench size={18} />}
+              href="/app/secretaria/disponibilidad"
+            />
+            <ResourceCard
+              title="Estado Documental"
+              subtitle="Verificar SOAT, matrículas y revisiones técnicas"
+              icon={<CheckCircle2 size={18} />}
+              href="/app/secretaria/flota/estado"
+            />
+          </>
+        ) : (
+          <>
+            <ResourceCard
+              title="Insumos y Lubricantes"
+              subtitle="Stock de aceites, fluidos y filtros de repuesto"
+              icon={<Settings size={18} />}
+              href="/app/mecanico/lubricantes"
+            />
+            <ResourceCard
+              title="Historial de mantenimiento"
+              subtitle="Consulte los trabajos mecánicos registrados."
+              icon={<ShieldAlert size={18} />}
+              href="/app/mecanico/historial"
+            />
+            <ResourceCard
+              title="Reportes de taller"
+              subtitle="Consulte las novedades y actividades del taller."
+              icon={<CheckCircle2 size={18} />}
+              href="/app/mecanico/reportes"
+            />
+          </>
+        )}
+      </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12">
@@ -502,7 +619,11 @@ const WorkshopPanelPage: React.FC = () => {
                 id="maintenance-type-select"
                 className="form-input"
                 value={maintenanceType}
-                onChange={(e) => setMaintenanceType(e.target.value as any)}
+                onChange={(e) =>
+                  setMaintenanceType(
+                    e.target.value as 'preventivo' | 'correctivo' | 'cambio_aceite'
+                  )
+                }
               >
                 <option value="correctivo">
                   Correctivo (Reparación de fallas)

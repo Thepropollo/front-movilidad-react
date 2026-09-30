@@ -24,6 +24,7 @@ import {
 import { TRIP_STATUS_LABEL, labelOf } from '@/lib/labels';
 import api from '@/services/api';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
 
 type Trip = {
   id: number;
@@ -334,14 +335,67 @@ export default function ConductorRouteMapPage() {
   const nextPointLabel = nextStop?.location || detail?.destination_address || detail?.destination;
 
   return (
-    <section className="module-page driver-route-page">
-      <header className="module-header">
-        <p className="module-kicker">Guía de ruta</p>
-        <h1>Navegación del viaje</h1>
-        <p className="module-lead">
-          Siga la ruta, registre paradas en el camino y vea su posición en vivo.
-        </p>
-      </header>
+    <section className="module-page driver-route-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Guía y Telemetría"
+        badgeVariant="indigo"
+        title="Navegación en Ruta y Registro de Paradas GPS"
+        description="Guía interactiva paso a paso para el conductor. Visualice su posición satelital en vivo, calcule distancias y tiempo estimado (ETA) y asiente paradas intermedias con odómetro digital."
+        metricValue={selectedTrip ? `${progressPercent}%` : (live ? 'GPS ON' : 'SIN GPS')}
+        metricLabel={selectedTrip ? 'PROGRESO DE RUTA' : 'ESTADO GPS'}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Estado GPS"
+          value={live ? 'CONECTADO' : 'ESPERANDO'}
+          tone={live ? 'ok' : 'warn'}
+          icon={<LocateFixed size={18} />}
+          hint={live ? 'Señal satelital en vivo' : 'Permita acceso a ubicación'}
+        />
+        <StatCard
+          label="Viajes Aceptados"
+          value={accepted.length}
+          tone="info"
+          icon={<Route size={18} />}
+          hint="Listos para navegación"
+        />
+        <StatCard
+          label="Paradas Registradas"
+          value={`${completedStops} / ${stops.length}`}
+          tone="ok"
+          icon={<CheckCircle2 size={18} />}
+          hint={selectedTrip ? 'Puntos de control cubiertos' : 'Seleccione un viaje'}
+        />
+        <StatCard
+          label="Próximo Destino"
+          value={nextPointLabel || '—'}
+          tone="neutral"
+          icon={<Navigation size={18} />}
+          hint={routePlan ? `ETA: ${formatEta(routePlan.durationSeconds)}` : 'En espera de ruta'}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <ResourceCard
+          title="Mis Asignaciones"
+          description="Aceptar o rechazar comisiones de viaje emitidas por Secretaría."
+          icon={<Route size={20} />}
+          href="/app/conductor/viajes"
+        />
+        <ResourceCard
+          title="Mi vehículo"
+          description="Consulte la unidad asignada y sus datos operativos."
+          icon={<ListChecks size={20} />}
+          href="/app/conductor/vehiculo"
+        />
+        <ResourceCard
+          title="Vales de Combustible"
+          description="Código alfanumérico del vale para repostar en gasolineras aliadas."
+          icon={<Flag size={20} />}
+          href="/app/conductor/combustible"
+        />
+      </div>
 
       {error && (
         <div className="alert alert-danger" role="alert">

@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Check, X } from 'lucide-react';
 import { formatDateReadable, formatDateTimeReadable } from '@/lib/datetime';
 import { MOBILIZATION_TYPE_LABEL, REQUEST_STATUS_LABEL, TRIP_STATUS_LABEL, DRIVER_RESPONSE_LABEL, INVITATION_STATUS_LABEL, labelOf } from '@/lib/labels';
 import { modulesApi } from '../api';
 import { useAuth } from '@/context/AuthContext';
+import ProcessPhaseLine, {
+  type ProcessPhase,
+} from '@/features/shared/ProcessPhaseLine';
+import HeroMetricCard from '@/components/HeroMetricCard';
+import { Compass, Users, Clock, DollarSign } from 'lucide-react';
 
 type TimelineItem = {
   id: number;
@@ -68,22 +72,6 @@ type RequestDetail = {
   }>;
 };
 
-type StageState = 'done' | 'current' | 'pending' | 'blocked';
-
-type Stage = {
-  key: string;
-  label: string;
-  state: StageState;
-  action?: string;
-};
-
-const STAGE_STATE_LABEL: Record<StageState, string> = {
-  done: 'Completado',
-  current: 'En curso',
-  pending: 'Pendiente',
-  blocked: 'Rechazado',
-};
-
 const STATUS_BADGE: Record<string, string> = {
   pendiente_secretaria: 'bg-amber-100 text-amber-900',
   pendiente_rectorado: 'bg-amber-100 text-amber-900',
@@ -101,6 +89,7 @@ export default function FlujoPage() {
   >([]);
   const [selected, setSelected] = useState<number | ''>('');
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [phases, setPhases] = useState<ProcessPhase[]>([]);
   const [detail, setDetail] = useState<RequestDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,16 +100,31 @@ export default function FlujoPage() {
       .catch(() => setError('No se pudieron cargar solicitudes.'));
   }, []);
 
-  const loadFlujo = async (id: number) => {
-    setError(null);
-    try {
-      const { data } = await modulesApi.flujo(id);
-      setTimeline(data.timeline || []);
-      setDetail(data.request);
-    } catch {
-      setError('No se pudo cargar la trazabilidad.');
-    }
-  };
+  const queryId = Number(new URLSearchParams(location.search).get('id') || '');
+  const defaultId = solicitudes.some((solicitud) => solicitud.id === queryId)
+    ? queryId
+    : solicitudes[0]?.id;
+  const activeId = selected || defaultId || '';
+
+  useEffect(() => {
+    if (!activeId) return;
+    let current = true;
+    void modulesApi
+      .flujo(activeId)
+      .then(({ data }) => {
+        if (!current) return;
+        setError(null);
+        setTimeline(data.timeline || []);
+        setPhases(data.phases || []);
+        setDetail(data.request);
+      })
+      .catch(() => {
+        if (current) setError('No se pudo cargar la trazabilidad.');
+      });
+    return () => {
+      current = false;
+    };
+  }, [activeId]);
 
   const mapPath = location.pathname.startsWith('/app/facultad/')
     ? '/app/facultad/mapa'
@@ -155,94 +159,6 @@ export default function FlujoPage() {
           maximumFractionDigits: 2,
         }).format(Number(detail.projected_cost));
 
-  const stages = useMemo<Stage[]>(() => {
-    if (!detail) return [];
-    const st = detail.status;
-    const isExterna = detail.mobilization_type === 'externa';
-    const rs = detail.route_sheet;
-    const driverResponse = rs?.driver_response;
-    const tripStatus = rs?.trip_status;
-    const has = (a: string) => timeline.some((t) => t.action === a);
-
-    const list: Stage[] = [
-      {
-        key: 'creada',
-        label: 'Solicitud creada',
-        state: 'done',
-        action: 'SOLICITUD_CREADA',
-      },
-    ];
-
-    let secState: StageState;
-    if (has('SECRETARIA_RECHAZA')) secState = 'blocked';
-    else if (has('SECRETARIA_AUTORIZA')) secState = 'done';
-    else if (st === 'pendiente_secretaria') secState = 'current';
-    else secState = 'pending';
-    list.push({
-      key: 'secretaria',
-      label: 'Autorización de Secretaría',
-      state: secState,
-      action: secState === 'blocked' ? 'SECRETARIA_RECHAZA' : 'SECRETARIA_AUTORIZA',
-    });
-
-    if (isExterna) {
-      let vicState: StageState;
-      if (has('VICERRECTOR_RECHAZA')) vicState = 'blocked';
-      else if (has('VICERRECTOR_APRUEBA')) vicState = 'done';
-      else if (st === 'pendiente_rectorado') vicState = 'current';
-      else vicState = 'pending';
-      list.push({
-        key: 'vicerrectorado',
-        label: 'Aprobación de Vicerrectorado',
-        state: vicState,
-        action: vicState === 'blocked' ? 'VICERRECTOR_RECHAZA' : 'VICERRECTOR_APRUEBA',
-      });
-    }
-
-    let asigState: StageState;
-    if (rs) asigState = 'done';
-    else if (
-      (isExterna && st === 'aprobado_rectorado') ||
-      (!isExterna && st === 'autorizada_secretaria')
-    )
-      asigState = 'current';
-    else asigState = 'pending';
-    list.push({
-      key: 'asignacion',
-      label: 'Asignación de recursos',
-      state: asigState,
-      action: 'ASIGNACION_RECURSOS',
-    });
-
-    let condState: StageState;
-    if (driverResponse === 'aceptado') condState = 'done';
-    else if (driverResponse === 'rechazado') condState = 'blocked';
-    else if (driverResponse === 'pendiente') condState = 'current';
-    else condState = 'pending';
-    list.push({
-      key: 'conductor',
-      label: 'Aceptación del conductor',
-      state: condState,
-      action: condState === 'blocked' ? 'CONDUCTOR_RECHAZA' : 'CONDUCTOR_ACEPTA',
-    });
-
-    let salidaState: StageState;
-    if (tripStatus === 'en_ruta' || tripStatus === 'finalizado') salidaState = 'done';
-    else if (driverResponse === 'aceptado' && tripStatus === 'programado') salidaState = 'current';
-    else salidaState = 'pending';
-    list.push({ key: 'salida', label: 'Salida (inspección en patio)', state: salidaState });
-
-    let llegadaState: StageState;
-    if (tripStatus === 'finalizado') llegadaState = 'done';
-    else if (tripStatus === 'en_ruta') llegadaState = 'current';
-    else llegadaState = 'pending';
-    list.push({ key: 'llegada', label: 'Llegada / cierre', state: llegadaState });
-
-    return list;
-  }, [detail, timeline]);
-
-  const doneCount = stages.filter((s) => s.state === 'done').length;
-
   const rejectEvent = timeline.find(
     (t) => t.action === 'SECRETARIA_RECHAZA' || t.action === 'VICERRECTOR_RECHAZA'
   );
@@ -251,14 +167,15 @@ export default function FlujoPage() {
     reason ? reason.split(/\[RECHAZADO/i)[0].trim() : '—';
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Trazabilidad</p>
-        <h1>Flujo completo de la solicitud</h1>
-        <p className="module-lead">
-          Registro de cambio de estados, fecha y observacion
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Trazabilidad"
+        badgeVariant="indigo"
+        title="Flujo Completo y Ciclo de Vida de Solicitudes"
+        description="Registro de auditoría y trazabilidad paso a paso: autorización, asignación vehicular, ejecución en ruta y cierre de la comisión."
+        metricValue={detail ? `#${detail.id}` : `${solicitudes.length}`}
+        metricLabel={detail ? 'SOLICITUD ACTIVA' : 'TOTAL DISPONIBLES'}
+      />
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="module-panel" style={{ marginBottom: 16 }}>
         <label className="form-label" htmlFor="solicitud">
@@ -267,11 +184,11 @@ export default function FlujoPage() {
         <select
           id="solicitud"
           className="form-select"
-          value={selected}
+          value={activeId}
           onChange={(e) => {
             const id = Number(e.target.value);
             setSelected(id);
-            if (id) void loadFlujo(id);
+            setError(null);
           }}
         >
           <option value="">Seleccione…</option>
@@ -318,81 +235,99 @@ export default function FlujoPage() {
             </div>
           )}
 
-          <div className="trace-stats">
-            <article className="stat-card">
-              <span>Tipo</span>
-              <strong>{labelOf(MOBILIZATION_TYPE_LABEL, detail.mobilization_type)}</strong>
-            </article>
-            <article className="stat-card">
-              <span>Costo proyectado</span>
-              <strong>{projectedCost}</strong>
-            </article>
-            <article className="stat-card">
-              <span>Días estimados</span>
-              <strong>{detail.estimated_days ?? '—'}</strong>
-            </article>
-            <article className="stat-card">
-              <span>Participantes</span>
-              <strong>{participantsSummary.total}</strong>
-            </article>
-            <article className="stat-card">
-              <span>Respondidos</span>
-              <strong>
-                {participantsSummary.aceptados + participantsSummary.rechazados}
-              </strong>
-            </article>
+          {/* Hero Banner Card for Selected Request */}
+          <div className="mb-5">
+            <HeroMetricCard
+              headline={`${detail.origin} → ${detail.destination}`}
+              author={`Solicitud #${detail.id} · ${labelOf(REQUEST_STATUS_LABEL, detail.status)}`}
+              tag={{
+                icon: <Compass size={13} />,
+                label: labelOf(MOBILIZATION_TYPE_LABEL, detail.mobilization_type),
+              }}
+              metricValue={projectedCost}
+              metricLabel="Costo Proyectado"
+              gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+            />
           </div>
 
-          {stages.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                  Tipo Movilización
+                </span>
+                <Compass size={15} className="text-zinc-400" />
+              </div>
+              <strong className="font-mono font-bold text-base text-zinc-900 leading-snug">
+                {labelOf(MOBILIZATION_TYPE_LABEL, detail.mobilization_type)}
+              </strong>
+            </div>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                  Días Estimados
+                </span>
+                <Clock size={15} className="text-zinc-400" />
+              </div>
+              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+                {detail.estimated_days ?? '—'}
+              </strong>
+            </div>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                  Participantes
+                </span>
+                <Users size={15} className="text-zinc-400" />
+              </div>
+              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+                {participantsSummary.total}
+              </strong>
+            </div>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                  Confirmados
+                </span>
+                <DollarSign size={15} className="text-emerald-500" />
+              </div>
+              <strong className="font-mono font-bold text-2xl text-emerald-600 leading-none">
+                {participantsSummary.aceptados + participantsSummary.rechazados}
+              </strong>
+            </div>
+          </div>
+
+          {phases.length > 0 && (
             <div className="module-panel flow-panel">
               <div className="flow-head">
-                <h3>Avance del proceso</h3>
+                <h3>Línea del proceso</h3>
                 <span className="flow-progress">
-                  {doneCount} de {stages.length} etapas completadas
+                  {phases.filter((p) => p.state === 'done').length} de{' '}
+                  {phases.length} fases
                 </span>
               </div>
-              <ol className="flow-stepper">
-                {stages.map((stage, i) => {
-                  const ev = stage.action
-                    ? timeline.find((t) => t.action === stage.action)
-                    : undefined;
-                  return (
-                    <li key={stage.key} className={`flow-step is-${stage.state}`}>
-                      <span className="flow-step-node" aria-hidden>
-                        {stage.state === 'done' ? (
-                          <Check size={16} />
-                        ) : stage.state === 'blocked' ? (
-                          <X size={16} />
-                        ) : (
-                          i + 1
-                        )}
+              <ProcessPhaseLine phases={phases} />
+              {timeline.length > 0 && (
+                <ul className="phase-bitacora">
+                  {timeline.map((ev) => (
+                    <li key={ev.id}>
+                      <strong>{ev.action.replace(/_/g, ' ')}</strong>
+                      <span>
+                        {ev.user
+                          ? `${ev.user.first_name} ${ev.user.last_name}`
+                          : 'Sistema'}
+                        {ev.created_at
+                          ? ` · ${formatDateTimeReadable(ev.created_at)}`
+                          : ''}
                       </span>
-                      <div className="flow-step-body">
-                        <div className="flow-step-title">
-                          <strong>{stage.label}</strong>
-                          <span className="flow-step-state">
-                            {STAGE_STATE_LABEL[stage.state]}
-                          </span>
-                        </div>
-                        {(stage.state === 'done' || stage.state === 'blocked') &&
-                          ev && (
-                            <span className="flow-step-meta">
-                              {ev.user
-                                ? `${ev.user.first_name} ${ev.user.last_name}`
-                                : 'Sistema'}
-                              {ev.created_at
-                                ? ` · ${formatDateTimeReadable(ev.created_at)}`
-                                : ''}
-                            </span>
-                          )}
-                        {stage.state === 'blocked' && ev?.observation && (
-                          <em>{ev.observation}</em>
-                        )}
-                      </div>
+                      {ev.observation && <em>{ev.observation}</em>}
                     </li>
-                  );
-                })}
-              </ol>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
