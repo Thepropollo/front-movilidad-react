@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Download, Eye, FileUp, FileText, PenLine, Eraser } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
+import { downloadApiFile, fetchApiBlob } from '@/services/download';
 import { modulesApi } from '../api';
 import Modal from '@/components/Modal';
 
@@ -31,15 +32,6 @@ type DocRow = {
   request?: { destination?: string };
   signature_slots?: SignatureSlot[];
 };
-
-function authHeaders(): HeadersInit {
-  const token = localStorage.getItem('access_token');
-  return { Authorization: `Bearer ${token}` };
-}
-
-function apiBase(): string {
-  return (api.defaults.baseURL || 'http://localhost:8000/api').replace(/\/$/, '');
-}
 
 export default function InstitutionalDocumentsPage() {
   const { roleIds } = useAuth();
@@ -117,11 +109,7 @@ export default function InstitutionalDocumentsPage() {
   }, [previewUrl]);
 
   const fetchBlob = async (id: number) => {
-    const res = await fetch(`${apiBase()}/documentos/${id}/archivo`, {
-      headers: authHeaders(),
-    });
-    if (!res.ok) throw new Error('No se pudo abrir el documento.');
-    return res.blob();
+    return fetchApiBlob(`/documentos/${id}/archivo`);
   };
 
   const openDocument = async (doc: DocRow, nextMode: 'view' | 'sign') => {
@@ -146,13 +134,7 @@ export default function InstitutionalDocumentsPage() {
   };
 
   const downloadById = async (id: number, filename: string) => {
-    const blob = await fetchBlob(id);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadApiFile(`/documentos/${id}/archivo`, filename);
   };
 
   const generate = async () => {

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Download, FileBarChart2, FileText } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
+import { downloadApiFile } from '@/services/download';
 import { REQUEST_STATUS_LABEL, labelOf } from '@/lib/labels';
 
 type ReportKind = 'solicitudes' | 'viajes' | 'flota' | 'mensual' | 'aceite' | 'novedades';
@@ -16,21 +17,11 @@ const KIND_META: Record<ReportKind, { code: string; title: string }> = {
 };
 
 async function downloadReport(kind: ReportKind, format: 'csv' | 'pdf', params: URLSearchParams) {
-  const token = localStorage.getItem('access_token');
-  const next = new URLSearchParams(params);
-  next.set('format', format);
-  const base = (api.defaults.baseURL || 'http://localhost:8000/api').replace(/\/$/, '');
-  const res = await fetch(`${base}/reportes/${kind}?${next}`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const next = Object.fromEntries(params.entries());
+  await downloadApiFile(`/reportes/${kind}`, `${KIND_META[kind].code}.${format}`, {
+    ...next,
+    format,
   });
-  if (!res.ok) throw new Error(`No se pudo descargar el ${format.toUpperCase()}.`);
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${KIND_META[kind].code}.${format}`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export default function ReportsPage() {

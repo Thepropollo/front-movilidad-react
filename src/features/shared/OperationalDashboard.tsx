@@ -8,6 +8,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import api from '@/services/api';
+import { downloadApiFile } from '@/services/download';
 import { REQUEST_STATUS_LABEL, labelOf } from '@/lib/labels';
 import type { RoleId } from '@/config/roles';
 import { useAlerts } from '@/context/AlertsContext';
@@ -61,22 +62,7 @@ function chartLabel(raw: string): string {
 }
 
 async function downloadReportPdf(kind: string) {
-  const token = localStorage.getItem('access_token');
-  const base = (api.defaults.baseURL || 'http://localhost:8000/api').replace(
-    /\/$/,
-    ''
-  );
-  const res = await fetch(`${base}/reportes/${kind}?format=pdf`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('No se pudo descargar el PDF.');
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${kind}.pdf`;
-  a.click();
-  URL.revokeObjectURL(url);
+  await downloadApiFile(`/reportes/${kind}`, `${kind}.pdf`, { format: 'pdf' });
 }
 
 function barTone(label: string): string {
