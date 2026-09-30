@@ -9,11 +9,11 @@
 
 ## Resumen ejecutivo
 
-Se contrastaron las rutas y permisos del frontend con el código del backend y se corrigieron fallos reproducibles estáticamente. El proyecto instala desde el lockfile, pasa ESLint, TypeScript estricto, `npm audit` y el build de producción. El bundle inicial bajó de 875.17 kB a 306.19 kB minificados. `vite preview` devolvió HTTP 200 para `/` y una ruta profunda de React Router.
+Se contrastaron las rutas y permisos del frontend con el código del backend y se corrigieron fallos reproducibles estáticamente. El proyecto instala desde el lockfile, pasa ESLint, TypeScript estricto, `npm audit` y el build de producción. El bundle inicial bajó de 875.17 kB a 309.69 kB minificados. `vite preview` devolvió HTTP 200 para `/` y para `/app/solicitudes/nueva`.
 
-El veredicto es **NO LISTO** porque no se pudo probar ningún recorrido autenticado contra el backend, no hay suite de tests configurada y la revisión visual móvil/escritorio no se pudo ejecutar. Persisten rutas de tarjetas que no existen o apuntan a otro rol, pantallas incompletas en documentos/auditoría y una decisión de proceso que afecta el flujo económico. No se generaron capturas ni mediciones Lighthouse; no se atribuyen resultados visuales que no se hayan observado.
+El veredicto es **NO LISTO** porque no se pudo probar ningún recorrido autenticado contra el backend, no hay suite de tests configurada y la revisión visual móvil/escritorio no se pudo ejecutar. Se agregaron aliases por rol para rutas antiguas y se alinearon los atajos de las pantallas activas; el redirect autenticado y las acciones integradas siguen sin recorrido real. Persisten pantallas incompletas en documentos/auditoría y una decisión de proceso que afecta el flujo económico. No se generaron capturas ni mediciones Lighthouse; no se atribuyen resultados visuales que no se hayan observado.
 
-La rama parte de un árbol de trabajo que ya tenía numerosos cambios y archivos staged al comenzar la auditoría. Esos cambios se conservaron fuera de los commits de auditoría; el logo continúa staged como estaba al inicio. Los commits siguientes sí están en `audit/frontend`. No se hizo push ni merge.
+La rama parte de un árbol de trabajo que ya tenía numerosos cambios sin guardar al comenzar la auditoría. Se conservaron; el logo y varios ajustes de pantallas siguen sin commit porque estaban mezclados con cambios previos de UI. El cambio autocontenido de redirecciones por rol quedó en `69c5307`. No se hizo push ni merge.
 
 ## Acciones eliminadas, corregidas y conservadas
 
@@ -29,6 +29,8 @@ La rama parte de un árbol de trabajo que ya tenía numerosos cambios y archivos
 | Corregida | Configuración/descargas de API | `VITE_API_BASE_URL` es obligatoria y las descargas usan el cliente común. [api.ts:3](../src/services/api.ts:3), commits `5704b93`, `d7acc81`. |
 | Corregida | Confirmación y tipos | TypeScript `strict` está habilitado; se corrigieron tipos de API y advertencias React Hooks en commits `c8abf4a`, `9bee9cf`, `655f828`, `83bd3ed`, `6d7d469`, `ea9be29`. |
 | Corregida | Carga de rutas y dependencias | Pantallas con lazy loading; actualizaciones compatibles sin `--force`. Commits `57d25a9`, `88f4df6`. |
+| Corregida | Rutas antiguas y atajos de navegación | `src/App.tsx` redirige destinos históricos al módulo existente según el rol; `/app/solicitudes/nueva` lleva al formulario docente/facultad. Commit `69c5307`. Los atajos actuales se alinearon en pantallas con cambios locales previos; esos cambios no se mezclaron en el commit. |
+| Eliminada | Enlace Scalar “Documentación API” en sidebar | El menú no incluye el enlace `/scalar`; la búsqueda en `AppShell.tsx` y `dist/assets` no encuentra “Documentación API”, `/scalar` ni `BookOpen`. |
 | Conservadas | Pantallas y módulos existentes | No se eliminó ninguna pantalla ni componente completo. El inventario registra acciones incompletas y rutas rápidas dudosas. |
 
 ## Hallazgos corregidos
@@ -57,14 +59,14 @@ La rama parte de un árbol de trabajo que ya tenía numerosos cambios y archivos
 - **Auditoría administrativa — requiere definición:** backend ofrece `/logs-sistema` y rutas `admin/*`, sin pantallas correspondientes. Confirmar si entran en la tesis y qué rol organizacional debe acceder; no existe rol administrador en el catálogo.
 - **Firma documental:** la pantalla permite generar, adjuntar y firmar; el endpoint `GET /documentos/{id}/verificar` no tiene acción/UI localizada. La verificación criptográfica sigue incompleta.
 - **Funciones con UI y backend identificados:** registro, paradas, actas mediante `/actas-entrega`, firma y reasignación tienen pantalla/llamadas estáticas. La variante `POST /actas-recepcion-llegada` tiene helper, pero no uso localizado; la llegada desde checklist usa `/actas-entrega`. No se confirmó con backend si ambas variantes tienen el mismo propósito.
-- **Rutas UI:** quedan enlaces rápidos con paths inexistentes o incompatibles con el rol en varias páginas; evidencia agrupada en [inventario-acciones.md](inventario-acciones.md). No se añadieron alias o pantallas sin contrato.
+- **Rutas UI:** los destinos históricos reportados tienen redirects de compatibilidad por rol en `src/App.tsx`; los atajos activos se alinearon con rutas existentes. El inventario actualizado conserva las acciones que aún requieren recorrido funcional. No se añadieron pantallas ni endpoints.
 
 ## Estado de los ocho flujos
 
 | Flujo | Resultado | Evidencia y límite |
 |---|---|---|
 | 1. Registro e inicio de sesión | No verificado | UI, guards y catálogo inspeccionados estáticamente; no hubo cuentas ni prueba de sesión/401/403 en navegador. |
-| 2. Solicitud → autorizaciones → asignación → conductor → reasignación → ejecución/cierre | No verificado | Endpoints y pantallas existen en código. Autorización externa es secuencial Secretaría→Vicerrectorado; traspasos/estados no se probaron con API. Persisten enlaces UI rotos. |
+| 2. Solicitud → autorizaciones → asignación → conductor → reasignación → ejecución/cierre | No verificado | Endpoints y pantallas existen; rutas históricas y atajos se corrigieron estáticamente. Autorización externa es secuencial Secretaría→Vicerrectorado; traspasos/estados no se probaron con API. |
 | 3. Invitación → respuesta → consulta → evaluación | No verificado | Pantallas y endpoints encontrados; sin actores ni API para verificar persistencia y notificaciones. |
 | 4. Inspección/acta → paradas → llegada/cierre | No verificado | Pantallas y llamadas identificadas; no se probó móvil, guardado, pérdida de conexión ni contrato entre las dos rutas de acta. |
 | 5. Vale → despacho → consulta de combustible | No verificado; consulta agregada incompleta | Códigos alfanuméricos reales se muestran; emisión/despacho/consulta individual requieren prueba API. No hay historial agregado identificado para Secretaría. |
@@ -84,6 +86,7 @@ La rama parte de un árbol de trabajo que ya tenía numerosos cambios y archivos
 | `VITE_API_BASE_URL=/api npm run build` | Pasa sin warnings relevantes; 249 módulos transformados, JS inicial 306.19 kB minificado (93.92 kB gzip), Leaflet en chunk diferido de 152.40 kB. |
 | `npm run preview`; GET `/` | HTTP 200, `text/html`, 1,087 bytes. |
 | `npm run preview`; GET `/app/conductor/combustible` | HTTP 200, `text/html`, 1,087 bytes; fallback SPA funciona en Vite Preview. |
+| `npm run preview`; GET `/app/solicitudes/nueva` | HTTP 200, `text/html`, 1,087 bytes; fallback SPA funciona. El redirect React por rol no se verificó con sesión. |
 | API backend `127.0.0.1:8000` | No disponible; conexión rechazada. Ninguna API funcional se probó. |
 | Firefox headless/capturas | No verificable: Firefox falló al iniciar el compositor headless; no se generaron capturas. Playwright/Puppeteer no quedó disponible para recorrer la app. |
 
@@ -97,7 +100,7 @@ La rama parte de un árbol de trabajo que ya tenía numerosos cambios y archivos
 | Hosting estático estándar, SPA fallback y assets hasheados | Cumple estáticamente | `README.md`; `vite preview` sirvió ruta profunda. Reglas del hosting real no verificadas. |
 | Sourcemaps públicos | Cumple en el build observado | No se encontraron `.map` en `dist/`. |
 | Pantalla 404, guards y home por rol | No verificado en navegador | Declarados en `src/App.tsx`; faltan pruebas con roles reales y URLs directas. |
-| Rutas UI y acciones sin callejones | No cumple | El inventario conserva rutas rápidas rotas o de otro rol y acciones aún incompletas. |
+| Rutas UI y acciones sin callejones | Parcial estáticamente | Aliases y atajos activos apuntan a pantallas existentes; no se recorrieron todos los enlaces ni guards con usuarios. |
 | Flujos E2E con backend y casos de error | No cumple | API y credenciales de prueba no disponibles; falta script de tests. |
 | Responsividad a 320–1920 px/orientación y prioridad de conductor/mecánico | No verificado | Navegador headless no operativo; sin revisión visual ni capturas 360/768/1440. |
 | Accesibilidad WCAG AA, teclado, foco/modal y objetivos táctiles | No verificado | Se hicieron mejoras localizadas, pero no se midió contraste ni se recorrieron controles con teclado/dispositivos. |
@@ -112,7 +115,7 @@ La rama parte de un árbol de trabajo que ya tenía numerosos cambios y archivos
 1. Decidir si liquidación docente y compensación del conductor son procesos separados; definir el rol y contrato real de carga del comprobante.
 2. Definir si se necesita consumo agregado para Secretaría y proporcionar endpoint si corresponde.
 3. Determinar el alcance y permisos de auditoría (`/logs-sistema`) y CRUD `admin/*`; el catálogo no incluye administrador.
-4. Resolver las tarjetas con rutas inexistentes o de otro rol enumeradas en `inventario-acciones.md`.
+4. Recorrer las tarjetas y aliases corregidos con una sesión por rol, incluidos usuarios multirol; HTTP 200 en el fallback no prueba el redirect React ni permisos.
 5. Disponer backend ejecutable, fixtures/datos y usuarios por rol (incluido multirol) para validar los 8 recorridos, 401/403 y errores de API.
 6. Ejecutar pruebas visuales de escritorio/móvil y guardar capturas antes/después cuando un navegador automatizable esté disponible.
 7. Añadir una suite frontend para autenticación, permisos, flujo principal y estados de error.

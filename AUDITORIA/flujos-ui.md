@@ -28,6 +28,7 @@ Fecha: 2026-09-29. No había backend respondiendo en 127.0.0.1:8000 ni credencia
 - Línea base: npm ci, exit code 0; lint fallaba con 25 errores y 4 warnings; TypeScript pasaba; build pasaba con chunk principal de 875.17 kB.
 - Estado corregido: npm run lint, npx tsc --noEmit -p tsconfig.app.json --pretty false --incremental false y VITE_API_BASE_URL=/api npm run build pasan después de cada commit de corrección. El chunk inicial final es de 306.19 kB, sin aviso de tamaño.
 - Prueba de build servido: npm run preview; GET / y GET /app/conductor/combustible devolvieron HTTP 200 y text/html (1,087 bytes), comprobando el fallback SPA de Vite Preview.
+- Regresión de ruta reportada: GET /app/solicitudes/nueva devolvió HTTP 200 en Vite Preview y tiene redirect según rol en `src/App.tsx` (69c5307). Sin sesión de usuario, el destino React ni el permiso por rol quedaron verificados.
 - Tests: npm run test sigue sin estar definido en package.json; no hay suite frontend.
 - Auditoría funcional: ningún flujo se ejecutó con usuarios reales ni contra un backend activo; todas las integraciones E2E siguen sin verificar.
 - API local: curl a 127.0.0.1:8000 falla por conexión rechazada.
