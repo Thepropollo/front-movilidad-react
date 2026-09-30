@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bell, X } from 'lucide-react';
@@ -69,7 +69,7 @@ export default function NotificationBell({
   const btnRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const placePanel = () => {
+  const placePanel = useCallback(() => {
     const rect = btnRef.current?.getBoundingClientRect();
     if (!rect) {
       setPos({ left: 8, top: 8, maxHeight: window.innerHeight - 16 });
@@ -96,7 +96,7 @@ export default function NotificationBell({
     }
 
     setPos({ left, top, maxHeight });
-  };
+  }, [placement]);
 
   const toggle = () => {
     if (open) {
@@ -150,7 +150,7 @@ export default function NotificationBell({
       window.removeEventListener('resize', onViewport);
       window.removeEventListener('scroll', onViewport, true);
     };
-  }, [open, placement]);
+  }, [open, placePanel]);
 
   const handleSelect = (alert: AlertItem) => {
     void markRead(alert.id);
