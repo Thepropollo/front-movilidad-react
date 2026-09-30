@@ -3,11 +3,12 @@ import {
   Fuel,
   ClipboardCheck,
   MapPin,
-  CheckCircle,
+  CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
 import Button from '@/components/Button';
 import { useAuth } from '@/context/AuthContext';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
 import { FUEL_TYPE_LABEL, labelOf } from '@/lib/labels';
 import api from '@/services/api'; // fallback for direct routes
 import {
@@ -20,8 +21,13 @@ import {
 
 interface PendingSheetRecord {
   id: number;
-  vehicle: { plate: string; brand: string };
-  request: { destination: string };
+  vehicle: {
+    plate: string;
+    brand: string;
+  };
+  request: {
+    destination: string;
+  };
 }
 
 const DriverFuelTicketsPage: React.FC = () => {
@@ -31,7 +37,7 @@ const DriverFuelTicketsPage: React.FC = () => {
   const [stations, setStations] = useState<ServiceStation[]>([]);
   const [routeSheets, setRouteSheets] = useState<PendingSheetRecord[]>([]);
 
-  // Selection states for issuing a voucher (Secretaría only)
+  // Selection states for issuing a voucher (Jefe de Transporte only)
   const [selectedSheetId, setSelectedSheetId] = useState<string>('');
   const [selectedStationId, setSelectedStationId] = useState<string>('');
   const [issuing, setIssuing] = useState<boolean>(false);
@@ -51,18 +57,14 @@ const DriverFuelTicketsPage: React.FC = () => {
       if (canManageFuel) {
         const [stationsData, sheetsResponse] = await Promise.all([
           fetchServiceStations(),
-          api.get<PendingSheetRecord[]>('/inspecciones/pendientes'), // get sheets pending inspection to assign fuel
+          api.get<PendingSheetRecord[]>('/inspecciones/pendientes'),
         ]);
         setStations(stationsData);
         setRouteSheets(sheetsResponse.data);
       }
     } catch (err: unknown) {
       console.error(err);
-      const er = err as { response?: { data?: { message?: string } } };
-      setErrorMsg(
-        er.response?.data?.message ||
-          'Error al cargar vales de combustible. Por favor, recarga.'
-      );
+      setErrorMsg('Error al cargar vales de combustible. Por favor, recarga.');
     } finally {
       setLoading(false);
     }
@@ -119,6 +121,7 @@ const DriverFuelTicketsPage: React.FC = () => {
       setSelectedSheetId('');
       setSelectedStationId('');
 
+      // Reload
       await loadData();
     } catch (err: unknown) {
       console.error(err);
@@ -153,7 +156,7 @@ const DriverFuelTicketsPage: React.FC = () => {
 
       {successMsg && (
         <div className="success-banner mb-6 flex items-start gap-3">
-          <CheckCircle
+          <CheckCircle2
             className="text-success flex-shrink-0 mt-0.5"
             size={18}
           />
@@ -171,6 +174,76 @@ const DriverFuelTicketsPage: React.FC = () => {
         </div>
       )}
 
+      {/* Hero Metric Banner Card */}
+      <div className="mb-6">
+        <HeroMetricCard
+          headline="Vales de Combustible ULEAM"
+          author="Emisión, Control de Cupones Digitales y Abastecimiento de Flota"
+          tag={{
+            icon: <Fuel size={13} />,
+            label: `${orders.length} Vales Digitales Registrados`,
+          }}
+          metricValue={orders.length}
+          metricLabel="Vales Emitidos"
+          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+        />
+      </div>
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Total Vales"
+          value={orders.length}
+          hint="Historial institucional"
+          icon={<Fuel size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Activos / Emitidos"
+          value={orders.filter((o) => o.order_status === 'emitida').length}
+          hint="Listos para despacho"
+          icon={<ClipboardCheck size={16} />}
+          tone="info"
+        />
+        <StatCard
+          label="Despachados"
+          value={orders.filter((o) => o.order_status === 'despachada').length}
+          hint="Cargas completadas"
+          icon={<CheckCircle2 size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="Galones Autorizados"
+          value={`${orders.reduce((sum, o) => sum + (Number(o.authorized_gallons) || 0), 0)} Gal`}
+          hint="Volumen combustible"
+          icon={<Fuel size={16} />}
+          tone="neutral"
+        />
+      </div>
+
+      {canManageFuel && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+          <ResourceCard
+            title="Convenios de Gasolineras"
+            subtitle="Precios por litro, cupos mensuales y contratos"
+            icon={<Fuel size={18} />}
+            href="/app/secretaria/gasolineras"
+          />
+          <ResourceCard
+            title="Panel de Transporte"
+            subtitle="Hojas de ruta y asignación de vehículos"
+            icon={<ClipboardCheck size={18} />}
+            href="/app/secretaria/solicitudes"
+          />
+          <ResourceCard
+            title="Auditoría de Liquidaciones"
+            subtitle="Bandeja de revisión económica"
+            icon={<CheckCircle2 size={18} />}
+            href="/app/secretaria/economico"
+          />
+        </div>
+      )}
+
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12">
           <div
@@ -183,8 +256,8 @@ const DriverFuelTicketsPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Columna Izquierda: Emisión de Vale (solo Secretaría) */}
-          {canManageFuel && (
+          {/* Columna Izquierda: Emisión de Vale (Solo Jefe de Transporte) */}
+        {canManageFuel && (
             <div className="xl:col-span-1 flex flex-col gap-6">
               <div className="glass-panel p-6 bg-white/50">
                 <h2 className="section-title flex items-center gap-2 mb-4">

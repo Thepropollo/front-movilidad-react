@@ -7,6 +7,8 @@ import { useAuth } from '@/context/AuthContext';
 import ProcessPhaseLine, {
   type ProcessPhase,
 } from '@/features/shared/ProcessPhaseLine';
+import HeroMetricCard from '@/components/HeroMetricCard';
+import { Compass, Users, Clock, DollarSign } from 'lucide-react';
 
 type TimelineItem = {
   id: number;
@@ -165,14 +167,15 @@ export default function FlujoPage() {
     reason ? reason.split(/\[RECHAZADO/i)[0].trim() : '—';
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Trazabilidad</p>
-        <h1>Flujo completo de la solicitud</h1>
-        <p className="module-lead">
-          Registro de cada fase: si se aprueba, se asigna y se cierra el viaje.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Trazabilidad"
+        badgeVariant="indigo"
+        title="Flujo Completo y Ciclo de Vida de Solicitudes"
+        description="Registro de auditoría y trazabilidad paso a paso: autorización, asignación vehicular, ejecución en ruta y cierre de la comisión."
+        metricValue={detail ? `#${detail.id}` : `${solicitudes.length}`}
+        metricLabel={detail ? 'SOLICITUD ACTIVA' : 'TOTAL DISPONIBLES'}
+      />
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="module-panel" style={{ marginBottom: 16 }}>
         <label className="form-label" htmlFor="solicitud">
@@ -232,29 +235,69 @@ export default function FlujoPage() {
             </div>
           )}
 
-          <div className="trace-stats">
-            <article className="stat-card">
-              <span>Tipo</span>
-              <strong>{labelOf(MOBILIZATION_TYPE_LABEL, detail.mobilization_type)}</strong>
-            </article>
-            <article className="stat-card">
-              <span>Costo proyectado</span>
-              <strong>{projectedCost}</strong>
-            </article>
-            <article className="stat-card">
-              <span>Días estimados</span>
-              <strong>{detail.estimated_days ?? '—'}</strong>
-            </article>
-            <article className="stat-card">
-              <span>Participantes</span>
-              <strong>{participantsSummary.total}</strong>
-            </article>
-            <article className="stat-card">
-              <span>Respondidos</span>
-              <strong>
+          {/* Hero Banner Card for Selected Request */}
+          <div className="mb-5">
+            <HeroMetricCard
+              headline={`${detail.origin} → ${detail.destination}`}
+              author={`Solicitud #${detail.id} · ${labelOf(REQUEST_STATUS_LABEL, detail.status)}`}
+              tag={{
+                icon: <Compass size={13} />,
+                label: labelOf(MOBILIZATION_TYPE_LABEL, detail.mobilization_type),
+              }}
+              metricValue={projectedCost}
+              metricLabel="Costo Proyectado"
+              gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                  Tipo Movilización
+                </span>
+                <Compass size={15} className="text-zinc-400" />
+              </div>
+              <strong className="font-mono font-bold text-base text-zinc-900 leading-snug">
+                {labelOf(MOBILIZATION_TYPE_LABEL, detail.mobilization_type)}
+              </strong>
+            </div>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                  Días Estimados
+                </span>
+                <Clock size={15} className="text-zinc-400" />
+              </div>
+              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+                {detail.estimated_days ?? '—'}
+              </strong>
+            </div>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                  Participantes
+                </span>
+                <Users size={15} className="text-zinc-400" />
+              </div>
+              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+                {participantsSummary.total}
+              </strong>
+            </div>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                  Confirmados
+                </span>
+                <DollarSign size={15} className="text-emerald-500" />
+              </div>
+              <strong className="font-mono font-bold text-2xl text-emerald-600 leading-none">
                 {participantsSummary.aceptados + participantsSummary.rechazados}
               </strong>
-            </article>
+            </div>
           </div>
 
           {phases.length > 0 && (

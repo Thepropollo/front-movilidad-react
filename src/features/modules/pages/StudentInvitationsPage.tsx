@@ -1,6 +1,32 @@
 import { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { UserCheck, UserX, Clock } from 'lucide-react';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard } from '@/components/Cards';
+
+interface InvitationRecord {
+  id: number;
+  status?: string;
+  invitation_status?: string;
+  rejection_reason?: string | null;
+  solicitud?: {
+    id: number;
+    destination: string;
+    travel_reason?: string;
+    departure_date?: string;
+    return_date?: string;
+  };
+  request?: {
+    destination?: string;
+    travel_reason?: string;
+    departure_date?: string;
+    return_date?: string;
+    status?: string;
+    requester?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  };
+}
 
 const INVITATION_STATUS_LABEL: Record<string, string> = {
   invitado: 'Pendiente de respuesta',
@@ -9,7 +35,7 @@ const INVITATION_STATUS_LABEL: Record<string, string> = {
 };
 
 export default function StudentInvitationsPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<InvitationRecord[]>([]);
   const [reason, setReason] = useState<Record<number, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +56,27 @@ export default function StudentInvitationsPage() {
   };
 
   useEffect(() => {
-    void load();
+    let ignore = false;
+    modulesApi
+      .myInvitations()
+      .then(({ data }) => {
+        if (!ignore) {
+          setRows(data || []);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setError('No se pudieron cargar invitaciones. Intente actualizar nuevamente.');
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const respond = async (id: number, action: 'accept' | 'reject') => {
@@ -59,25 +105,43 @@ export default function StudentInvitationsPage() {
   };
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Mis viajes</p>
-        <h1>Invitaciones</h1>
-        <div className="module-header-actions">
-          <p className="module-lead">
-            Confirme o rechace su participación académica.
-          </p>
-          <button
-            type="button"
-            className="btn btn-outline module-refresh"
-            onClick={() => void load()}
-            disabled={loading || processingId !== null}
-          >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} aria-hidden />
-            Actualizar
-          </button>
-        </div>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Mis Convocatorias"
+        badgeVariant="indigo"
+        title="Invitaciones a Comisiones Académicas"
+        description="Confirme o rechace su participación en salidas institucionales para validar su asistencia en el manifiesto oficial de pasajeros."
+        metricValue={String(rows.length)}
+        metricLabel="TOTAL INVITACIONES"
+        actionLabel="Actualizar"
+        onAction={() => void load()}
+        actionLoading={loading || processingId !== null}
+      />
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Pendientes"
+          value={rows.filter((r) => r.status === 'invitado').length}
+          hint="En espera de respuesta"
+          icon={<Clock size={16} />}
+          tone={rows.filter((r) => r.status === 'invitado').length > 0 ? 'warn' : 'neutral'}
+        />
+        <StatCard
+          label="Aceptadas"
+          value={rows.filter((r) => r.status === 'aceptado').length}
+          hint="Cupo confirmado"
+          icon={<UserCheck size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="Rechazadas"
+          value={rows.filter((r) => r.status === 'rechazado').length}
+          hint="Declinadas"
+          icon={<UserX size={16} />}
+          tone={rows.filter((r) => r.status === 'rechazado').length > 0 ? 'danger' : 'neutral'}
+        />
+      </div>
       {msg && <div className="alert alert-info" role="status">{msg}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       {loading ? (
@@ -106,10 +170,10 @@ export default function StudentInvitationsPage() {
                 {r.request?.requester?.last_name}
               </p>
               <p className="ops-muted">
-                Estado: {INVITATION_STATUS_LABEL[r.invitation_status] ?? r.invitation_status} · Solicitud:{' '}
+                Estado: {INVITATION_STATUS_LABEL[r.invitation_status ?? r.status ?? 'invitado'] ?? (r.invitation_status ?? r.status ?? 'invitado')} · Solicitud:{' '}
                 {r.request?.status}
               </p>
-              {r.invitation_status === 'invitado' && (
+              {(r.invitation_status === 'invitado' || r.status === 'invitado') && (
                 <>
                   <label className="form-label" htmlFor={`invitation-reason-${r.id}`}>
                     Motivo si rechaza
@@ -127,7 +191,7 @@ export default function StudentInvitationsPage() {
                 </>
               )}
             </div>
-            {r.invitation_status === 'invitado' && (
+            {(r.invitation_status === 'invitado' || r.status === 'invitado') && (
               <div className="ops-actions">
                 <button
                   type="button"

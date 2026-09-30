@@ -13,6 +13,7 @@ import {
 import api from '@/services/api';
 import { MOBILIZATION_TYPE_LABEL, labelOf } from '@/lib/labels';
 import { useAlerts } from '@/context/AlertsContext';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
 import ProcessPhaseLine, {
   type ProcessPhase,
 } from '@/features/shared/ProcessPhaseLine';
@@ -85,7 +86,10 @@ const TransportPanel: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [listLoading, setListLoading] = useState<boolean>(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [successData, setSuccessData] = useState<any>(null);
+  const [successData, setSuccessData] = useState<{
+    message: string;
+    route_sheet?: { id: number; initial_mileage: number };
+  } | null>(null);
 
   const loadAllData = async () => {
     setListLoading(true);
@@ -121,9 +125,10 @@ const TransportPanel: React.FC = () => {
           setSelectedDriverId(null);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const er = err as { response?: { data?: { message?: string } } };
       setApiError(
-        err.response?.data?.message || 'Error al cargar los datos del panel.'
+        er.response?.data?.message || 'Error al cargar los datos del panel.'
       );
     } finally {
       setListLoading(false);
@@ -131,7 +136,42 @@ const TransportPanel: React.FC = () => {
   };
 
   useEffect(() => {
-    loadAllData();
+    let ignore = false;
+    Promise.all([
+      api.get('/solicitudes'),
+      api.get('/vehicles'),
+      api.get('/drivers'),
+    ])
+      .then(([reqRes, vehRes, driRes]) => {
+        if (!ignore) {
+          const filterable = reqRes.data.filter(
+            (r: RequestData) =>
+              (r.mobilization_type === 'interna' &&
+                ['autorizada_secretaria', 'pendiente'].includes(r.status)) ||
+              (r.mobilization_type === 'externa' &&
+                r.status === 'aprobado_rectorado')
+          );
+          setRequests(filterable);
+          setVehicles(vehRes.data);
+          setDrivers(driRes.data);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          const er = err as { response?: { data?: { message?: string } } };
+          setApiError(
+            er.response?.data?.message || 'Error al cargar los datos del panel.'
+          );
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setListLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleIssueRouteSheet = async () => {
@@ -159,10 +199,17 @@ const TransportPanel: React.FC = () => {
       setSelectedDriverId(null);
       loadAllData();
       refresh();
-    } catch (err: any) {
-      if (err.response && err.response.data) {
-        const data = err.response.data;
-        // En caso de errores 422 de Laravel
+    } catch (err: unknown) {
+      const er = err as {
+        response?: {
+          data?: {
+            message?: string;
+            errors?: Record<string, string[]>;
+          };
+        };
+      };
+      if (er.response && er.response.data) {
+        const data = er.response.data;
         if (data.errors) {
           const errorsList = Object.values(data.errors).flat().join(', ');
           setApiError(errorsList);
@@ -228,11 +275,81 @@ const TransportPanel: React.FC = () => {
         </div>
       )}
 
+      {/* Hero Metric Banner Card */}
+      <div className="mb-6">
+        <HeroMetricCard
+          headline="Asignación y Logística de Flota"
+          author="Emisión de Hojas de Ruta y Asignación de Recursos Institucionales"
+          tag={{
+            icon: <Milestone size={13} />,
+            label: `${requests.length} Solicitudes Autorizadas en Espera`,
+          }}
+          metricValue={requests.length}
+          metricLabel="Por Asignar"
+          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+        />
+      </div>
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Por Asignar"
+          value={requests.length}
+          hint="Listas para hoja de ruta"
+          icon={<Milestone size={16} />}
+          tone={requests.length > 0 ? 'info' : 'neutral'}
+        />
+        <StatCard
+          label="Vehículos Listos"
+          value={vehicles.filter((v) => v.is_selectable).length}
+          hint={`${vehicles.length} en flota`}
+          icon={<Car size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="Conductores"
+          value={drivers.filter((d) => d.is_selectable).length}
+          hint={`${drivers.length} registrados`}
+          icon={<User size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Bloqueados / Taller"
+          value={vehicles.filter((v) => !v.is_selectable).length}
+          hint="No disponibles"
+          icon={<ShieldAlert size={16} />}
+          tone={vehicles.filter((v) => !v.is_selectable).length > 0 ? 'warn' : 'neutral'}
+        />
+      </div>
+
+      {/* Quick Resource Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <ResourceCard
+          title="Disponibilidad de Flota"
+          subtitle="Monitoreo en tiempo real de choferes y móviles"
+          icon={<Car size={18} />}
+          href="/app/secretaria/disponibilidad"
+        />
+        <ResourceCard
+          title="Vales de Combustible"
+          subtitle="Emisión y control de cupones de abastecimiento"
+          icon={<FileText size={18} />}
+          href="/app/secretaria/combustible/despacho"
+        />
+        <ResourceCard
+          title="Agenda de Movilizaciones"
+          subtitle="Calendario de salidas programadas y retornos"
+          icon={<Milestone size={18} />}
+          href="/app/secretaria/agenda"
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Side: Requests List */}
-        <div className="lg:col-span-1 bg-white rounded-xl shadow border p-5 flex flex-col h-[650px]">
-          <h2 className="text-lg font-bold text-primary mb-4 pb-2 border-b">
-            Solicitudes por Asignar ({requests.length})
+        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col min-h-[580px]">
+          <h2 className="text-lg font-bold text-primary mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
+            <span>Solicitudes por Asignar</span>
+            <span className="sgv-badge is-neutral">{requests.length}</span>
           </h2>
 
           {listLoading && requests.length === 0 ? (
@@ -274,15 +391,15 @@ const TransportPanel: React.FC = () => {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span
-                      className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                      className={`sgv-badge ${
                         req.mobilization_type === 'externa'
-                          ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                          : 'bg-blue-100 text-blue-800 border border-blue-200'
+                          ? 'is-info'
+                          : 'is-gold'
                       }`}
                     >
                       {labelOf(MOBILIZATION_TYPE_LABEL, req.mobilization_type)}
                     </span>
-                    <span className="font-extrabold text-primary text-sm">
+                    <span className="font-extrabold text-primary text-sm font-mono">
                       ${Number(req.projected_cost).toFixed(2)}
                     </span>
                   </div>
@@ -317,20 +434,20 @@ const TransportPanel: React.FC = () => {
         </div>
 
         {/* Right Side: Assignment Process */}
-        <div className="lg:col-span-2 flex flex-col gap-6 h-[650px]">
+        <div className="lg:col-span-2 flex flex-col gap-6 min-h-[580px]">
           {!selectedRequest ? (
-            <div className="flex-1 bg-gray-50 border border-dashed rounded-xl flex flex-col justify-center items-center text-center p-6">
-              <Milestone className="text-gray-300 mb-3" size={54} />
-              <h3 className="text-gray-600 font-bold text-lg">
+            <div className="flex-1 bg-slate-50/70 border border-dashed border-slate-200 rounded-xl flex flex-col justify-center items-center text-center p-8">
+              <Milestone className="text-slate-300 mb-3" size={54} />
+              <h3 className="text-slate-700 font-bold text-lg">
                 Asignación de Recursos en Patio
               </h3>
-              <p className="text-gray-400 text-sm mt-1 max-w-sm">
+              <p className="text-slate-400 text-sm mt-1 max-w-sm">
                 Seleccione una solicitud de movilización de la lista de la
                 izquierda para comenzar el despacho de vehículos y conductores.
               </p>
             </div>
           ) : (
-            <div className="flex-1 bg-white rounded-xl shadow border p-6 flex flex-col overflow-hidden">
+            <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col overflow-hidden">
               {/* Active Request Info */}
               <div className="bg-gray-50 border rounded-lg p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 text-sm">
                 <div>

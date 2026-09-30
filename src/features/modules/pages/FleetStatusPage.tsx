@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Input from '@/components/Input';
+import HeroMetricCard from '@/components/HeroMetricCard';
+import { Car, ShieldCheck, AlertTriangle, XCircle } from 'lucide-react';
 import { modulesApi } from '../api';
 import {
   DOCUMENT_STATUS_META,
@@ -98,14 +100,15 @@ export default function FleetStatusPage() {
   ).length;
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Flota</p>
-        <h1>Estado documental de la flota</h1>
-        <p className="module-lead">
-          Revise si los permisos, la revisión técnica y la matrícula están al día.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Flota Vehicular"
+        badgeVariant="indigo"
+        title="Estado Documental y Revisiones Técnicas"
+        description="Inspección de vigencia de matrícula institucional, SOAT, permisos de circulación y estado documental del parque automotor."
+        metricValue={`${vehicles.length ? Math.round((upToDateCount / vehicles.length) * 100) : 100}%`}
+        metricLabel="DOCUMENTACIÓN AL DÍA"
+      />
 
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
@@ -116,33 +119,66 @@ export default function FleetStatusPage() {
         </div>
       ) : (
         <>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: 14,
-              marginBottom: 20,
-            }}
-          >
-            <div className="module-panel">
-              <p className="participants-kpi-label">Vehículos registrados</p>
-              <strong style={{ fontSize: 28, color: 'var(--color-primary)' }}>{vehicles.length}</strong>
+          {/* Modern Statistics Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                  Registrados
+                </span>
+                <Car size={16} className="text-zinc-400" />
+              </div>
+              <div className="flex items-baseline justify-between">
+                <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+                  {vehicles.length}
+                </strong>
+                <span className="font-mono text-[11px] text-zinc-400">Total unidades</span>
+              </div>
             </div>
-            <div className="module-panel">
-              <p className="participants-kpi-label">Documentación al día</p>
-              <strong style={{ fontSize: 28, color: 'var(--success)' }}>{upToDateCount}</strong>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                  Al Día
+                </span>
+                <ShieldCheck size={16} className="text-emerald-500" />
+              </div>
+              <div className="flex items-baseline justify-between">
+                <strong className="font-mono font-bold text-2xl text-emerald-600 leading-none">
+                  {upToDateCount}
+                </strong>
+                <span className="font-mono text-[11px] text-emerald-600 font-semibold">Sin novedades</span>
+              </div>
             </div>
-            <div className="module-panel">
-              <p className="participants-kpi-label">Requieren atención</p>
-              <strong style={{ fontSize: 28, color: attentionCount ? 'var(--warning)' : 'var(--success)' }}>
-                {attentionCount}
-              </strong>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-amber-600 uppercase tracking-wider">
+                  Por Vencer
+                </span>
+                <AlertTriangle size={16} className="text-amber-500" />
+              </div>
+              <div className="flex items-baseline justify-between">
+                <strong className="font-mono font-bold text-2xl text-amber-600 leading-none">
+                  {attentionCount}
+                </strong>
+                <span className="font-mono text-[11px] text-amber-500 font-semibold">Atención requerida</span>
+              </div>
             </div>
-            <div className="module-panel">
-              <p className="participants-kpi-label">Con documentos vencidos</p>
-              <strong style={{ fontSize: 28, color: expiredCount ? 'var(--danger)' : 'var(--success)' }}>
-                {expiredCount}
-              </strong>
+
+            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold text-rose-600 uppercase tracking-wider">
+                  Vencidos
+                </span>
+                <XCircle size={16} className="text-rose-500" />
+              </div>
+              <div className="flex items-baseline justify-between">
+                <strong className="font-mono font-bold text-2xl text-rose-600 leading-none">
+                  {expiredCount}
+                </strong>
+                <span className="font-mono text-[11px] text-rose-500 font-semibold">Urgente</span>
+              </div>
             </div>
           </div>
 

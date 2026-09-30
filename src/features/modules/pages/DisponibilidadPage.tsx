@@ -1,6 +1,36 @@
 import { useEffect, useState } from 'react';
-import { Car, User } from 'lucide-react';
+import { Car, User, ShieldCheck, Wrench, UserCheck } from 'lucide-react';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
+
+interface DisponibilidadDriver {
+  id: number;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  national_id?: string;
+  license_type?: string;
+  points?: number;
+  status_label: string;
+  status_details?: string;
+  is_selectable: boolean;
+  status?: string;
+  user?: {
+    first_name?: string;
+    last_name?: string;
+  };
+}
+
+interface DisponibilidadVehicle {
+  id: number;
+  plate: string;
+  brand: string;
+  model: string;
+  status_label: string;
+  status_details?: string;
+  is_selectable: boolean;
+  status?: string;
+}
 
 const DRIVER_STATUS: Record<string, { label: string; className: string }> = {
   available: { label: 'Disponible', className: 'bg-green-100 text-green-800' },
@@ -92,27 +122,38 @@ function FilterChips({
 }
 
 export default function DisponibilidadPage() {
-  const [drivers, setDrivers] = useState<any[]>([]);
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<DisponibilidadDriver[]>([]);
+  const [vehicles, setVehicles] = useState<DisponibilidadVehicle[]>([]);
   const [driverFilter, setDriverFilter] = useState('all');
   const [vehicleFilter, setVehicleFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
+    let ignore = false;
     Promise.all([modulesApi.drivers(), modulesApi.vehicles()])
       .then(([d, v]) => {
-        setDrivers(d.data || []);
-        setVehicles(v.data || []);
+        if (!ignore) {
+          setDrivers(d.data || []);
+          setVehicles(v.data || []);
+        }
       })
-      .catch(() =>
-        setError('No se pudo consultar la disponibilidad de la flota.')
-      )
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!ignore) {
+          setError('No se pudo consultar la disponibilidad de la flota.');
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
-  const countBy = (list: any[], key: string) =>
+  const countBy = (list: Array<{ status_label?: string }>, key: string) =>
     list.filter((i) => i.status_label === key).length;
 
   const driverCounts: Record<string, number> = {
@@ -141,15 +182,69 @@ export default function DisponibilidadPage() {
   const vehiclesAvailable = vehicles.filter((v) => v.is_selectable).length;
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Consultas</p>
-        <h1>Disponibilidad de la flota</h1>
-        <p className="module-lead">
-          Estado en tiempo real de conductores y vehículos listos para ser
-          asignados a una comisión.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Consultas Operativas"
+        badgeVariant="indigo"
+        title="Disponibilidad Operativa de Flota y Choferes"
+        description="Monitoreo en tiempo real de unidades vehiculares y conductores habilitados para asignación inmediata a comisiones institucionales."
+        metricValue={`${vehicles.length ? Math.round((vehiclesAvailable / vehicles.length) * 100) : 100}%`}
+        metricLabel="DISPONIBILIDAD FLOTA"
+      />
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Vehículos Listos"
+          value={vehiclesAvailable}
+          hint={`${vehicles.length} totales en flota`}
+          icon={<Car size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="Choferes Listos"
+          value={driversAvailable}
+          hint={`${drivers.length} registrados`}
+          icon={<UserCheck size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="Vehículos en Taller / Ruta"
+          value={vehicles.length - vehiclesAvailable}
+          hint="No disponibles"
+          icon={<Wrench size={16} />}
+          tone={vehicles.length - vehiclesAvailable > 0 ? 'warn' : 'neutral'}
+        />
+        <StatCard
+          label="Choferes Ocupados"
+          value={drivers.length - driversAvailable}
+          hint="En viaje / no seleccionables"
+          icon={<User size={16} />}
+          tone={drivers.length - driversAvailable > 0 ? 'warn' : 'neutral'}
+        />
+      </div>
+
+      {/* Quick Resource Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <ResourceCard
+          title="Panel de Asignación"
+          subtitle="Emitir hojas de ruta a vehículos y conductores disponibles"
+          icon={<Car size={18} />}
+          href="/app/secretaria/asignar"
+        />
+        <ResourceCard
+          title="Catálogo de Vehículos"
+          subtitle="Revisión documental, matrículas y SOAT"
+          icon={<ShieldCheck size={18} />}
+          href="/app/secretaria/flota/vehiculos"
+        />
+        <ResourceCard
+          title="Taller de Mantenimiento"
+          subtitle="Revisar novedades técnicas y reparaciones"
+          icon={<Wrench size={18} />}
+          href="/app/secretaria/taller"
+        />
+      </div>
 
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
 

@@ -111,14 +111,20 @@ export default function Login() {
       <header className="login-top">
         <div className="login-brandmark">
           <img
-            src="/brand/logo-uleam-wordmark.png"
+            src="/brand/logo-uleam-horizontal.png"
             alt="Universidad Laica Eloy Alfaro de Manabí"
-            width={220}
-            height={68}
+            className="login-brandmark-logo"
           />
-          <span>
-            <strong>SIGMOV-ULEAM</strong>
-            <small>Logística y movilidad de la flota vehicular</small>
+          <div className="login-brandmark-divider" aria-hidden />
+          <div className="login-brandmark-text">
+            <strong>SIGMOV · ULEAM</strong>
+            <small>Sistema Institucional de Gestión y Movilidad</small>
+          </div>
+        </div>
+        <div className="login-top-right">
+          <span className="login-portal-badge">
+            <span className="login-badge-dot" aria-hidden />
+            Portal Institucional
           </span>
         </div>
       </header>
@@ -134,17 +140,17 @@ export default function Login() {
             <p className="login-kicker">Universidad Laica Eloy Alfaro de Manabí</p>
             <h1 id="login-story-title">Gestión de logística y movilidad</h1>
             <p className="login-lead">
-              Plataforma web para planificar, asignar, trazar y reportar el uso
-              de la flota institucional.
+              Plataforma digital para planificar, autorizar, asignar y dar
+              seguimiento a la flota vehicular institucional.
             </p>
             <ul className="login-ops">
               {REQUEST_STEPS.map((item) => (
                 <li key={item.label}>
-                  <item.icon size={18} aria-hidden />
-                  <span>
+                  <item.icon size={20} aria-hidden />
+                  <div className="login-op-text">
                     <strong>{item.label}</strong>
-                    {item.text}
-                  </span>
+                    <span>{item.text}</span>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -154,7 +160,7 @@ export default function Login() {
         <main className="login-card">
           <header className="login-card-head">
             <h2 id="login-title">Acceso institucional</h2>
-            <p>Correo institucional @uleam.edu.ec. Un repositorio, todo el flujo.</p>
+            <p>Ingrese con sus credenciales institucionales para continuar.</p>
           </header>
 
           {error && (
@@ -301,8 +307,8 @@ export default function Login() {
       </div>
 
       <footer className="login-foot">
-        <p>Universidad Laica Eloy Alfaro de Manabí</p>
-        <p>Circunvalación / Vía San Mateo · Manta, Manabí</p>
+        <p>© Universidad Laica Eloy Alfaro de Manabí · Dirección de Transporte y Movilidad</p>
+        <p>Campus Matriz Manta · Manabí, Ecuador</p>
       </footer>
     </div>
   );

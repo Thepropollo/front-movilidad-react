@@ -21,12 +21,25 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
+    cors: true,
     allowedHosts: ['.trycloudflare.com'],
     watch: {
       ignored: ['**/public/brand/**'],
     },
     proxy: {
       '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/scalar': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/docs': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/openapi.json': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },

@@ -24,3 +24,5 @@ public/uleam-local-rootCA.pem
 *.njsproj
 *.sln
 *.sw?
+AGENTS.md
+public/__dev_auth.html

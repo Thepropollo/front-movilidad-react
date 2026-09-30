@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Fuel, CheckCircle2, DollarSign } from 'lucide-react';
 import Input from '@/components/Input';
+import Button from '@/components/Button';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
+
+interface StationRecord {
+  id: number;
+  commercial_name: string;
+  ruc: string;
+  address: string;
+  price_per_liter: number;
+  monthly_quota_liters: number;
+  contract_start?: string;
+  contract_end?: string;
+  active_agreement: boolean;
+}
 
 const empty = {
   commercial_name: '',
@@ -14,12 +28,6 @@ const empty = {
   active_agreement: true,
 };
 
-const actionBtn: React.CSSProperties = {
-  width: 'auto',
-  padding: '8px 16px',
-  fontSize: 14,
-};
-
 const normalizeSearchValue = (value: unknown) =>
   String(value ?? '')
     .normalize('NFD')
@@ -27,7 +35,7 @@ const normalizeSearchValue = (value: unknown) =>
     .toLocaleLowerCase();
 
 export default function GasStationsPage() {
-  const [stations, setStations] = useState<any[]>([]);
+  const [stations, setStations] = useState<StationRecord[]>([]);
   const [form, setForm] = useState(empty);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -40,7 +48,22 @@ export default function GasStationsPage() {
   };
 
   useEffect(() => {
-    void load().catch(() => setError('No se pudieron cargar gasolineras.'));
+    let ignore = false;
+    modulesApi
+      .stations()
+      .then(({ data }) => {
+        if (!ignore) {
+          setStations(data || []);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setError('No se pudieron cargar gasolineras.');
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const reset = () => {
@@ -48,7 +71,7 @@ export default function GasStationsPage() {
     setEditingId(null);
   };
 
-  const startEdit = (s: any) => {
+  const startEdit = (s: StationRecord) => {
     setEditingId(s.id);
     setMsg(null);
     setError(null);
@@ -103,7 +126,7 @@ export default function GasStationsPage() {
     }
   };
 
-  const toggle = async (s: any) => {
+  const toggle = async (s: StationRecord) => {
     setMsg(null);
     setError(null);
     try {
@@ -127,26 +150,100 @@ export default function GasStationsPage() {
       )
     : stations;
 
+  const activeStations = stations.filter((s) => s.active_agreement).length;
+  const totalQuota = stations.reduce(
+    (acc, s) => acc + (Number(s.monthly_quota_liters) || 0),
+    0
+  );
+  const avgPrice = stations.length
+    ? (
+        stations.reduce((acc, s) => acc + (Number(s.price_per_liter) || 0), 0) /
+        stations.length
+      ).toFixed(2)
+    : '0.00';
+
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Flota</p>
-        <h1>Contratos de gasolineras</h1>
-        <p className="module-lead">
-          Cupo, precio por litro y vigencia del convenio.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Flota y Combustible"
+        badgeVariant="indigo"
+        title="Convenios y Contratos de Combustible"
+        description="Red de estaciones de servicio autorizadas, cupos mensuales asignados y vigencia contractual para la flota ULEAM."
+        metricValue={`${stations.length ? Math.round((activeStations / stations.length) * 100) : 100}%`}
+        metricLabel="VIGENCIA"
+        actionLabel="Nueva Estación"
+        onAction={() => reset()}
+      />
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Estaciones Aliadas"
+          value={stations.length}
+          hint="Puntos registrados"
+          icon={<Fuel size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Convenios Activos"
+          value={activeStations}
+          hint="Vigentes para despacho"
+          icon={<CheckCircle2 size={16} />}
+          tone="ok"
+        />
+        <StatCard
+          label="Cupo Mensual"
+          value={`${totalQuota.toLocaleString()} L`}
+          hint="Capacidad global"
+          icon={<DollarSign size={16} />}
+          tone="info"
+        />
+        <StatCard
+          label="Precio Promedio"
+          value={`$${avgPrice}`}
+          hint="Por litro contratado"
+          icon={<Fuel size={16} />}
+          tone="neutral"
+        />
+      </div>
+
+      {/* Quick Resource Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <ResourceCard
+          title="Emisión de Vales"
+          subtitle="Generar órdenes de carga de combustible por comisión"
+          icon={<Fuel size={18} />}
+          href="/app/secretaria/combustible/despacho"
+        />
+        <ResourceCard
+          title="Auditoría de Liquidaciones"
+          subtitle="Verificar tickets y facturas post-viaje"
+          icon={<CheckCircle2 size={18} />}
+          href="/app/secretaria/economico"
+        />
+        <ResourceCard
+          title="Panel de Transporte"
+          subtitle="Despacho institucional y hojas de ruta"
+          icon={<DollarSign size={18} />}
+          href="/app/secretaria/asignar"
+        />
+      </div>
+
       {msg && <div className="alert alert-success">{msg}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
       <form
-        className="module-panel"
+        className="sgv-dark-form-card mb-6"
         onSubmit={(e) => void submit(e)}
-        style={{ marginBottom: 16 }}
       >
-        <h2 style={{ marginBottom: 16 }}>
-          {editingId ? 'Editar contrato' : 'Registrar nuevo contrato'}
-        </h2>
+        <div className="sgv-dark-form-header">
+          <h2 className="sgv-dark-form-title">
+            {editingId ? 'Editar contrato' : 'Registrar nuevo contrato'}
+          </h2>
+          <p className="sgv-dark-form-subtitle">
+            Cupo mensual, tarifas por litro y vigencia del convenio institucional
+          </p>
+        </div>
         <div
           style={{
             display: 'grid',
@@ -239,29 +336,38 @@ export default function GasStationsPage() {
             </label>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-primary"
-            type="submit"
-            style={{ width: 'auto', padding: '14px 28px' }}
-          >
-            {editingId ? 'Guardar cambios' : 'Registrar contrato'}
-          </button>
+        <div className="sgv-dark-divider">
           {editingId && (
-            <button
-              className="btn btn-secondary"
+            <Button
+              variant="dark-cancel"
               type="button"
               onClick={reset}
-              style={{ width: 'auto', padding: '14px 28px' }}
+              fullWidth={false}
             >
               Cancelar
-            </button>
+            </Button>
           )}
+          <Button
+            variant="dark-submit"
+            type="submit"
+            fullWidth={false}
+          >
+            {editingId ? 'Guardar cambios' : 'Registrar contrato'}
+          </Button>
         </div>
       </form>
 
-      <div className="module-panel">
-        <h2>Estaciones de servicio registradas</h2>
+      <div className="sgv-dark-table-card p-6">
+        <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
+          <div>
+            <h2 className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+              Estaciones de servicio registradas
+            </h2>
+            <p className="font-mono text-xs text-slate-500 mt-0.5">
+              Convenios institucionales activos y volumen de combustible
+            </p>
+          </div>
+        </div>
         <Input
           id="station-search"
           label="Buscar estación"
@@ -272,59 +378,105 @@ export default function GasStationsPage() {
           containerStyle={{ marginBottom: 16 }}
           aria-label="Buscar estación por nombre, RUC o dirección"
         />
-        <table className="ops-table">
-          <thead>
-            <tr>
-              <th>Estación</th>
-              <th>RUC</th>
-              <th>Precio</th>
-              <th>Cupo</th>
-              <th>Activo</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStations.length > 0 ? (
-              filteredStations.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.commercial_name}</td>
-                  <td>{s.ruc}</td>
-                  <td>{s.price_per_liter ?? '—'}</td>
-                  <td>{s.monthly_quota_liters ?? '—'}</td>
-                  <td>{s.active_agreement ? 'Activo' : 'Inactivo'}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button
-                        className="btn btn-secondary"
-                        style={actionBtn}
-                        onClick={() => startEdit(s)}
+        <div className="sgv-dark-table-wrapper">
+          <table className="sgv-dark-table">
+            <thead>
+              <tr>
+                <th>Estación</th>
+                <th>RUC</th>
+                <th>Precio/L</th>
+                <th>Cupo mensual</th>
+                <th>Estado</th>
+                <th className="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStations.length > 0 ? (
+                filteredStations.map((s, idx) => (
+                  <tr key={s.id}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`sgv-avatar-squircle ${
+                            idx % 3 === 0
+                              ? 'is-amber'
+                              : idx % 3 === 1
+                              ? 'is-mint'
+                              : 'is-lavender'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <div>
+                          <span className="font-mono font-bold text-slate-900 block">
+                            {s.commercial_name}
+                          </span>
+                          <span className="font-mono text-xs text-slate-500">
+                            {s.address}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="font-mono text-slate-700">{s.ruc}</span>
+                    </td>
+                    <td>
+                      <span className="font-mono font-bold text-emerald-600">
+                        {s.price_per_liter ? `$${Number(s.price_per_liter).toFixed(3)}` : '—'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="font-mono text-slate-700">
+                        {s.monthly_quota_liters ? `${s.monthly_quota_liters} L` : '—'}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`sgv-pill-capsule ${
+                          s.active_agreement ? 'is-active' : 'is-suspended'
+                        }`}
                       >
-                        Editar
-                      </button>
-                      <button
-                        className={
-                          s.active_agreement ? 'btn btn-outline' : 'btn btn-success'
-                        }
-                        style={actionBtn}
-                        onClick={() => void toggle(s)}
-                      >
-                        {s.active_agreement ? 'Desactivar' : 'Activar'}
-                      </button>
-                    </div>
+                        {s.active_agreement ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <div className="inline-flex gap-2 justify-end">
+                        <button
+                          className="btn-dark-cancel text-xs cursor-pointer"
+                          style={{ padding: '6px 12px' }}
+                          onClick={() => startEdit(s)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className={
+                            s.active_agreement
+                              ? 'btn-dark-cancel text-xs cursor-pointer'
+                              : 'btn-dark-submit text-xs cursor-pointer'
+                          }
+                          style={{ padding: '6px 12px' }}
+                          onClick={() => void toggle(s)}
+                        >
+                          {s.active_agreement ? 'Desactivar' : 'Activar'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="text-center py-8 font-mono text-slate-400 text-sm"
+                  >
+                    {stationSearch.trim()
+                      ? 'No se encontraron estaciones con esa búsqueda.'
+                      : 'No hay estaciones registradas.'}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                  {stationSearch.trim()
-                    ? 'No se encontraron estaciones con esa búsqueda.'
-                    : 'No hay estaciones registradas.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );

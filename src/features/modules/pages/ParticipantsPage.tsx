@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Users, UserCheck, UserX, Clock } from 'lucide-react';
 import Button from '@/components/Button';
 import { formatDateTimeReadable } from '@/lib/datetime';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard } from '@/components/Cards';
 
 interface SolicitudOption {
   id: number;
@@ -131,14 +133,15 @@ export default function ParticipantsPage() {
   );
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Participantes</p>
-        <h1>Participantes del viaje</h1>
-        <p className="module-lead">
-          Invite estudiantes y revise confirmaciones.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 max-w-7xl mx-auto p-4 md:p-6">
+      <HeroMetricCard
+        badge="Participantes"
+        badgeVariant="indigo"
+        title="Gestión de Participantes del Viaje"
+        description="Convoque estudiantes, valide cupos y revise confirmaciones de asistencia para comisiones académicas institucionales."
+        metricValue={summary ? `${summary.total}` : `${solicitudes.length}`}
+        metricLabel={summary ? 'ESTUDIANTES CONVOCADOS' : 'SOLICITUDES DISPONIBLES'}
+      />
       {msg && <div className="alert alert-info" role="status">{msg}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="module-panel" style={{ marginBottom: 16 }}>
@@ -169,23 +172,37 @@ export default function ParticipantsPage() {
         </select>
       </div>
       {summary && (
-        <div className="participants-summary-grid" style={{ marginBottom: 16 }}>
-          <article className="module-panel participants-kpi">
-            <p className="participants-kpi-label">Total</p>
-            <strong>{summary.total}</strong>
-          </article>
-          <article className="module-panel participants-kpi">
-            <p className="participants-kpi-label">Aceptados</p>
-            <strong>{summary.aceptados}</strong>
-          </article>
-          <article className="module-panel participants-kpi">
-            <p className="participants-kpi-label">Rechazados</p>
-            <strong>{summary.rechazados}</strong>
-          </article>
-          <article className="module-panel participants-kpi">
-            <p className="participants-kpi-label">Pendientes</p>
-            <strong>{summary.pendientes}</strong>
-          </article>
+        <div className="mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="Convocados"
+              value={summary.total}
+              hint="Total registrados"
+              icon={<Users size={16} />}
+              tone="neutral"
+            />
+            <StatCard
+              label="Aceptados"
+              value={summary.aceptados}
+              hint="Confirmaron cupo"
+              icon={<UserCheck size={16} />}
+              tone="ok"
+            />
+            <StatCard
+              label="Rechazados"
+              value={summary.rechazados}
+              hint="Declinaron viaje"
+              icon={<UserX size={16} />}
+              tone="danger"
+            />
+            <StatCard
+              label="Pendientes"
+              value={summary.pendientes}
+              hint="En espera de respuesta"
+              icon={<Clock size={16} />}
+              tone="warn"
+            />
+          </div>
         </div>
       )}
       {selected && (

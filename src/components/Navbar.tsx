@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Compass, Power } from 'lucide-react';
+import { Power } from 'lucide-react';
+import type { User } from '../context/AuthContext';
 
 interface NavbarProps {
-  user: any;
+  user: User | null;
   filteredLinks: Array<{ label: string; path: string; icon: React.ReactNode }>;
   onLogout: () => void;
 }
@@ -16,15 +17,18 @@ const Navbar: React.FC<NavbarProps> = ({ user, filteredLinks, onLogout }) => {
       <div className="navbar-container">
         <div className="navbar-content">
           {/* Logo and Brand Name */}
-          <div className="navbar-brand">
-            <div className="navbar-logo-box">
-              <Compass className="text-secondary" size={20} />
-            </div>
+          <Link to="/" className="navbar-brand" title="Ir al inicio">
+            <img
+              src="/brand/logo-uleam-horizontal.png"
+              alt="Universidad Laica Eloy Alfaro de Manabí"
+              className="navbar-brand-logo"
+            />
+            <div className="navbar-brand-divider" aria-hidden="true" />
             <div className="navbar-brand-text">
-              <span className="navbar-title">ULEAM</span>
-              <span className="navbar-subtitle">Sistema de Movilización</span>
+              <span className="navbar-title">SIGMOV · ULEAM</span>
+              <span className="navbar-subtitle">Sistema Institucional de Gestión y Movilidad</span>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation Links */}
           <nav className="navbar-nav">

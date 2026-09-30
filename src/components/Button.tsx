@@ -1,7 +1,17 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'gold' | 'danger' | 'success' | 'outline';
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'gold'
+    | 'danger'
+    | 'success'
+    | 'outline'
+    | 'dark-cancel'
+    | 'dark-submit'
+    | 'mono-cancel'
+    | 'mono-submit';
   isLoading?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;
@@ -30,6 +40,12 @@ const Button: React.FC<ButtonProps> = ({
         return 'btn btn-success';
       case 'outline':
         return 'btn btn-outline';
+      case 'dark-cancel':
+      case 'mono-cancel':
+        return 'btn-dark-cancel';
+      case 'dark-submit':
+      case 'mono-submit':
+        return 'btn-dark-submit';
       case 'primary':
       default:
         return 'btn btn-primary';
@@ -41,9 +57,9 @@ const Button: React.FC<ButtonProps> = ({
     ...style,
   };
 
-  // Spinner inherits white color on dark buttons, or primary brand color on light/outline buttons
-  const spinnerBorderColor = ['secondary', 'outline'].includes(variant)
-    ? 'var(--color-primary)'
+  // Spinner inherits white color on dark buttons, or dark color on light/outline/cancel buttons
+  const spinnerBorderColor = ['secondary', 'outline', 'dark-cancel', 'mono-cancel'].includes(variant)
+    ? '#09090b'
     : '#ffffff';
 
   return (

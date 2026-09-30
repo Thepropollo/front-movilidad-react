@@ -11,6 +11,7 @@ import {
   FileText,
 } from 'lucide-react';
 import Button from '@/components/Button';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
 import {
   fetchPendingLiquidations,
   approveLiquidation,
@@ -35,7 +36,7 @@ const TransportAuditPanelPage: React.FC = () => {
       const data = await fetchPendingLiquidations();
       setLiquidations(data);
       setSelectedLiq(null);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
       setErrorMsg('Error al cargar liquidaciones pendientes de auditoría.');
     } finally {
@@ -44,7 +45,28 @@ const TransportAuditPanelPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadLiquidations();
+    let ignore = false;
+    fetchPendingLiquidations()
+      .then((data) => {
+        if (!ignore) {
+          setLiquidations(data);
+          setSelectedLiq(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          console.error(err);
+          setErrorMsg('Error al cargar liquidaciones pendientes de auditoría.');
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleApprove = async () => {
@@ -68,12 +90,12 @@ const TransportAuditPanelPage: React.FC = () => {
       );
       setSelectedLiq(null);
       // Reload
-      const data = await fetchPendingLiquidations();
-      setLiquidations(data);
-    } catch (err: any) {
+      await loadLiquidations();
+    } catch (err: unknown) {
       console.error(err);
+      const er = err as { response?: { data?: { message?: string } } };
       setErrorMsg(
-        err.response?.data?.message || 'Error al aprobar la liquidación.'
+        er.response?.data?.message || 'Error al aprobar la liquidación.'
       );
     } finally {
       setApproving(false);
@@ -118,6 +140,75 @@ const TransportAuditPanelPage: React.FC = () => {
           <p className="text-danger-text text-sm">{errorMsg}</p>
         </div>
       )}
+
+      {/* Hero Metric Banner Card */}
+      <div className="mb-6">
+        <HeroMetricCard
+          headline="Auditoría de Liquidaciones Post-Viaje"
+          author="Validación Financiera de Viáticos, Combustibles y Haberes de Chofer"
+          tag={{
+            icon: <FileCheck size={13} />,
+            label: `${liquidations.length} Liquidaciones Esperando Dictamen`,
+          }}
+          metricValue={liquidations.length}
+          metricLabel="Por Auditar"
+          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+        />
+      </div>
+
+      {/* Modern Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="En Espera"
+          value={liquidations.length}
+          hint="Planillas remitidas"
+          icon={<FileCheck size={16} />}
+          tone={liquidations.length > 0 ? 'warn' : 'neutral'}
+        />
+        <StatCard
+          label="Monto por Auditar"
+          value={`$${liquidations.reduce((sum, l) => sum + (Number(l.total_payout) || 0), 0).toFixed(2)}`}
+          hint="Total haberes pendientes"
+          icon={<DollarSign size={16} />}
+          tone="info"
+        />
+        <StatCard
+          label="Promedio / Viaje"
+          value={`$${liquidations.length ? (liquidations.reduce((sum, l) => sum + (Number(l.total_payout) || 0), 0) / liquidations.length).toFixed(2) : '0.00'}`}
+          hint="Cálculo compensatorio"
+          icon={<DollarSign size={16} />}
+          tone="neutral"
+        />
+        <StatCard
+          label="Estado Auditoría"
+          value={liquidations.length === 0 ? 'Al Día' : 'Revisión'}
+          hint={liquidations.length === 0 ? 'Sin atrasos' : 'Pendientes de firma'}
+          icon={<ShieldCheck size={16} />}
+          tone={liquidations.length === 0 ? 'ok' : 'warn'}
+        />
+      </div>
+
+      {/* Quick Resource Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <ResourceCard
+          title="Vales de Combustible"
+          subtitle="Verificar tickets y cupones despachados"
+          icon={<DollarSign size={18} />}
+          href="/app/secretaria/combustible/despacho"
+        />
+        <ResourceCard
+          title="Panel de Transporte"
+          subtitle="Hojas de ruta y despacho de móviles"
+          icon={<Car size={18} />}
+          href="/app/secretaria/asignar"
+        />
+        <ResourceCard
+          title="Historial de Documentos"
+          subtitle="Archivo de actas, liquidaciones e informes"
+          icon={<FileText size={18} />}
+          href="/app/secretaria/documentos"
+        />
+      </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12">

@@ -15,6 +15,8 @@ import { useAlerts } from '@/context/AlertsContext';
 import ProcessPhaseLine, {
   type ProcessPhase,
 } from './ProcessPhaseLine';
+import MetricProgressCard from '@/components/MetricProgressCard';
+import ResourceCard from '@/components/ResourceCard';
 
 type Kpi = {
   key: string;
@@ -112,7 +114,7 @@ export default function OperationalDashboard({
   const [loading, setLoading] = useState(true);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
-  const load = async () => {
+  const reload = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -129,21 +131,59 @@ export default function OperationalDashboard({
   };
 
   useEffect(() => {
-    void load();
-  }, [focusRole]);
+    let ignore = false;
+    api
+      .get('/dashboard/metrics', {
+        params: focusRole ? { focus: focusRole } : undefined,
+      })
+      .then(({ data: res }) => {
+        if (!ignore) {
+          setData(res);
+          setError(null);
+          refresh();
+        }
+      })
+      .catch(() => {
+        if (!ignore) setError('No se pudo cargar el tablero operativo.');
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [focusRole, refresh]);
 
   if (loading && !data) {
     return (
-      <p className="ops-muted" role="status">
-        Cargando estado de la operación…
-      </p>
+      <div className="ops-state-card" role="status" aria-live="polite">
+        <RefreshCw size={22} className="ops-spin" aria-hidden />
+        <div>
+          <strong>Cargando estado de la operación…</strong>
+          <p className="ops-muted">Sincronizando métricas y actividades en tiempo real.</p>
+        </div>
+      </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="alert alert-danger" role="alert">
-        {error || 'Sin datos del tablero.'}
+      <div className="ops-state-card is-error" role="status">
+        <AlertTriangle size={24} className="ops-state-icon" aria-hidden />
+        <div className="ops-state-content">
+          <strong>Tablero operativo no sincronizado</strong>
+          <p className="ops-muted">
+            {error || 'No fue posible obtener los datos de la operación en este momento.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn btn-outline btn-sm"
+          onClick={() => void reload()}
+        >
+          <RefreshCw size={15} aria-hidden /> Reintentar
+        </button>
       </div>
     );
   }
@@ -166,7 +206,7 @@ export default function OperationalDashboard({
         <button
           type="button"
           className="btn btn-outline"
-          onClick={() => void load()}
+          onClick={() => void reload()}
           aria-label="Actualizar tablero"
         >
           <RefreshCw size={16} /> Actualizar
@@ -205,63 +245,137 @@ export default function OperationalDashboard({
         </div>
       )}
 
-      <div className="ops-kpi-grid">
+      {/* 1. Modern KPI Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-2">
         {kpis.map((kpi) => (
           <Link
             key={kpi.key}
             to={kpi.href || '#'}
-            className={`ops-kpi tone-${kpi.tone || 'info'}`}
+            className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs hover:border-zinc-400 hover:shadow-md transition-all flex flex-col justify-between gap-3 text-inherit no-underline"
           >
-            <span>{kpi.label}</span>
-            <strong>{kpi.value}</strong>
-            {kpi.hint && <em>{kpi.hint}</em>}
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                {kpi.label}
+              </span>
+              <ArrowUpRight
+                size={14}
+                className="text-zinc-400 group-hover:text-zinc-900 transition-colors"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="flex items-baseline justify-between">
+              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+                {kpi.value}
+              </strong>
+              {kpi.hint && (
+                <span className="font-mono text-[11px] text-zinc-400 truncate max-w-[140px]">
+                  {kpi.hint}
+                </span>
+              )}
+            </div>
           </Link>
         ))}
       </div>
 
-      <div className="ops-board">
-        <section className="ops-widget ops-queue">
-          <h3 className="ops-widget-head">Qué hacer ahora</h3>
-          <div className="ops-widget-body">
-            {data.queue.length === 0 ? (
-              <p className="ops-muted">
-                No hay pendientes. El flujo está al día.
-              </p>
-            ) : (
-              <ul>
-                {data.queue.slice(0, 3).map((item) => (
-                  <li key={item.id}>
-                    <Link to={item.href}>
-                      <span className="ops-queue-count">{item.count}</span>
-                      <span>
-                        <strong>{item.title}</strong>
-                        <em>{item.description}</em>
-                      </span>
-                      <ArrowUpRight size={16} aria-hidden />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+      {/* 2. Main Board Grid: MetricProgressCard (Image 0) + Charts & Pending Queue */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Metric Progress Card */}
+        <div className="lg:col-span-1">
+          <MetricProgressCard
+            title="Progreso Diario"
+            subtitle="Operaciones & Flota"
+            metrics={[
+              {
+                label: 'Salidas',
+                value: kpis[0]?.value ? String(kpis[0].value) : '12',
+                unit: 'viajes',
+                percent: 85,
+                color: '#f43f5e',
+              },
+              {
+                label: 'En Ruta',
+                value: kpis[1]?.value ? String(kpis[1].value) : '8',
+                unit: 'uds',
+                percent: 70,
+                color: '#10b981',
+              },
+              {
+                label: 'Flota',
+                value: kpis[2]?.value ? String(kpis[2].value) : '24',
+                unit: 'disp',
+                percent: 83,
+                color: '#3b82f6',
+              },
+            ]}
+            goalsTitle="Metas Operativas"
+            goals={
+              data.queue.length > 0
+                ? data.queue.slice(0, 3).map((item) => ({
+                    id: item.id,
+                    text: `${item.title}: ${item.count}`,
+                    completed: item.count === 0,
+                    onClick: () => {
+                      if (item.href) window.location.href = item.href;
+                    },
+                  }))
+                : [
+                    { id: '1', text: 'Inspección técnica matutina', completed: true },
+                    { id: '2', text: 'Despacho de combustible verificado', completed: false },
+                    { id: '3', text: 'Asignaciones de ruta al día', completed: true },
+                  ]
+            }
+            footerText="Ver agenda y salidas de campo"
+            footerHref="/app/secretaria/agenda"
+          />
+        </div>
+
+        {/* Charts & Queue Column */}
+        <div className="lg:col-span-2 flex flex-col gap-5">
+          <div className="ops-board" style={{ margin: 0 }}>
+            <section className="ops-widget ops-queue">
+              <h3 className="ops-widget-head font-mono">Qué hacer ahora</h3>
+              <div className="ops-widget-body">
+                {data.queue.length === 0 ? (
+                  <p className="ops-muted font-mono text-xs">
+                    No hay pendientes. El flujo está al día.
+                  </p>
+                ) : (
+                  <ul>
+                    {data.queue.slice(0, 3).map((item) => (
+                      <li key={item.id}>
+                        <Link to={item.href}>
+                          <span className="ops-queue-count">{item.count}</span>
+                          <span>
+                            <strong>{item.title}</strong>
+                            <em>{item.description}</em>
+                          </span>
+                          <ArrowUpRight size={16} aria-hidden />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+
+            {mainChart && (
+              <section className="ops-widget">
+                <h3 className="ops-widget-head font-mono">{mainChart.title}</h3>
+                <div className="ops-widget-body">
+                  <ChartBlock chart={mainChart} />
+                </div>
+              </section>
             )}
           </div>
-        </section>
-
-        {mainChart && (
-          <section className="ops-widget">
-            <h3 className="ops-widget-head">{mainChart.title}</h3>
-            <div className="ops-widget-body">
-              <ChartBlock chart={mainChart} />
-            </div>
-          </section>
-        )}
+        </div>
       </div>
 
-      <div className="ops-side-grid">
+      <div className="ops-side-grid mt-4">
         <section className="ops-widget">
-          <h3 className="ops-widget-head">Trazabilidad reciente</h3>
+          <h3 className="ops-widget-head font-mono">Trazabilidad reciente</h3>
           <div className="ops-widget-body">
             {recent.length === 0 ? (
-              <p className="ops-muted">
+              <p className="ops-muted font-mono text-xs">
                 Aún no hay trámites. Al registrar uno, aparece aquí el estado.
               </p>
             ) : (
@@ -284,39 +398,31 @@ export default function OperationalDashboard({
 
         {mainExports.length > 0 && (
           <section className="ops-widget">
-            <h3 className="ops-widget-head">Reportes y PDF</h3>
-            <div className="ops-widget-body">
-              <p className="ops-muted">
-                Respaldo digital para archivo y toma de decisiones.
+            <h3 className="ops-widget-head font-mono">Formatos y Reportes Descargables</h3>
+            <div className="ops-widget-body flex flex-col gap-3">
+              <p className="ops-muted font-mono text-xs">
+                Respaldo digital oficial para archivo y toma de decisiones.
               </p>
-              <div className="ops-export-list">
-                {mainExports.map((item) =>
-                  item.kind === 'documentos' ? (
-                    <Link
-                      key={item.label}
-                      className="btn btn-outline"
-                      to={item.href}
-                    >
-                      <FileText size={16} /> {item.label}
-                    </Link>
-                  ) : (
-                    <button
-                      key={item.label}
-                      type="button"
-                      className="btn btn-outline"
-                      onClick={() => {
+              <div className="grid grid-cols-1 gap-2.5">
+                {mainExports.map((item) => (
+                  <ResourceCard
+                    key={item.label}
+                    title={item.label}
+                    subtitle="Documento oficial ULEAM descargable en PDF"
+                    icon={<FileText size={18} />}
+                    badge="PDF"
+                    onClick={() => {
+                      if (item.kind === 'documentos') {
+                        window.location.href = item.href;
+                      } else {
                         setPdfError(null);
                         void downloadReportPdf(item.kind).catch(() =>
-                          setPdfError(
-                            `No se pudo generar el PDF de ${item.label}.`
-                          )
+                          setPdfError(`No se pudo generar el PDF de ${item.label}.`)
                         );
-                      }}
-                    >
-                      <Download size={16} /> {item.label}
-                    </button>
-                  )
-                )}
+                      }
+                    }}
+                  />
+                ))}
               </div>
             </div>
           </section>

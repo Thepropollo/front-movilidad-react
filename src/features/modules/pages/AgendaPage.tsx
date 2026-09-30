@@ -1,8 +1,24 @@
-import { useEffect, useState } from 'react';
-import Button from '@/components/Button';
-import Pagination, { type PaginationMeta } from '@/components/Pagination';
+import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  CalendarDays,
+  Clock,
+  Compass,
+  CheckCircle2,
+  Car,
+  Navigation,
+  Activity,
+  AlertTriangle,
+} from 'lucide-react';
+import CalendarAgenda, {
+  type CalendarEvent,
+  type CalendarViewMode,
+  type CalendarFilterGroup,
+} from '@/components/CalendarAgenda';
+import type { PaginationMeta } from '@/components/Pagination';
 import { DRIVER_RESPONSE_LABEL } from '@/lib/labels';
 import { modulesApi } from '../api';
+import { HeroMetricCard, StatCard, ResourceCard } from '@/components/Cards';
 
 type Event = {
   id: number;
@@ -14,27 +30,6 @@ type Event = {
   driver: string;
   vehicle: string;
 };
-
-interface Filters {
-  from: string;
-  to: string;
-  tripStatus: string;
-  q: string;
-}
-
-interface AgendaPayload {
-  from?: string;
-  to?: string;
-  events?: PaginationMeta & { data?: Event[] };
-}
-
-const TRIP_STATUSES = [
-  { value: '', label: 'Todos los estados' },
-  { value: 'programado', label: 'Programado' },
-  { value: 'en_ruta', label: 'En ruta' },
-  { value: 'pendiente_feedback', label: 'Pendiente de evaluación' },
-  { value: 'finalizado', label: 'Finalizado' },
-];
 
 const STATUS_LABEL: Record<string, string> = {
   programado: 'Programado',
@@ -48,363 +43,276 @@ const toISODate = (date: Date) => {
   return local.toISOString().slice(0, 10);
 };
 
-const startOfWeek = () => {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  return toISODate(monday);
+const getDateRangeForView = (date: Date, viewMode: CalendarViewMode, firstDayOfWeek = 0) => {
+  if (viewMode === 'month') {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const firstDayIndex = firstDay.getDay(); // 0 = Sun
+    const offset = (firstDayIndex - firstDayOfWeek + 7) % 7;
+    const startDate = new Date(year, month, 1 - offset);
+    const endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 41);
+    return { from: toISODate(startDate), to: toISODate(endDate) };
+  }
+  if (viewMode === 'week') {
+    const dayOfWeek = date.getDay();
+    const offset = (dayOfWeek - firstDayOfWeek + 7) % 7;
+    const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() - offset);
+    const endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 6);
+    return { from: toISODate(startDate), to: toISODate(endDate) };
+  }
+  if (viewMode === 'day') {
+    const iso = toISODate(date);
+    return { from: iso, to: iso };
+  }
+  // list view: full month
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  return { from: toISODate(start), to: toISODate(end) };
 };
-
-const endOfWeek = () => {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? 0 : 7 - day;
-  const sunday = new Date(now);
-  sunday.setDate(now.getDate() + diff);
-  return toISODate(sunday);
-};
-
-const addDaysISO = (iso: string, days: number) => {
-  const [y, m, d] = iso.split('-').map(Number);
-  const date = new Date(y, m - 1, d + days);
-  return toISODate(date);
-};
-
-const weekDays = (start: string) =>
-  Array.from({ length: 7 }, (_, i) => addDaysISO(start, i));
-
-const dayLabel = (iso: string) => {
-  const [y, m, d] = iso.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  return {
-    weekday: date
-      .toLocaleDateString('es-EC', { weekday: 'short' })
-      .replace('.', ''),
-    dayMonth: date
-      .toLocaleDateString('es-EC', { day: 'numeric', month: 'short' })
-      .replace('.', ''),
-  };
-};
-
-const statusClass = (status: string) =>
-  `schedule-status status-${status.replace(/[^a-z0-9_]/g, '-')}`;
 
 export default function AgendaPage() {
-  const [view, setView] = useState<'horario' | 'lista'>('horario');
-
-  // Vista lista
+  const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  const [from, setFrom] = useState(startOfWeek());
-  const [to, setTo] = useState(endOfWeek());
-  const [tripStatus, setTripStatus] = useState('');
-  const [q, setQ] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Vista horario
-  const [weekStart, setWeekStart] = useState(startOfWeek());
-  const [weekEvents, setWeekEvents] = useState<Event[]>([]);
-  const [weekLoading, setWeekLoading] = useState(true);
+  // Calendar State
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [view, setView] = useState<CalendarViewMode>('month');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [tripStatus, setTripStatus] = useState<string>('');
+  const [selectedDriver, setSelectedDriver] = useState('');
+  const [selectedVehicle, setSelectedVehicle] = useState('');
 
-  const apply = (data: AgendaPayload) => {
-    setEvents(data.events?.data ?? []);
-    setMeta(data.events ?? null);
-  };
-
-  const buildParams = (targetPage: number, filters: Filters) => ({
-    from: filters.from || undefined,
-    to: filters.to || undefined,
-    trip_status: filters.tripStatus || undefined,
-    q: filters.q.trim() || undefined,
-    page: targetPage,
-  });
-
-  const load = (targetPage: number, overrides?: Partial<Filters>) => {
-    const filters: Filters = { from, to, tripStatus, q, ...overrides };
-
-    if (filters.from && filters.to && filters.from > filters.to) {
-      setError('La fecha "desde" no puede ser posterior a la fecha "hasta".');
-      setLoading(false);
-      return;
-    }
-
+  // Dynamic page fetcher
+  const handlePageChange = (page: number) => {
+    const { from, to } = getDateRangeForView(currentDate, view, 0);
     setLoading(true);
-    setError(null);
     modulesApi
-      .agenda(buildParams(targetPage, filters))
-      .then(({ data }) => apply(data))
-      .catch(() => setError('No se pudo cargar la agenda.'))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    modulesApi
-      .agenda({ from: startOfWeek(), to: endOfWeek(), page: 1 })
-      .then(({ data }) => apply(data))
-      .catch(() => setError('No se pudo cargar la agenda.'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    modulesApi
-      .agenda({ from: weekStart, to: addDaysISO(weekStart, 6), per_page: 100 })
-      .then(({ data }) => {
-        setWeekEvents(data.events?.data ?? []);
-        setError(null);
+      .agenda({
+        from,
+        to,
+        trip_status: tripStatus || undefined,
+        q: searchQuery.trim() || undefined,
+        page,
+        per_page: view === 'list' ? 15 : 100,
       })
-      .catch(() => setError('No se pudo cargar la agenda.'))
-      .finally(() => setWeekLoading(false));
-  }, [weekStart]);
-
-  const goWeek = (offset: number) => {
-    setWeekLoading(true);
-    setWeekStart((w) => addDaysISO(w, offset * 7));
+      .then(({ data }) => {
+        setEvents(data.events?.data ?? []);
+        setMeta(data.events ?? null);
+      })
+      .catch(() => setError('No se pudo cargar la agenda de viajes.'))
+      .finally(() => setLoading(false));
   };
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    load(1);
-  };
+  useEffect(() => {
+    let ignore = false;
+    const { from, to } = getDateRangeForView(currentDate, view, 0);
 
-  const clear = () => {
-    const reset: Filters = {
-      from: startOfWeek(),
-      to: endOfWeek(),
-      tripStatus: '',
-      q: '',
+    modulesApi
+      .agenda({
+        from,
+        to,
+        trip_status: tripStatus || undefined,
+        q: searchQuery.trim() || undefined,
+        page: 1,
+        per_page: view === 'list' ? 15 : 100,
+      })
+      .then(({ data }) => {
+        if (!ignore) {
+          setEvents(data.events?.data ?? []);
+          setMeta(data.events ?? null);
+          setError(null);
+        }
+      })
+      .catch(() => {
+        if (!ignore) setError('No se pudo cargar la agenda de viajes.');
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
     };
-    setFrom(reset.from);
-    setTo(reset.to);
-    setTripStatus(reset.tripStatus);
-    setQ(reset.q);
-    load(1, reset);
-  };
+  }, [currentDate, view, tripStatus, searchQuery]);
 
-  const days = weekDays(weekStart);
-  const today = toISODate(new Date());
-  const byDay: Record<string, Event[]> = {};
-  for (const e of weekEvents) {
-    (byDay[e.date] ??= []).push(e);
-  }
+  // Unique options for filters
+  const driverOptions = useMemo(() => {
+    const set = new Set<string>();
+    events.forEach((e) => {
+      if (e.driver) set.add(e.driver);
+    });
+    return [
+      { label: 'All Categories', value: '' },
+      ...Array.from(set).sort().map((d) => ({ label: d, value: d })),
+    ];
+  }, [events]);
+
+  const vehicleOptions = useMemo(() => {
+    const set = new Set<string>();
+    events.forEach((e) => {
+      if (e.vehicle) set.add(e.vehicle);
+    });
+    return [
+      { label: 'Todos los vehículos', value: '' },
+      ...Array.from(set).sort().map((v) => ({ label: v, value: v })),
+    ];
+  }, [events]);
+
+  // Filter groups for CalendarAgenda header
+  const filterGroups: CalendarFilterGroup[] = useMemo(() => [
+    {
+      id: 'trip_status',
+      label: 'Estado de Viaje',
+      options: [
+        { label: 'Todos los estados', value: '' },
+        { label: 'Programado', value: 'programado' },
+        { label: 'En ruta', value: 'en_ruta' },
+        { label: 'Pend. evaluación', value: 'pendiente_feedback' },
+        { label: 'Finalizado', value: 'finalizado' },
+      ],
+      selectedValue: tripStatus,
+      onSelect: (val) => setTripStatus(val),
+    },
+    {
+      id: 'vehicles',
+      label: 'Vehículo',
+      options: vehicleOptions,
+      selectedValue: selectedVehicle,
+      onSelect: (val) => setSelectedVehicle(val),
+    },
+    {
+      id: 'categories',
+      label: 'Categories',
+      options: driverOptions,
+      selectedValue: selectedDriver,
+      onSelect: (val) => setSelectedDriver(val),
+    },
+  ], [tripStatus, vehicleOptions, selectedVehicle, driverOptions, selectedDriver]);
+
+  // Map to CalendarEvent interface and apply local driver/vehicle filter
+  const calendarEvents: CalendarEvent[] = useMemo(() => {
+    return events
+      .filter((e) => {
+        if (selectedDriver && e.driver !== selectedDriver) return false;
+        if (selectedVehicle && e.vehicle !== selectedVehicle) return false;
+        return true;
+      })
+      .map((e) => ({
+        id: e.id,
+        date: e.date,
+        return_date: e.return_date,
+        title: e.destination || 'Viaje sin destino',
+        destination: e.destination,
+        status: e.trip_status,
+        statusLabel: STATUS_LABEL[e.trip_status] ?? e.trip_status,
+        driver: e.driver,
+        driver_response: DRIVER_RESPONSE_LABEL[e.driver_response] ?? e.driver_response,
+        vehicle: e.vehicle,
+        raw: e,
+      }));
+  }, [events, selectedDriver, selectedVehicle]);
+
+  const enRutaCount = events.filter((e) => e.trip_status === 'en_ruta').length;
+  const programadosCount = events.filter((e) => e.trip_status === 'programado').length;
+  const finalizadosCount = events.filter((e) => e.trip_status === 'finalizado').length;
 
   return (
-    <section className="module-page">
-      <header className="module-header">
-        <p className="module-kicker">Agenda</p>
-        <h1>Agenda semanal</h1>
-        <p className="module-lead">
-          Horario de viajes por conductor y vehículo.
-        </p>
-      </header>
+    <section className="module-page flex flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto">
+      <HeroMetricCard
+        badge="Operación y Planificación"
+        badgeVariant="indigo"
+        title="Agenda Institucional y Programación de Flota"
+        description="Monitoreo interactivo del calendario de salidas institucionales. Visualice la programación mensual, semanal o diaria de unidades vehiculares, choferes designados y el avance de ruta."
+        metricValue={String(events.length)}
+        metricLabel="SALIDAS EN EL PERÍODO"
+        actionLabel="Solicitudes por asignar"
+        onAction={() => navigate('/app/secretaria/asignar')}
+      />
 
-      <div
-        className="view-toggle"
-        role="tablist"
-        style={{ marginBottom: 16 }}
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={view === 'horario'}
-          className={view === 'horario' ? 'is-active' : ''}
-          onClick={() => setView('horario')}
-        >
-          Horario
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={view === 'lista'}
-          className={view === 'lista' ? 'is-active' : ''}
-          onClick={() => setView('lista')}
-        >
-          Lista
-        </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Salidas"
+          value={events.length}
+          tone="info"
+          icon={<CalendarDays size={18} />}
+          hint="En el rango de fechas visible"
+        />
+        <StatCard
+          label="En Circulación"
+          value={enRutaCount}
+          tone={enRutaCount > 0 ? 'warn' : 'neutral'}
+          icon={<Activity size={18} />}
+          hint={enRutaCount > 0 ? 'Comisiones activas en vía' : 'Sin viajes en curso'}
+        />
+        <StatCard
+          label="Programados"
+          value={programadosCount}
+          tone="ok"
+          icon={<Clock size={18} />}
+          hint="Listos para despacho"
+        />
+        <StatCard
+          label="Finalizados"
+          value={finalizadosCount}
+          tone="neutral"
+          icon={<CheckCircle2 size={18} />}
+          hint="Comisiones concluidas"
+        />
       </div>
 
-      {error && <div className="alert alert-danger" role="alert">{error}</div>}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <ResourceCard
+          title="Mapa de Rutas en Vivo"
+          description="Visualice paradas GPS en tiempo real y trayectorias vehiculares."
+          icon={<Compass size={20} />}
+          href="/app/secretaria/mapa"
+        />
+        <ResourceCard
+          title="Disponibilidad de Flota"
+          description="Consulte unidades vehiculares y choferes con estatus libre."
+          icon={<Car size={20} />}
+          href="/app/secretaria/disponibilidad"
+        />
+        <ResourceCard
+          title="Asignación y Despacho"
+          description="Asigne chofer y vehículo a las solicitudes autorizadas."
+          icon={<Navigation size={20} />}
+          href="/app/secretaria/asignar"
+        />
+      </div>
 
-      {view === 'horario' && (
-        <>
-          <div className="module-panel schedule-week-nav">
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth={false}
-              onClick={() => goWeek(-1)}
-            >
-              Semana anterior
-            </Button>
-            <span className="ops-muted">
-              {dayLabel(weekStart).dayMonth} – {dayLabel(addDaysISO(weekStart, 6)).dayMonth}
-            </span>
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth={false}
-              onClick={() => goWeek(1)}
-            >
-              Semana siguiente
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              fullWidth={false}
-              onClick={() => {
-                setWeekLoading(true);
-                setWeekStart(startOfWeek());
-              }}
-            >
-              Semana actual
-            </Button>
-            <span className="ops-muted" style={{ marginLeft: 'auto' }}>
-              {weekEvents.length} viaje(s)
-            </span>
-          </div>
-
-          {weekLoading ? (
-            <div className="module-panel">
-              <p className="ops-muted">Cargando horario…</p>
-            </div>
-          ) : (
-            <div className="schedule-grid">
-              {days.map((day) => {
-                const label = dayLabel(day);
-                const dayEvents = byDay[day] ?? [];
-                return (
-                  <article
-                    key={day}
-                    className={`schedule-day${day === today ? ' is-today' : ''}`}
-                  >
-                    <header className="schedule-day-header">
-                      <span className="schedule-day-title">
-                        {label.weekday}
-                      </span>
-                      <span className="schedule-day-date">
-                        {label.dayMonth}
-                      </span>
-                    </header>
-                    <div className="schedule-cards">
-                      {dayEvents.map((e) => (
-                        <div key={e.id} className="schedule-card">
-                          <span className={statusClass(e.trip_status)}>
-                            {STATUS_LABEL[e.trip_status] ?? e.trip_status}
-                          </span>
-                          <strong>{e.destination}</strong>
-                          <small>{e.driver || 'Sin conductor'}</small>
-                          <small>{e.vehicle || 'Sin vehículo'}</small>
-                        </div>
-                      ))}
-                      {dayEvents.length === 0 && (
-                        <p className="schedule-empty">Sin viajes</p>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </>
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-mono flex items-center gap-2">
+          <AlertTriangle size={16} className="text-red-600 shrink-0" />
+          <span>{error}</span>
+        </div>
       )}
 
-      {view === 'lista' && (
-        <>
-          <form className="module-panel" onSubmit={submit}>
-            <div className="filters-row">
-              <label>
-                Desde
-                <input
-                  type="date"
-                  className="form-input"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                />
-              </label>
-              <label>
-                Hasta
-                <input
-                  type="date"
-                  className="form-input"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                />
-              </label>
-              <label>
-                Estado del viaje
-                <select
-                  className="form-select"
-                  value={tripStatus}
-                  onChange={(e) => setTripStatus(e.target.value)}
-                >
-                  {TRIP_STATUSES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <input
-                className="form-input"
-                placeholder="Buscar por destino, placa o conductor"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-              <Button type="submit" fullWidth={false} isLoading={loading}>
-                Actualizar
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                fullWidth={false}
-                onClick={clear}
-              >
-                Limpiar
-              </Button>
-            </div>
-          </form>
-          <div className="module-panel">
-            <table className="ops-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Destino</th>
-                  <th>Conductor</th>
-                  <th>Vehículo</th>
-                  <th>Estado viaje</th>
-                  <th>Respuesta</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((e) => (
-                  <tr key={e.id}>
-                    <td>{e.date}</td>
-                    <td>{e.destination}</td>
-                    <td>{e.driver}</td>
-                    <td>{e.vehicle}</td>
-                    <td>{STATUS_LABEL[e.trip_status] ?? e.trip_status}</td>
-                    <td>{DRIVER_RESPONSE_LABEL[e.driver_response] ?? e.driver_response}</td>
-                  </tr>
-                ))}
-                {events.length === 0 && !loading && (
-                  <tr>
-                    <td colSpan={6} className="ops-muted">
-                      Sin viajes en este rango.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <Pagination
-              meta={meta}
-              loading={loading}
-              onPageChange={(p) => load(p)}
-            />
-          </div>
-        </>
-      )}
+      {/* Modern Aceternity-style Calendar Component */}
+      <CalendarAgenda
+        events={calendarEvents}
+        currentDate={currentDate}
+        onDateChange={setCurrentDate}
+        view={view}
+        onViewChange={setView}
+        onNewEvent={() => navigate('/app/secretaria/asignar')}
+        newEventLabel="Solicitudes por asignar"
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Buscar por destino, chofer o vehículo..."
+        filterGroups={filterGroups}
+        isLoading={loading}
+        locale="en"
+        firstDayOfWeek={0}
+        paginationMeta={meta}
+        onPageChange={handlePageChange}
+      />
     </section>
   );
 }
