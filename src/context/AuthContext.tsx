@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import api from '../services/api';
 import { normalizeRoles, type RoleId } from '../config/roles';
 
@@ -43,9 +49,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const roleIds = normalizeRoles(user?.role, user?.roles);
 
+  const logoutState = useCallback(() => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_data');
+    setToken(null);
+    setUser(null);
+  }, []);
+
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('access_token');
+      // Retire persisted profile data from previous versions of the app.
+      localStorage.removeItem('user_data');
       if (!storedToken) {
         setLoading(false);
         return;
@@ -54,20 +69,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setToken(storedToken);
 
       try {
-        const storedUser = localStorage.getItem('user_data');
-        if (storedUser) {
-          try {
-            setUser(JSON.parse(storedUser) as User);
-          } catch {
-            localStorage.removeItem('user_data');
-          }
-        }
-
         // La fuente de verdad de roles es siempre /me (no localStorage).
         const response = await api.get('/me');
         const freshUser = response.data.data as User;
         setUser(freshUser);
-        localStorage.setItem('user_data', JSON.stringify(freshUser));
       } catch {
         logoutState();
       }
@@ -76,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     void initializeAuth();
-  }, []);
+  }, [logoutState]);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
@@ -85,13 +90,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const { access_token, user: loggedUser } = response.data.data;
 
       localStorage.setItem('access_token', access_token);
-      localStorage.setItem('user_data', JSON.stringify(loggedUser));
 
       setToken(access_token);
       setUser(loggedUser);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      throw new Error(err.response?.data?.message || 'Error al iniciar sesión');
+      throw new Error(
+        err.response?.data?.message || 'Error al iniciar sesión',
+        { cause: error }
+      );
     } finally {
       setLoading(false);
     }
@@ -104,7 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const { access_token, user: registeredUser } = response.data.data;
 
       localStorage.setItem('access_token', access_token);
-      localStorage.setItem('user_data', JSON.stringify(registeredUser));
 
       setToken(access_token);
       setUser(registeredUser);
@@ -118,9 +124,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const message = err.response?.data?.message || 'Error en el registro';
       if (errors) {
         const errorList = Object.values(errors).flat().join(', ');
-        throw new Error(`${message}: ${errorList}`);
+        throw new Error(`${message}: ${errorList}`, { cause: error });
       }
-      throw new Error(message);
+      throw new Error(message, { cause: error });
     } finally {
       setLoading(false);
     }
@@ -138,19 +144,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const logoutState = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
-    setToken(null);
-    setUser(null);
-  };
-
   const fetchCurrentUser = async () => {
     try {
       const response = await api.get('/me');
       const currentUser = response.data.data;
       setUser(currentUser);
-      localStorage.setItem('user_data', JSON.stringify(currentUser));
     } catch {
       logoutState();
     }
@@ -175,6 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- hooks are not components and share this context.
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
