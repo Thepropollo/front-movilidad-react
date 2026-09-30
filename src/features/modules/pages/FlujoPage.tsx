@@ -98,27 +98,31 @@ export default function FlujoPage() {
       .catch(() => setError('No se pudieron cargar solicitudes.'));
   }, []);
 
-  const loadFlujo = async (id: number) => {
-    setError(null);
-    try {
-      const { data } = await modulesApi.flujo(id);
-      setTimeline(data.timeline || []);
-      setPhases(data.phases || []);
-      setDetail(data.request);
-    } catch {
-      setError('No se pudo cargar la trazabilidad.');
-    }
-  };
+  const queryId = Number(new URLSearchParams(location.search).get('id') || '');
+  const defaultId = solicitudes.some((solicitud) => solicitud.id === queryId)
+    ? queryId
+    : solicitudes[0]?.id;
+  const activeId = selected || defaultId || '';
 
   useEffect(() => {
-    if (!solicitudes.length) return;
-    const fromQuery = Number(
-      new URLSearchParams(location.search).get('id') || ''
-    );
-    const next = fromQuery || solicitudes[0].id;
-    setSelected(next);
-    void loadFlujo(next);
-  }, [solicitudes, location.search]);
+    if (!activeId) return;
+    let current = true;
+    void modulesApi
+      .flujo(activeId)
+      .then(({ data }) => {
+        if (!current) return;
+        setError(null);
+        setTimeline(data.timeline || []);
+        setPhases(data.phases || []);
+        setDetail(data.request);
+      })
+      .catch(() => {
+        if (current) setError('No se pudo cargar la trazabilidad.');
+      });
+    return () => {
+      current = false;
+    };
+  }, [activeId]);
 
   const mapPath = location.pathname.startsWith('/app/facultad/')
     ? '/app/facultad/mapa'
@@ -177,11 +181,11 @@ export default function FlujoPage() {
         <select
           id="solicitud"
           className="form-select"
-          value={selected}
+          value={activeId}
           onChange={(e) => {
             const id = Number(e.target.value);
             setSelected(id);
-            if (id) void loadFlujo(id);
+            setError(null);
           }}
         >
           <option value="">Seleccione…</option>
