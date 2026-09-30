@@ -5,7 +5,7 @@ import AppShell from './components/AppShell';
 import RoleRoute from './components/RoleRoute';
 import RoleHomePage from '@features/shared/RoleHomePage';
 import NotFoundPage from '@features/shared/NotFoundPage';
-import { homeForRoles } from './config/roles';
+import { homeForRoles, type RoleId } from './config/roles';
 
 const LoginPage = lazy(() => import('@features/auth/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@features/auth/pages/RegisterPage'));
@@ -64,6 +64,40 @@ const allowRegister = import.meta.env.VITE_ALLOW_REGISTER === 'true';
 function AppHome() {
   const { roleIds } = useAuth();
   return <Navigate to={homeForRoles(roleIds)} replace />;
+}
+
+function RoleAwareRedirect({
+  destinations,
+  priority = [
+    'secretaria',
+    'vicerrector',
+    'responsable_facultad',
+    'docente',
+    'conductor',
+    'mecanico',
+    'estudiante',
+  ],
+}: {
+  destinations: Partial<Record<RoleId, string>>;
+  priority?: RoleId[];
+}) {
+  const { roleIds } = useAuth();
+  const destination = priority.find(
+    (role) => roleIds.includes(role) && destinations[role]
+  );
+  return <Navigate to={destination ? destinations[destination]! : homeForRoles(roleIds)} replace />;
+}
+
+function NewRequestRedirect() {
+  return (
+    <RoleAwareRedirect
+      priority={['responsable_facultad', 'docente', 'secretaria', 'vicerrector', 'conductor', 'mecanico', 'estudiante']}
+      destinations={{
+        responsable_facultad: '/app/facultad/solicitar',
+        docente: '/app/docente/solicitar',
+      }}
+    />
+  );
 }
 
 function AppContent() {
@@ -128,6 +162,93 @@ function AppContent() {
           }
         >
           <Route index element={<AppHome />} />
+          <Route path="solicitudes/nueva" element={<NewRequestRedirect />} />
+          <Route
+            path="solicitudes"
+            element={
+              <RoleAwareRedirect
+                destinations={{
+                  secretaria: '/app/secretaria/solicitudes',
+                  responsable_facultad: '/app/facultad/solicitudes',
+                  docente: '/app/docente/historial',
+                }}
+              />
+            }
+          />
+          <Route
+            path="documentos"
+            element={
+              <RoleAwareRedirect
+                destinations={{
+                  secretaria: '/app/secretaria/documentos',
+                  conductor: '/app/conductor/documentos',
+                  mecanico: '/app/mecanico/documentos',
+                  docente: '/app/docente/documentos',
+                  responsable_facultad: '/app/facultad/documentos',
+                  vicerrector: '/app/vicerrector/documentos',
+                  estudiante: '/app/estudiante/documentos',
+                }}
+              />
+            }
+          />
+          <Route
+            path="secretaria/asignacion"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/asignar' }} />}
+          />
+          <Route
+            path="admin/flota/choferes"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/flota/conductores' }} />}
+          />
+          <Route
+            path="admin/flota/vehiculos"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/flota/vehiculos' }} />}
+          />
+          <Route
+            path="admin/flota/disponibilidad"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/disponibilidad' }} />}
+          />
+          <Route
+            path="admin/flota/gasolineras"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/gasolineras' }} />}
+          />
+          <Route
+            path="operaciones/mapa"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/mapa' }} />}
+          />
+          <Route
+            path="transporte/auditoria"
+            element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/economico' }} />}
+          />
+          <Route
+            path="conductor/ruta-guiada"
+            element={<RoleAwareRedirect destinations={{ conductor: '/app/conductor/hoja-ruta' }} />}
+          />
+          <Route
+            path="conductor/vales-combustible"
+            element={
+              <RoleAwareRedirect
+                destinations={{
+                  secretaria: '/app/secretaria/combustible/despacho',
+                  conductor: '/app/conductor/combustible',
+                }}
+              />
+            }
+          />
+          <Route
+            path="mantenimiento"
+            element={
+              <RoleAwareRedirect
+                destinations={{
+                  secretaria: '/app/secretaria/taller',
+                  mecanico: '/app/mecanico/ordenes',
+                }}
+              />
+            }
+          />
+          <Route
+            path="novedades"
+            element={<RoleAwareRedirect destinations={{ conductor: '/app/conductor/novedades' }} />}
+          />
 
           <Route
             path="secretaria"
@@ -300,18 +421,67 @@ function AppContent() {
         </Route>
 
         <Route path="/dashboard" element={<Navigate to="/app" replace />} />
-        <Route
-          path="/solicitar"
-          element={<Navigate to="/app/docente/solicitar" replace />}
-        />
+        <Route path="/solicitar" element={<NewRequestRedirect />} />
         <Route
           path="/rectorado"
           element={<Navigate to="/app/vicerrector/pendientes" replace />}
         />
+        <Route path="/transporte" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/asignar' }} />} />
+        <Route path="/transporte/panel" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/asignar' }} />} />
+        <Route path="/transporte/disponibilidad" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/disponibilidad' }} />} />
         <Route
-          path="/transporte"
-          element={<Navigate to="/app/secretaria/asignar" replace />}
+          path="/transporte/vales-combustible"
+          element={
+            <RoleAwareRedirect
+              destinations={{
+                secretaria: '/app/secretaria/combustible/despacho',
+                conductor: '/app/conductor/combustible',
+              }}
+            />
+          }
         />
+        <Route path="/transporte/liquidaciones-auditoria" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/economico' }} />} />
+        <Route path="/transporte/vehiculos" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/flota/vehiculos' }} />} />
+        <Route
+          path="/transporte/taller"
+          element={
+            <RoleAwareRedirect
+              destinations={{
+                secretaria: '/app/secretaria/taller',
+                mecanico: '/app/mecanico/ordenes',
+              }}
+            />
+          }
+        />
+        <Route path="/transporte/flota/estado" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/flota/estado' }} />} />
+        <Route
+          path="/transporte/insumos"
+          element={
+            <RoleAwareRedirect
+              destinations={{
+                secretaria: '/app/secretaria/taller',
+                mecanico: '/app/mecanico/lubricantes',
+              }}
+            />
+          }
+        />
+        <Route
+          path="/transporte/historial-documentos"
+          element={
+            <RoleAwareRedirect
+              destinations={{
+                secretaria: '/app/secretaria/documentos',
+                conductor: '/app/conductor/documentos',
+                mecanico: '/app/mecanico/documentos',
+                docente: '/app/docente/documentos',
+                responsable_facultad: '/app/facultad/documentos',
+                vicerrector: '/app/vicerrector/documentos',
+                estudiante: '/app/estudiante/documentos',
+              }}
+            />
+          }
+        />
+        <Route path="/agenda" element={<RoleAwareRedirect destinations={{ secretaria: '/app/secretaria/agenda' }} />} />
         <Route
           path="/taller"
           element={<Navigate to="/app/mecanico/ordenes" replace />}
