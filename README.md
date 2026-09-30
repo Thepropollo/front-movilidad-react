@@ -1,73 +1,77 @@
-# React + TypeScript + Vite
+# Frontend del sistema de transporte universitario
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación web para gestionar solicitudes, viajes, flota, combustible, taller,
+documentos y reportes. El frontend consume la API del proyecto; no incluye ni
+reemplaza el backend.
 
-Currently, two official plugins are available:
+## Requisitos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js compatible con Vite 8.
+- npm compatible con la versión de Node instalada.
 
-## React Compiler
+## Instalación y desarrollo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Desde esta carpeta:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```sh
+npm ci
+cp .env.example .env.local
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Configura `VITE_API_BASE_URL` en `.env.local` antes de abrir la aplicación. Para
+desarrollo local puede usarse el proxy de Vite (`/api`); el destino del proxy se
+define en `vite.config.ts`. Si el backend está en otro origen, establece su
+URL base completa y confirma que CORS permite el origen del frontend.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+## Variables de entorno
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+| Variable | Uso |
+|---|---|
+| `VITE_API_BASE_URL` | URL base de la API, obligatoria al compilar. Ejemplo: `/api` si el servidor enruta ese prefijo al backend. |
+| `VITE_ENABLE_DEMO_LOGIN` | Habilita los accesos de demostración. Debe permanecer `false` en producción. |
+| `VITE_ALLOW_REGISTER` | Muestra el registro público. El backend conserva la autoridad para permitir o rechazar registros. |
+
+Las variables `VITE_*` se incorporan al JavaScript público del navegador. No
+coloques contraseñas, tokens privados ni claves de servidor en ellas. Crea el
+archivo de entorno apropiado **antes de cada build**; Vite no las consulta en
+tiempo de ejecución.
+
+## Comprobaciones y build
+
+```sh
+npm run lint
+npx tsc --noEmit -p tsconfig.app.json
+npm run build
+npm run preview -- --host 127.0.0.1
 ```
+
+El resultado estático queda en `dist/`. `npm run test` no está configurado aún;
+los recorridos de la aplicación requieren una API disponible y cuentas de
+prueba por rol.
+
+## Despliegue estático
+
+Publica el contenido de `dist/` en la raíz del sitio estático y sirve los
+archivos con HTTPS. El servidor debe devolver `index.html` para las rutas de la
+aplicación que no correspondan a un archivo, para que React Router resuelva las
+URLs directas y las recargas. Ejemplo genérico de Nginx:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name app.example.edu;
+    root /srv/www/transporte/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+Configura por separado el enrutamiento de `/api` hacia el backend o compila con
+la URL pública de la API. El `base` de Vite usa `/` por defecto; si se aloja la
+app bajo un subdirectorio, ajusta `base` en `vite.config.ts` antes de generar el
+build. Los assets de producción se emiten con nombres versionados y los
+sourcemaps públicos están deshabilitados.
