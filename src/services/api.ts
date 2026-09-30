@@ -1,17 +1,16 @@
 import axios from 'axios';
 
-const baseURL =
-  import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.176:8000/api';
+const baseURL = import.meta.env.VITE_API_BASE_URL?.trim();
 
-if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
-  // Evita builds de producción apuntando a localhost por accidente.
-  console.error(
-    'VITE_API_BASE_URL no está definida en el build de producción.'
+if (!baseURL) {
+  throw new Error(
+    'VITE_API_BASE_URL debe configurarse antes de iniciar la aplicación.'
   );
 }
 
 const api = axios.create({
   baseURL,
+  timeout: 20_000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
