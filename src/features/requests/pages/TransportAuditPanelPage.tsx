@@ -4,7 +4,6 @@ import {
   FileCheck,
   CheckCircle,
   AlertTriangle,
-  Eye,
   DollarSign,
   Calendar,
   User,
@@ -50,6 +49,13 @@ const TransportAuditPanelPage: React.FC = () => {
 
   const handleApprove = async () => {
     if (!selectedLiq) return;
+    if (
+      !window.confirm(
+        `¿Confirmas la aprobación y cierre financiero de la comisión #${selectedLiq.route_sheet_id}?`
+      )
+    ) {
+      return;
+    }
 
     setApproving(true);
     setErrorMsg(null);
@@ -300,41 +306,32 @@ const TransportAuditPanelPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Previsualización del Comprobante */}
+                {/* Referencia del comprobante registrada por el backend */}
                 <div className="glass-panel p-6 bg-white/50">
                   <h2 className="section-title flex items-center gap-2 mb-4">
                     <FileText size={18} className="text-primary-brand" />
-                    Archivo de Respaldo Cargado
+                    Comprobante y observaciones
                   </h2>
 
-                  <div className="border border-gray-200 rounded-2xl p-6 bg-gray-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-red-100 text-red-600 rounded-xl">
-                        <FileText size={28} />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-primary">
-                          comprobante_viaje_{selectedLiq.route_sheet_id}.pdf
-                        </p>
-                        <p className="text-xs text-muted">
-                          Tamaño: ~1.2 MB • Formato: PDF Document
-                        </p>
-                      </div>
-                    </div>
-
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        alert(
-                          `Abriendo previsualización simulada de comprobante: ${selectedLiq.payment_receipt_url}`
-                        );
-                      }}
-                      className="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-250 text-primary text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
-                    >
-                      <Eye size={14} />
-                      Ver Comprobante
-                    </a>
+                  <div className="border border-gray-200 rounded-2xl p-6 bg-gray-50/50">
+                    {selectedLiq.payment_receipt_url?.startsWith('DISPUTA:') ? (
+                      <p className="text-sm text-amber-900" role="status">
+                        Observación del conductor:{' '}
+                        {selectedLiq.payment_receipt_url.slice('DISPUTA:'.length).trim()}
+                      </p>
+                    ) : selectedLiq.payment_receipt_url ? (
+                      <p className="text-sm text-primary break-all">
+                        Referencia registrada:{' '}
+                        {selectedLiq.payment_receipt_url}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted" role="status">
+                        No hay referencia de comprobante registrada.
+                      </p>
+                    )}
+                    <p className="text-xs text-muted mt-2">
+                      El API no ofrece una ruta para visualizar o descargar el archivo de respaldo.
+                    </p>
                   </div>
                 </div>
 
