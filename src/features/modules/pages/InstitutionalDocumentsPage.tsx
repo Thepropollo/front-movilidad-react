@@ -137,6 +137,19 @@ export default function InstitutionalDocumentsPage() {
     await downloadApiFile(`/documentos/${id}/archivo`, filename);
   };
 
+  const shareById = async (id: number, filename: string) => {
+    const blob = await fetchBlob(id);
+    const file = new File([blob], filename, {
+      type: blob.type || 'application/pdf',
+    });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    }
+    await downloadById(id, filename);
+    setMsg('Documento descargado. Puede compartirlo desde su dispositivo.');
+  };
+
   const generate = async () => {
     setBusy(true);
     setMsg(null);
@@ -257,6 +270,9 @@ export default function InstitutionalDocumentsPage() {
     }
     if (!signOk) {
       setError('Debe aceptar que revisó el documento.');
+      return;
+    }
+    if (!window.confirm('¿Confirmas que deseas firmar digitalmente este documento?')) {
       return;
     }
     setBusy(true);
@@ -485,6 +501,32 @@ export default function InstitutionalDocumentsPage() {
                 <PenLine size={16} /> Pasar a firmar
               </button>
             )}
+            {active && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() =>
+                    void downloadById(active.id, active.original_filename).catch(() =>
+                      setError('No se pudo descargar el documento.')
+                    )
+                  }
+                >
+                  <Download size={16} /> Descargar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() =>
+                    void shareById(active.id, active.original_filename).catch(() =>
+                      setError('No se pudo compartir el documento.')
+                    )
+                  }
+                >
+                  Compartir
+                </button>
+              </>
+            )}
             {mode === 'sign' && (
               <button type="button" className="btn btn-primary" onClick={() => void submitSign()} disabled={busy}>
                 <PenLine size={16} /> Confirmar firma digital
@@ -496,14 +538,27 @@ export default function InstitutionalDocumentsPage() {
         <div className="sign-desk">
           <div className="sign-preview">
             {previewUrl ? (
-              <iframe title="Documento institucional" src={previewUrl} />
+              <div className="h-full min-h-[420px] flex flex-col items-center justify-center gap-3 p-6 text-center bg-white">
+                <FileText size={36} className="text-primary-brand" aria-hidden />
+                <p className="ops-muted">
+                  Abra el documento en el visor del dispositivo para revisarlo.
+                </p>
+                <a
+                  className="btn btn-primary"
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Abrir documento
+                </a>
+              </div>
             ) : (
               <p className="ops-muted">Cargando documento…</p>
             )}
             {mode === 'sign' && (
               <div className="sign-overlay">
                 <div className="sign-overlay-head">
-                  <strong>Firme aquí, encima del documento</strong>
+                  <strong>Trazo de firma digital</strong>
                   <button type="button" className="btn btn-outline" onClick={clearSignature}>
                     <Eraser size={14} /> Borrar
                   </button>
