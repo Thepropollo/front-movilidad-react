@@ -6,6 +6,12 @@ import React, {
   useCallback,
 } from 'react';
 import api from '../services/api';
+import {
+  clearAccessToken,
+  clearLegacyUserData,
+  getAccessToken,
+  setAccessToken,
+} from '../services/authSession';
 import { normalizeRoles, type RoleId } from '../config/roles';
 
 export interface RoleRef {
@@ -50,17 +56,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const roleIds = normalizeRoles(user?.role, user?.roles);
 
   const logoutState = useCallback(() => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
+    clearAccessToken();
     setToken(null);
     setUser(null);
   }, []);
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('access_token');
-      // Retire persisted profile data from previous versions of the app.
-      localStorage.removeItem('user_data');
+      const storedToken = getAccessToken();
+      // Retira datos de perfil persistidos por versiones anteriores de la app.
+      clearLegacyUserData();
       if (!storedToken) {
         setLoading(false);
         return;
@@ -89,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await api.post('/login', { email, password });
       const { access_token, user: loggedUser } = response.data.data;
 
-      localStorage.setItem('access_token', access_token);
+      setAccessToken(access_token);
 
       setToken(access_token);
       setUser(loggedUser);
@@ -110,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await api.post('/register', data);
       const { access_token, user: registeredUser } = response.data.data;
 
-      localStorage.setItem('access_token', access_token);
+      setAccessToken(access_token);
 
       setToken(access_token);
       setUser(registeredUser);

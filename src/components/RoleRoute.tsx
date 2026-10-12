@@ -1,6 +1,7 @@
-import { Link, Navigate, Outlet } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { hasAnyRole, homeForRoles, type RoleId } from '../config/roles';
+import { rememberRedirect } from '../services/authSession';
 
 type Props = {
   roles: RoleId[];
@@ -9,6 +10,7 @@ type Props = {
 
 export default function RoleRoute({ roles, children }: Props) {
   const { isAuthenticated, loading, roleIds } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -19,6 +21,9 @@ export default function RoleRoute({ roles, children }: Props) {
   }
 
   if (!isAuthenticated) {
+    // Recordar el destino (p. ej. un enlace de verificación de documento)
+    // para volver a él después de iniciar sesión.
+    rememberRedirect(location.pathname + location.search);
     return <Navigate to="/login" replace />;
   }
 

@@ -1,4 +1,9 @@
 import axios from 'axios';
+import {
+  clearAccessToken,
+  getAccessToken,
+  rememberRedirect,
+} from './authSession';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL?.trim();
 
@@ -19,7 +24,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,25 +37,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
-    if (status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_data');
+    const requestUrl: string = error?.config?.url ?? '';
+    // Un 401 en /login o /register significa credenciales inválidas, no una
+    // sesión vencida: se deja que el formulario muestre el error.
+    const isAuthAttempt = /^\/?(login|register)\/?$/.test(requestUrl);
+    if (status === 401 && !isAuthAttempt && typeof window !== 'undefined') {
+      clearAccessToken();
       if (!window.location.pathname.startsWith('/login')) {
-        try {
-          sessionStorage.setItem(
-            'auth_redirect_to',
-            window.location.pathname.startsWith('/') &&
-              !window.location.pathname.startsWith('//')
-              ? window.location.pathname
-              : '/app'
-          );
-          sessionStorage.setItem(
-            'auth_notice',
-            'Tu sesión venció. Inicia sesión para continuar.'
-          );
-        } catch {
-          // Continue to login even when browser storage is unavailable.
-        }
+        rememberRedirect(
+          window.location.pathname + window.location.search,
+          'Tu sesión venció. Inicia sesión para continuar.'
+        );
         window.location.assign('/login');
       }
     } else if (status === 403 && typeof window !== 'undefined') {
