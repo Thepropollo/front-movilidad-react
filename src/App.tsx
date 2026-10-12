@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppShell from './components/AppShell';
 import RoleRoute from './components/RoleRoute';
@@ -35,6 +35,7 @@ const ParticipantsPage = lazy(() => import('@features/modules/pages/Participants
 const ReassignPage = lazy(() => import('@features/modules/pages/ReassignPage'));
 const ReportsPage = lazy(() => import('@features/modules/pages/ReportsPage'));
 const InstitutionalDocumentsPage = lazy(() => import('@features/modules/pages/InstitutionalDocumentsPage'));
+const DocumentVerificationPage = lazy(() => import('@features/documents/pages/DocumentVerificationPage'));
 const RateConfigurationPage = lazy(() => import('@features/modules/pages/RateConfigurationPage'));
 const StudentInvitationsPage = lazy(() => import('@features/modules/pages/StudentInvitationsPage'));
 const ConductorNoveltyPage = lazy(() =>
@@ -86,6 +87,11 @@ function RoleAwareRedirect({
     (role) => roleIds.includes(role) && destinations[role]
   );
   return <Navigate to={destination ? destinations[destination]! : homeForRoles(roleIds)} replace />;
+}
+
+function VerifyRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/app/verificar/${encodeURIComponent(id ?? '')}`} replace />;
 }
 
 function NewRequestRedirect() {
@@ -162,6 +168,8 @@ function AppContent() {
           }
         >
           <Route index element={<AppHome />} />
+          <Route path="verificar" element={<DocumentVerificationPage />} />
+          <Route path="verificar/:id" element={<DocumentVerificationPage />} />
           <Route path="solicitudes/nueva" element={<NewRequestRedirect />} />
           <Route
             path="solicitudes"
@@ -420,6 +428,8 @@ function AppContent() {
           </Route>
         </Route>
 
+        <Route path="/verificar" element={<Navigate to="/app/verificar" replace />} />
+        <Route path="/verificar/:id" element={<VerifyRedirect />} />
         <Route path="/dashboard" element={<Navigate to="/app" replace />} />
         <Route path="/solicitar" element={<NewRequestRedirect />} />
         <Route

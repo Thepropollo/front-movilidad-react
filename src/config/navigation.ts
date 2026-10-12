@@ -667,6 +667,26 @@ export const NAV_ITEMS: NavItem[] = [
     description: 'Orden y hoja de ruta de su viaje',
     priority: 'secondary',
   },
+  // Transversal: todos los perfiles pueden verificar documentos a los que tienen acceso.
+  {
+    id: 'verificar-documento',
+    label: 'Verificar documento',
+    shortLabel: 'Verificar',
+    path: '/app/verificar',
+    module: 'Documentos',
+    roles: [
+      'secretaria',
+      'conductor',
+      'mecanico',
+      'docente',
+      'responsable_facultad',
+      'vicerrector',
+      'estudiante',
+    ],
+    status: 'ready',
+    description: 'Integridad y firmas de un PDF institucional',
+    priority: 'secondary',
+  },
 ];
 
 export function navForRoles(roles: RoleId[]): NavItem[] {

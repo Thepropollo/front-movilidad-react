@@ -54,6 +54,7 @@ const KNOWN_SEGMENT_LABELS: Record<string, string> = {
   'historial': 'Historial',
   'pendientes': 'Aprobaciones pendientes',
   'economico': 'Auditoría financiera',
+  'verificar': 'Verificar documento',
 };
 
 function getBreadcrumbTrail(
