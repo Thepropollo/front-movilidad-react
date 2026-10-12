@@ -6,7 +6,7 @@ reemplaza el backend.
 
 ## Requisitos
 
-- Node.js compatible con Vite 8.
+- Node.js 20.19 o superior (requerido por Vite 8 y Vitest 4).
 - npm compatible con la versión de Node instalada.
 
 ## Instalación y desarrollo
@@ -41,14 +41,17 @@ tiempo de ejecución.
 
 ```sh
 npm run lint
-npx tsc --noEmit -p tsconfig.app.json
+npx tsc -b
+npm test
 npm run build
 npm run preview -- --host 127.0.0.1
 ```
 
-El resultado estático queda en `dist/`. `npm run test` no está configurado aún;
-los recorridos de la aplicación requieren una API disponible y cuentas de
-prueba por rol.
+El resultado estático queda en `dist/`. `npm test` ejecuta las pruebas de
+Vitest + React Testing Library (`src/**/*.test.ts(x)`) en jsdom, sin backend:
+las llamadas a la API se simulan. `npm run test:watch` las deja en modo
+observación. Los recorridos completos de la aplicación siguen requiriendo una
+API disponible y cuentas de prueba por rol.
 
 ## Despliegue estático
 
