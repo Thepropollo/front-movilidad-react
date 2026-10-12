@@ -333,8 +333,8 @@ const RequestForm: React.FC = () => {
         />
         {!isFacultyRequest && (
           <ResourceCard
-            title="Liquidación Docente"
-            description="Consulte el proceso disponible para comisiones finalizadas."
+            title="Comisiones finalizadas"
+            description="Consulte sus viajes retornados. La liquidación de viáticos aún no está disponible."
             icon={<FileCheck2 size={20} />}
             href="/app/docente/liquidar"
           />

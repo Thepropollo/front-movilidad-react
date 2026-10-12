@@ -46,7 +46,7 @@ const KNOWN_SEGMENT_LABELS: Record<string, string> = {
   'participantes': 'Participantes',
   'flujo': 'Trazabilidad',
   'reasignar': 'Reasignar conductor',
-  'liquidar': 'Liquidar viáticos',
+  'liquidar': 'Comisiones finalizadas',
   'evaluar': 'Calificar viaje',
   'invitaciones': 'Invitaciones',
   'detalle': 'Detalle de viaje',
