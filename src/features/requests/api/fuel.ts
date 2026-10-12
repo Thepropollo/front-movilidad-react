@@ -67,16 +67,26 @@ export const fetchDriverFuelOrders = async (): Promise<FuelOrder[]> => {
 export const fetchFuelOrderDetails = async (
   orderCode: string
 ): Promise<FuelOrder> => {
-  const response = await api.get(`/ordenes-combustible/${orderCode}`);
+  const response = await api.get(`/ordenes-combustible/${encodeURIComponent(orderCode)}`);
   return response.data;
 };
+
+/**
+ * Respuesta de PATCH /ordenes-combustible/{codigo}/despachar.
+ * El backend (FuelOrderDespacharController) envuelve la orden en `fuel_order`
+ * junto con un mensaje de confirmación; no devuelve la orden "plana".
+ */
+export interface FuelOrderDispatchResult {
+  message: string;
+  fuel_order: FuelOrder;
+}
 
 export const dispatchFuelOrder = async (
   orderCode: string,
   data: { galones_reales_despachados: number; valor_total_pagado: number }
-): Promise<FuelOrder> => {
-  const response = await api.patch(
-    `/ordenes-combustible/${orderCode}/despachar`,
+): Promise<FuelOrderDispatchResult> => {
+  const response = await api.patch<FuelOrderDispatchResult>(
+    `/ordenes-combustible/${encodeURIComponent(orderCode)}/despachar`,
     data
   );
   return response.data;

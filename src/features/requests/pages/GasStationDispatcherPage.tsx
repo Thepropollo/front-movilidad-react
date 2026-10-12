@@ -48,6 +48,8 @@ const GasStationDispatcherPage: React.FC = () => {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
   const [lastDispatchedCode, setLastDispatchedCode] = useState<string>('');
+  const [dispatchMessage, setDispatchMessage] = useState<string>('');
+  const [dispatchedOrder, setDispatchedOrder] = useState<FuelOrder | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [stationCount, setStationCount] = useState<number | null>(null);
 
@@ -130,11 +132,13 @@ const GasStationDispatcherPage: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      await dispatchFuelOrder(order.order_code, {
+      const result = await dispatchFuelOrder(order.order_code, {
         galones_reales_despachados: gallons,
         valor_total_pagado: paid,
       });
-      setLastDispatchedCode(order.order_code);
+      setDispatchedOrder(result.fuel_order ?? null);
+      setDispatchMessage(result.message ?? '');
+      setLastDispatchedCode(result.fuel_order?.order_code ?? order.order_code);
       setSuccess(true);
       setOrder(null);
       setOrderCode('');
@@ -148,6 +152,8 @@ const GasStationDispatcherPage: React.FC = () => {
 
   const handleReset = () => {
     setSuccess(false);
+    setDispatchMessage('');
+    setDispatchedOrder(null);
     setOrderCode('');
     setOrder(null);
     setErrorMsg(null);
@@ -235,8 +241,11 @@ const GasStationDispatcherPage: React.FC = () => {
               Transacción Registrada
             </h2>
             <p className="text-green-700 font-medium mt-2">
-              Liquidación del vale #{lastDispatchedCode} enviada a la Sección de
-              Transporte ULEAM.
+              {dispatchMessage ||
+                'Liquidación enviada a la Sección de Transporte ULEAM.'}
+            </p>
+            <p className="text-green-700 text-sm mt-1">
+              Vale #{lastDispatchedCode}
             </p>
           </div>
 
@@ -244,13 +253,14 @@ const GasStationDispatcherPage: React.FC = () => {
             <div>
               <p className="text-gray-400 text-xs">Galones Despachados</p>
               <p className="font-bold text-primary text-base">
-                {dispatchedGallons} Galones
+                {dispatchedOrder?.actual_dispatched_gallons ?? dispatchedGallons}{' '}
+                Galones
               </p>
             </div>
             <div>
               <p className="text-gray-400 text-xs">Importe de Transacción</p>
               <p className="font-bold text-primary text-base">
-                ${Number(totalPaid).toFixed(2)} USD
+                ${Number(dispatchedOrder?.total_amount_paid ?? totalPaid).toFixed(2)} USD
               </p>
             </div>
           </div>
