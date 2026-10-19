@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
-import { FUEL_TYPE_LABEL, labelOf } from '@/lib/labels';
+import { FUEL_TYPE_LABEL, ORDER_STATUS_LABEL, labelOf } from '@/lib/labels';
 import {
   fetchFuelOrderDetails,
   dispatchFuelOrder,
@@ -83,7 +83,7 @@ const GasStationDispatcherPage: React.FC = () => {
 
       if (details.order_status !== 'emitida') {
         setErrorMsg(
-          `Este vale de combustible no está activo. Estado actual: '${details.order_status}'.`
+          `Este vale de combustible no está activo para despacho. Estado actual: '${labelOf(ORDER_STATUS_LABEL, details.order_status)}'.`
         );
       } else {
         setOrder(details);

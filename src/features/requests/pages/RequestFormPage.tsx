@@ -10,6 +10,7 @@ import {
   Car,
   Plane,
   ArrowRight,
+  User,
 } from 'lucide-react';
 import api from '@/services/api';
 import Button from '@/components/Button';
@@ -41,6 +42,21 @@ interface RequestData {
   projected_cost: number;
   status: string;
   phases?: ProcessPhase[];
+  route_sheet?: {
+    id: number;
+    trip_status?: string;
+    vehicle?: {
+      plate: string;
+      brand: string;
+      model: string;
+    };
+    driver?: {
+      user?: {
+        first_name: string;
+        last_name: string;
+      };
+    };
+  } | null;
 }
 
 const RequestForm: React.FC = () => {
@@ -656,6 +672,15 @@ const RequestForm: React.FC = () => {
                   setReturnTime('');
                   setOrigin('MANTA');
                   setDestinationAddress('');
+                  setOccupantCount('1');
+                  setPublicServantsCount('0');
+                  setCommunicationNumber('');
+                  setAcademicProgram('');
+                  setActivityType('visitas_academicas');
+                  setDestinationPoint({ lat: null, lng: null, address: '' });
+                  setShowDestinationMap(false);
+                  setLocationError(null);
+                  setErrors(null);
                 }}
               >
                 Limpiar
@@ -743,6 +768,25 @@ const RequestForm: React.FC = () => {
                       </div>
                       <div>{getStatusBadge(req.status)}</div>
                     </div>
+                    {req.route_sheet && (
+                      <div className="mt-2.5 p-2.5 rounded-lg bg-blue-50/70 border border-blue-100 flex flex-wrap items-center justify-between text-xs gap-2">
+                        <div className="flex items-center gap-1.5 text-blue-900 font-medium">
+                          <Car size={13} className="text-blue-700 shrink-0" />
+                          <span>
+                            Unidad: <strong>{req.route_sheet.vehicle?.plate || 'Asignada'}</strong>
+                            {req.route_sheet.vehicle ? ` (${req.route_sheet.vehicle.brand} ${req.route_sheet.vehicle.model})` : ''}
+                          </span>
+                        </div>
+                        {req.route_sheet.driver?.user && (
+                          <div className="flex items-center gap-1.5 text-blue-900 font-medium">
+                            <User size={13} className="text-blue-700 shrink-0" />
+                            <span>
+                              Conductor: <strong>{req.route_sheet.driver.user.first_name} {req.route_sheet.driver.user.last_name}</strong>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {req.phases && req.phases.length > 0 && (
                       <div className="mt-3">
                         <ProcessPhaseLine phases={req.phases} compact />

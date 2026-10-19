@@ -419,6 +419,14 @@ const DriverFuelTicketsPage: React.FC = () => {
                                 {order.route_sheet.request.destination}
                               </p>
                             </div>
+                            {order.route_sheet.driver?.user && (
+                              <div className="col-span-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-gray-500">Conductor Autorizado:</span>
+                                <span className="font-semibold text-primary">
+                                  {order.route_sheet.driver.user.first_name} {order.route_sheet.driver.user.last_name}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
 

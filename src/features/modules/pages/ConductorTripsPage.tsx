@@ -10,6 +10,8 @@ import {
   Navigation,
   AlertCircle,
   Truck,
+  User,
+  Users,
 } from 'lucide-react';
 import { formatDateTimeReadable } from '@/lib/datetime';
 import { DRIVER_RESPONSE_LABEL, TRIP_STATUS_LABEL, labelOf } from '@/lib/labels';
@@ -21,7 +23,19 @@ type Trip = {
   trip_status: string;
   driver_response: string;
   driver_reject_reason?: string | null;
-  request?: { destination: string; departure_date: string; origin: string };
+  request?: {
+    destination: string;
+    departure_date: string;
+    return_date?: string;
+    origin: string;
+    travel_reason?: string;
+    occupant_count?: number;
+    requester?: {
+      first_name: string;
+      last_name: string;
+      faculty_institution?: string;
+    };
+  };
   vehicle?: { plate: string; brand: string; model: string };
 };
 
@@ -228,6 +242,18 @@ export default function ConductorTripsPage() {
                         <Car size={14} className="text-secondary shrink-0" />
                         <span>Vehículo: <strong className="text-slate-800">{t.vehicle?.plate} · {t.vehicle?.brand} {t.vehicle?.model}</strong></span>
                       </p>
+                      {t.request?.requester && (
+                        <p className="m-0 flex items-center gap-1.5">
+                          <User size={14} className="text-secondary shrink-0" />
+                          <span>Docente: <strong className="text-slate-800">{t.request.requester.first_name} {t.request.requester.last_name}</strong> {t.request.requester.faculty_institution ? `(${t.request.requester.faculty_institution})` : ''}</span>
+                        </p>
+                      )}
+                      {t.request?.occupant_count && (
+                        <p className="m-0 flex items-center gap-1.5">
+                          <Users size={14} className="text-secondary shrink-0" />
+                          <span>Pasajeros: <strong className="text-slate-800">{t.request.occupant_count} persona(s)</strong></span>
+                        </p>
+                      )}
                     </div>
 
                     {isPending && (

@@ -23,6 +23,13 @@ interface TripRecord {
     destination?: string;
     origin?: string;
     departure_date?: string;
+    return_date?: string;
+    occupant_count?: number;
+    requester?: {
+      first_name?: string;
+      last_name?: string;
+      faculty_institution?: string;
+    };
   };
   driver?: {
     id?: number;
@@ -255,15 +262,16 @@ export default function ReassignPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                 <div>
-                  <span className="ops-muted text-xs block">Origen</span>
+                  <span className="ops-muted text-xs block">Ruta</span>
                   <p className="text-sm font-semibold text-slate-800 m-0 mt-0.5">
-                    {t.request?.origin || '—'}
+                    {t.request?.origin || '—'} → {t.request?.destination || '—'}
                   </p>
                 </div>
                 <div>
-                  <span className="ops-muted text-xs block">Salida</span>
+                  <span className="ops-muted text-xs block">Fechas</span>
                   <p className="text-sm font-semibold text-slate-800 m-0 mt-0.5">
                     {formatDateReadable(t.request?.departure_date)}
+                    {t.request?.return_date ? ` → ${formatDateReadable(t.request.return_date)}` : ''}
                   </p>
                 </div>
                 <div>
@@ -278,6 +286,16 @@ export default function ReassignPage() {
                     {t.vehicle?.plate || '—'}
                   </p>
                 </div>
+                {t.request?.requester && (
+                  <div className="col-span-2 sm:col-span-3">
+                    <span className="ops-muted text-xs block">Solicitante institucional</span>
+                    <p className="text-xs font-semibold text-slate-700 m-0 mt-0.5">
+                      {t.request.requester.first_name} {t.request.requester.last_name}
+                      {t.request.requester.faculty_institution ? ` · ${t.request.requester.faculty_institution}` : ''}
+                      {t.request.occupant_count ? ` · ${t.request.occupant_count} pasajero(s)` : ''}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {t.driver_reject_reason && (

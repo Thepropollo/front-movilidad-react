@@ -24,6 +24,8 @@ type Solicitud = {
   mobilization_type: string;
   status: string;
   departure_date: string;
+  return_date?: string;
+  occupant_count?: number;
   travel_reason: string;
   phases?: ProcessPhase[];
   requester?: {
@@ -217,9 +219,12 @@ export default function AuthorizePage() {
                       {labelOf(MOBILIZATION_TYPE_LABEL, r.mobilization_type)}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600 ">
-                    Solicitante: <span className="font-semibold text-slate-800">{r.requester?.first_name} {r.requester?.last_name}</span> ·{' '}
+                  <p className="text-xs text-slate-600">
+                    Solicitante: <span className="font-semibold text-slate-800">{r.requester?.first_name} {r.requester?.last_name}</span>
+                    {r.requester?.faculty_institution ? ` (${r.requester.faculty_institution})` : ''} ·{' '}
                     Salida: <span className="font-semibold text-slate-800">{formatDateTimeReadable(r.departure_date)}</span>
+                    {r.return_date ? ` → Retorno: ${formatDateTimeReadable(r.return_date)}` : ''}
+                    {r.occupant_count ? ` · ${r.occupant_count} ocupante(s)` : ''}
                   </p>
                   <p className="ops-muted text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                     <span className="font-semibold text-slate-700">Motivo:</span> {r.travel_reason}

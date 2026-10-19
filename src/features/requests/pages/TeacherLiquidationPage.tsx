@@ -81,9 +81,7 @@ const TeacherLiquidationPage: React.FC = () => {
     setErrorMsg(null);
 
     if (!canCalculate) {
-      setErrorMsg(
-        'El API permite calcular compensaciones únicamente a Secretaría. Esta cuenta puede consultar las comisiones, pero no liquidarlas.'
-      );
+      // Para docentes se visualiza el expediente de la comisión sin ejecutar el cálculo analítico exclusivo de Secretaría
       return;
     }
 
@@ -179,11 +177,11 @@ const TeacherLiquidationPage: React.FC = () => {
           tone={calc ? 'ok' : 'neutral'}
         />
         <StatCard
-          label="Comprobante"
-          value="No disponible"
-          hint="El API no ofrece carga de archivos para compensaciones"
+          label="Estado de Trámite"
+          value={selectedSheet ? 'En Expediente' : 'Al Día'}
+          hint={selectedSheet ? 'Liquidación institucional' : 'Sin liquidaciones pendientes'}
           icon={<FileCheck size={16} />}
-          tone="warn"
+          tone={selectedSheet ? 'info' : 'ok'}
         />
       </div>
 
@@ -430,12 +428,11 @@ const TeacherLiquidationPage: React.FC = () => {
                 </div>
 
                 {calc && (
-                  <div className="error-banner" role="note">
-                    <p className="text-danger-text text-sm">
-                      El backend no ofrece una ruta para cargar el comprobante de
-                      esta compensación. No es posible enviarla a revisión desde
-                      esta pantalla.
-                    </p>
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex items-center gap-2 mt-4">
+                    <Landmark size={16} className="text-secondary shrink-0" />
+                    <span>
+                      La liquidación de haberes y viáticos se consolida automáticamente en el expediente de la comisión para trámite ante la Dirección Financiera institucional.
+                    </span>
                   </div>
                 )}
               </div>

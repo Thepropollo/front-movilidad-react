@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Users, UserCheck, UserX, Clock } from 'lucide-react';
 import Button from '@/components/Button';
 import { formatDateTimeReadable } from '@/lib/datetime';
+import { INVITATION_STATUS_LABEL, labelOf } from '@/lib/labels';
 import { modulesApi } from '../api';
 import { HeroMetricCard, StatCard } from '@/components/Cards';
 
@@ -345,7 +346,19 @@ export default function ParticipantsPage() {
                         {p.user?.first_name} {p.user?.last_name}
                       </td>
                       <td>{p.user?.email || '—'}</td>
-                      <td>{p.invitation_status}</td>
+                      <td>
+                        <span
+                          className={`sgv-pill-capsule ${
+                            p.invitation_status === 'aceptado'
+                              ? 'is-active'
+                              : p.invitation_status === 'rechazado'
+                              ? 'is-suspended'
+                              : 'is-invited'
+                          }`}
+                        >
+                          {labelOf(INVITATION_STATUS_LABEL, p.invitation_status)}
+                        </span>
+                      </td>
                       <td>{formatDateTimeReadable(p.responded_at)}</td>
                     </tr>
                   ))}

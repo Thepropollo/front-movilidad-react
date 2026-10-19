@@ -435,7 +435,7 @@ const ChecklistDigitalPage: React.FC = () => {
                         {selectedSheet.driver.user.last_name}
                       </p>
                       <p className="text-slate-500 text-xs">
-                        Licencia: {labelOf(CONTRACT_TYPE_LABEL, selectedSheet.driver.contract_type)}
+                        Modalidad: {labelOf(CONTRACT_TYPE_LABEL, selectedSheet.driver.contract_type)}
                       </p>
                     </div>
                     <div className="col-span-2">
