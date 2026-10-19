@@ -1,21 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowUpRight,
   AlertTriangle,
+  ArrowUpRight,
+  BellRing,
+  Car,
+  CheckCircle2,
+  ClipboardList,
+  Clock3,
   Download,
   FileText,
+  Fuel,
   RefreshCw,
+  Route,
+  Users,
+  Wrench,
 } from 'lucide-react';
 import api from '@/services/api';
 import { downloadApiFile } from '@/services/download';
 import { REQUEST_STATUS_LABEL, labelOf } from '@/lib/labels';
 import type { RoleId } from '@/config/roles';
 import { useAlerts } from '@/context/AlertsContext';
-import ProcessPhaseLine, {
-  type ProcessPhase,
-} from './ProcessPhaseLine';
-import MetricProgressCard from '@/components/MetricProgressCard';
+import ProcessPhaseLine, { type ProcessPhase } from './ProcessPhaseLine';
+import StatCard, { type StatCardTone } from '@/components/Cards/StatCard';
 import ResourceCard from '@/components/ResourceCard';
 
 type Kpi = {
@@ -59,101 +66,184 @@ type DashData = {
   exports: Array<{ label: string; kind: string; href: string }>;
 };
 
+type Tone = 'ok' | 'warn' | 'danger' | 'violet' | 'info';
+
+/* Paleta de datos fija: azul, celeste, verde, ámbar; rojo solo para lo negativo. */
+const TONE_HEX: Record<Tone, string> = {
+  info: '#0b63b4',
+  violet: '#22a3cf',
+  ok: '#26a65e',
+  warn: '#e08a00',
+  danger: '#dc3b3b',
+};
+
 function chartLabel(raw: string): string {
   return labelOf(REQUEST_STATUS_LABEL, raw);
+}
+
+function barTone(label: string): Tone {
+  const raw = label.toLowerCase();
+  if (raw.includes('rechaz') || raw.includes('vencid') || raw.includes('cancel')) return 'danger';
+  if (raw.includes('pendiente') || raw.includes('tramite') || raw.includes('trámite') || raw.includes('48'))
+    return 'warn';
+  if (raw.includes('aprob') || raw.includes('autoriz') || raw.includes('ok') || raw.includes('complet') || raw.includes('disponible'))
+    return 'ok';
+  if (raw.includes('extern')) return 'violet';
+  return 'info';
+}
+
+function kpiIcon(kpi: Kpi): ReactNode {
+  const k = `${kpi.key} ${kpi.label}`.toLowerCase();
+  if (k.includes('alert') || k.includes('aviso')) return <BellRing size={18} />;
+  if (k.includes('vehic') || k.includes('flota') || k.includes('unidad')) return <Car size={18} />;
+  if (k.includes('conduct') || k.includes('particip') || k.includes('estudiante')) return <Users size={18} />;
+  if (k.includes('manten') || k.includes('taller') || k.includes('aceite') || k.includes('orden')) return <Wrench size={18} />;
+  if (k.includes('combust') || k.includes('ticket')) return <Fuel size={18} />;
+  if (k.includes('ruta') || k.includes('viaje') || k.includes('salida')) return <Route size={18} />;
+  if (k.includes('pendiente') || k.includes('espera') || k.includes('48')) return <Clock3 size={18} />;
+  if (k.includes('aprob') || k.includes('autoriz') || k.includes('complet')) return <CheckCircle2 size={18} />;
+  if (k.includes('solicit') || k.includes('trámite') || k.includes('tramite')) return <ClipboardList size={18} />;
+  return <FileText size={18} />;
 }
 
 async function downloadReportPdf(kind: string) {
   await downloadApiFile(`/reportes/${kind}`, `${kind}.pdf`, { format: 'pdf' });
 }
 
-function barTone(label: string): string {
-  const raw = label.toLowerCase();
-  if (raw.includes('rechaz')) return 'danger';
-  if (raw.includes('pendiente') || raw.includes('tramite') || raw.includes('48'))
-    return 'warn';
-  if (raw.includes('aprob') || raw.includes('autoriz') || raw.includes('ok'))
-    return 'ok';
-  if (raw.includes('extern')) return 'violet';
-  return 'info';
-}
-
-function ChartBlock({ chart }: { chart: Chart }) {
-  const localMax = Math.max(1, ...chart.items.map((i) => i.value));
+function BarsChart({ chart }: { chart: Chart }) {
+  const max = Math.max(1, ...chart.items.map((i) => i.value));
+  if (chart.items.length === 0) return <p className="ops-muted">Sin datos en el periodo.</p>;
   return (
-    <div className="ops-bars">
-      {chart.items.length === 0 && (
-        <p className="ops-muted">Sin datos aún.</p>
-      )}
-      {chart.items.map((item) => (
-        <div key={item.label} className="ops-bar-row">
-          <span title={item.label}>{chartLabel(item.label)}</span>
-          <div className="ops-bar-track">
+    <div className="ops-bars" role="list" aria-label={chart.title}>
+      {chart.items.map((item) => {
+        const tone = barTone(item.label);
+        return (
+          <div key={item.label} className="ops-bar-row" role="listitem">
+            <span title={chartLabel(item.label)}>{chartLabel(item.label)}</span>
             <div
-              className={`ops-bar-fill is-${barTone(item.label)}`}
-              style={{
-                width: `${Math.max(6, (item.value / localMax) * 100)}%`,
-              }}
-            />
+              className="ops-bar-track"
+              role="img"
+              aria-label={`${chartLabel(item.label)}: ${item.value}`}
+            >
+              <div
+                className={`ops-bar-fill is-${tone}`}
+                style={{ width: `${Math.max(4, (item.value / max) * 100)}%` }}
+              />
+            </div>
+            <strong>{item.value}</strong>
           </div>
-          <strong>{item.value}</strong>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-export default function OperationalDashboard({
-  focusRole,
-}: {
-  focusRole?: RoleId;
-}) {
+function DonutChart({ chart }: { chart: Chart }) {
+  const total = chart.items.reduce((acc, i) => acc + i.value, 0);
+  if (chart.items.length === 0 || total === 0) {
+    return <p className="ops-muted">Sin movimientos en el periodo.</p>;
+  }
+
+  const radius = 52;
+  const stroke = 16;
+  const circumference = 2 * Math.PI * radius;
+
+  const slices = chart.items.reduce<
+    Array<Chart['items'][number] & { tone: Tone; dasharray: string; dashoffset: number; pct: number }>
+  >((acc, item) => {
+    const consumed = acc.reduce((sum, s) => sum + (s.value / total) * circumference, 0);
+    const fraction = item.value / total;
+    const length = fraction * circumference;
+    acc.push({
+      ...item,
+      tone: barTone(item.label),
+      dasharray: `${length} ${circumference - length}`,
+      dashoffset: -consumed,
+      pct: Math.round(fraction * 100),
+    });
+    return acc;
+  }, []);
+
+  const summary = slices.map((s) => `${chartLabel(s.label)} ${s.value} (${s.pct}%)`).join(', ');
+
+  return (
+    <div className="ops-donut">
+      <div className="ops-donut-svg" role="img" aria-label={`${chart.title}. Total ${total}: ${summary}`}>
+        <svg viewBox="0 0 132 132" aria-hidden="true">
+          <circle cx="66" cy="66" r={radius} fill="none" stroke="#eceff3" strokeWidth={stroke} />
+          {slices.map((slice) => (
+            <circle
+              key={slice.label}
+              cx="66"
+              cy="66"
+              r={radius}
+              fill="none"
+              stroke={TONE_HEX[slice.tone]}
+              strokeWidth={stroke}
+              strokeDasharray={slice.dasharray}
+              strokeDashoffset={slice.dashoffset}
+            />
+          ))}
+        </svg>
+        <div className="ops-donut-center">
+          <strong>{total}</strong>
+          <small>Total</small>
+        </div>
+      </div>
+      <ul className="ops-legend" aria-hidden="true">
+        {slices.map((slice) => (
+          <li key={slice.label}>
+            <i className={`is-${slice.tone}`} />
+            <span>{chartLabel(slice.label)}</span>
+            <strong>{slice.value}</strong>
+            <em>{slice.pct}%</em>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default function OperationalDashboard({ focusRole }: { focusRole?: RoleId }) {
   const { alerts, unreadCount, markRead, refresh } = useAlerts();
   const [data, setData] = useState<DashData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
-  const reload = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data: res } = await api.get('/dashboard/metrics', {
-        params: focusRole ? { focus: focusRole } : undefined,
-      });
-      setData(res);
-      refresh();
-    } catch {
-      setError('No se pudo cargar el tablero operativo.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let ignore = false;
-    api
-      .get('/dashboard/metrics', {
-        params: focusRole ? { focus: focusRole } : undefined,
-      })
-      .then(({ data: res }) => {
-        if (!ignore) {
+  const fetchMetrics = useCallback(
+    (signal?: { ignore: boolean }) =>
+      api
+        .get('/dashboard/metrics', {
+          params: focusRole ? { focus: focusRole } : undefined,
+        })
+        .then(({ data: res }) => {
+          if (signal?.ignore) return;
           setData(res);
           setError(null);
           refresh();
-        }
-      })
-      .catch(() => {
-        if (!ignore) setError('No se pudo cargar el tablero operativo.');
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
+        })
+        .catch(() => {
+          if (!signal?.ignore) setError('No se pudo cargar el tablero operativo.');
+        })
+        .finally(() => {
+          if (!signal?.ignore) setLoading(false);
+        }),
+    [focusRole, refresh]
+  );
 
+  const load = () => {
+    setLoading(true);
+    void fetchMetrics();
+  };
+
+  useEffect(() => {
+    const signal = { ignore: false };
+    void fetchMetrics(signal);
     return () => {
-      ignore = true;
+      signal.ignore = true;
     };
-  }, [focusRole, refresh]);
+  }, [fetchMetrics]);
 
   if (loading && !data) {
     return (
@@ -161,7 +251,7 @@ export default function OperationalDashboard({
         <RefreshCw size={22} className="ops-spin" aria-hidden />
         <div>
           <strong>Cargando estado de la operación…</strong>
-          <p className="ops-muted">Sincronizando métricas y actividades en tiempo real.</p>
+          <p className="ops-muted">Sincronizando métricas y pendientes.</p>
         </div>
       </div>
     );
@@ -177,11 +267,7 @@ export default function OperationalDashboard({
             {error || 'No fue posible obtener los datos de la operación en este momento.'}
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
-          onClick={() => void reload()}
-        >
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => void load()}>
           <RefreshCw size={15} aria-hidden /> Reintentar
         </button>
       </div>
@@ -189,38 +275,44 @@ export default function OperationalDashboard({
   }
 
   const kpis = data.kpis.slice(0, 4);
-  const mainChart = data.charts[0];
-  const extraCharts = data.charts.slice(1);
+  const [mainChart, ...extraCharts] = data.charts;
   const recent = data.recent.slice(0, 5);
-  const mainExports = data.exports.slice(0, 2);
-  const extraExports = data.exports.slice(2);
+  const [docExports, pdfExports] = [
+    data.exports.filter((e) => e.kind === 'documentos'),
+    data.exports.filter((e) => e.kind !== 'documentos'),
+  ];
   const pendingAlerts = alerts.filter((a) => !a.read).slice(0, 4);
 
   return (
-    <div className="ops-dashboard">
-      <div className="ops-dashboard-head">
-        <div>
-          <p className="module-kicker">Estado · {data.period}</p>
-          <h2>{data.title}</h2>
-        </div>
-        <button
-          type="button"
-          className="btn btn-outline"
-          onClick={() => void reload()}
-          aria-label="Actualizar tablero"
-        >
-          <RefreshCw size={16} /> Actualizar
-        </button>
+    <div className="ops-dashboard" aria-label={data.title}>
+      <div className="sg-section-head">
+        <h2>{data.title}</h2>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+          Periodo: {data.period}
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={() => void load()}
+            disabled={loading}
+            aria-label="Actualizar tablero"
+          >
+            <RefreshCw size={14} className={loading ? 'ops-spin' : ''} aria-hidden />
+            Actualizar
+          </button>
+        </span>
       </div>
 
       {pendingAlerts.length > 0 && (
         <section className="ops-alert-strip" aria-label="Pendientes de atención">
           <header>
-            <AlertTriangle size={16} />
-            <strong>
-              {unreadCount} aviso{unreadCount === 1 ? '' : 's'} pendiente
-              {unreadCount === 1 ? '' : 's'}
-            </strong>
+            <div>
+              <AlertTriangle size={17} aria-hidden />
+              <strong>
+                {unreadCount} aviso{unreadCount === 1 ? '' : 's'} pendiente
+                {unreadCount === 1 ? '' : 's'}
+              </strong>
+            </div>
+            <small>Al resolver el trámite, el aviso se retira solo.</small>
           </header>
           <ul>
             {pendingAlerts.map((alert) => (
@@ -245,138 +337,71 @@ export default function OperationalDashboard({
         </div>
       )}
 
-      {/* 1. Modern KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-2">
+      <div className="sg-stat-grid" aria-label="Indicadores del periodo">
         {kpis.map((kpi) => (
-          <Link
+          <StatCard
             key={kpi.key}
-            to={kpi.href || '#'}
-            className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs hover:border-zinc-400 hover:shadow-md transition-all flex flex-col justify-between gap-3 text-inherit no-underline"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                {kpi.label}
-              </span>
-              <ArrowUpRight
-                size={14}
-                className="text-zinc-400 group-hover:text-zinc-900 transition-colors"
-                aria-hidden="true"
-              />
-            </div>
-            <div className="flex items-baseline justify-between">
-              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
-                {kpi.value}
-              </strong>
-              {kpi.hint && (
-                <span className="font-mono text-[11px] text-zinc-400 truncate max-w-[140px]">
-                  {kpi.hint}
-                </span>
-              )}
-            </div>
-          </Link>
+            label={kpi.label}
+            value={kpi.value}
+            hint={kpi.hint}
+            tone={(kpi.tone as StatCardTone) || 'info'}
+            icon={kpiIcon(kpi)}
+            href={kpi.href}
+          />
         ))}
       </div>
 
-      {/* 2. Main Board Grid: MetricProgressCard (Image 0) + Charts & Pending Queue */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Metric Progress Card */}
-        <div className="lg:col-span-1">
-          <MetricProgressCard
-            title="Progreso Diario"
-            subtitle="Operaciones & Flota"
-            metrics={[
-              {
-                label: 'Salidas',
-                value: kpis[0]?.value ? String(kpis[0].value) : '12',
-                unit: 'viajes',
-                percent: 85,
-                color: '#f43f5e',
-              },
-              {
-                label: 'En Ruta',
-                value: kpis[1]?.value ? String(kpis[1].value) : '8',
-                unit: 'uds',
-                percent: 70,
-                color: '#10b981',
-              },
-              {
-                label: 'Flota',
-                value: kpis[2]?.value ? String(kpis[2].value) : '24',
-                unit: 'disp',
-                percent: 83,
-                color: '#3b82f6',
-              },
-            ]}
-            goalsTitle="Metas Operativas"
-            goals={
-              data.queue.length > 0
-                ? data.queue.slice(0, 3).map((item) => ({
-                    id: item.id,
-                    text: `${item.title}: ${item.count}`,
-                    completed: item.count === 0,
-                    onClick: () => {
-                      if (item.href) window.location.href = item.href;
-                    },
-                  }))
-                : [
-                    { id: '1', text: 'Inspección técnica matutina', completed: true },
-                    { id: '2', text: 'Despacho de combustible verificado', completed: false },
-                    { id: '3', text: 'Asignaciones de ruta al día', completed: true },
-                  ]
-            }
-            footerText="Ver agenda y salidas de campo"
-            footerHref="/app/secretaria/agenda"
-          />
-        </div>
-
-        {/* Charts & Queue Column */}
-        <div className="lg:col-span-2 flex flex-col gap-5">
-          <div className="ops-board" style={{ margin: 0 }}>
-            <section className="ops-widget ops-queue">
-              <h3 className="ops-widget-head font-mono">Qué hacer ahora</h3>
-              <div className="ops-widget-body">
-                {data.queue.length === 0 ? (
-                  <p className="ops-muted font-mono text-xs">
-                    No hay pendientes. El flujo está al día.
-                  </p>
-                ) : (
-                  <ul>
-                    {data.queue.slice(0, 3).map((item) => (
-                      <li key={item.id}>
-                        <Link to={item.href}>
-                          <span className="ops-queue-count">{item.count}</span>
-                          <span>
-                            <strong>{item.title}</strong>
-                            <em>{item.description}</em>
-                          </span>
-                          <ArrowUpRight size={16} aria-hidden />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </section>
-
-            {mainChart && (
-              <section className="ops-widget">
-                <h3 className="ops-widget-head font-mono">{mainChart.title}</h3>
-                <div className="ops-widget-body">
-                  <ChartBlock chart={mainChart} />
-                </div>
-              </section>
+      <div className="ops-grid-2 is-wide-left">
+        <section className="ops-widget ops-queue" aria-labelledby="ops-queue-title">
+          <h3 className="ops-widget-head" id="ops-queue-title">
+            Qué hacer ahora
+            <small>{data.queue.length} frente{data.queue.length === 1 ? '' : 's'}</small>
+          </h3>
+          <div className="ops-widget-body">
+            {data.queue.length === 0 ? (
+              <p className="ops-muted">No hay pendientes. El flujo está al día.</p>
+            ) : (
+              <ul>
+                {data.queue.slice(0, 5).map((item) => (
+                  <li key={item.id}>
+                    <Link to={item.href} className={item.count === 0 ? 'is-zero' : undefined}>
+                      <span className="ops-queue-count">{item.count}</span>
+                      <span>
+                        <strong>{item.title}</strong>
+                        <em>{item.description}</em>
+                      </span>
+                      <ArrowUpRight size={16} aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
-        </div>
+        </section>
+
+        {mainChart && (
+          <section className="ops-widget" aria-labelledby="ops-chart-main">
+            <h3 className="ops-widget-head" id="ops-chart-main">
+              {mainChart.title}
+              <small>{data.period}</small>
+            </h3>
+            <div className="ops-widget-body">
+              <DonutChart chart={mainChart} />
+            </div>
+          </section>
+        )}
       </div>
 
-      <div className="ops-side-grid mt-4">
-        <section className="ops-widget">
-          <h3 className="ops-widget-head font-mono">Trazabilidad reciente</h3>
+      <div className="ops-grid-2 is-wide-left">
+        <section className="ops-widget" aria-labelledby="ops-recent-title">
+          <h3 className="ops-widget-head" id="ops-recent-title">
+            Trazabilidad reciente
+            <small>Fases de cada trámite</small>
+          </h3>
           <div className="ops-widget-body">
             {recent.length === 0 ? (
-              <p className="ops-muted font-mono text-xs">
-                Aún no hay trámites. Al registrar uno, aparece aquí el estado.
+              <p className="ops-muted">
+                Aún no hay trámites. Al registrar uno, aparece aquí su estado.
               </p>
             ) : (
               <ul className="ops-recent">
@@ -396,85 +421,66 @@ export default function OperationalDashboard({
           </div>
         </section>
 
-        {mainExports.length > 0 && (
-          <section className="ops-widget">
-            <h3 className="ops-widget-head font-mono">Formatos y Reportes Descargables</h3>
-            <div className="ops-widget-body flex flex-col gap-3">
-              <p className="ops-muted font-mono text-xs">
-                Respaldo digital oficial para archivo y toma de decisiones.
-              </p>
-              <div className="grid grid-cols-1 gap-2.5">
-                {mainExports.map((item) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {extraCharts.slice(0, 1).map((chart) => (
+            <section key={chart.id} className="ops-widget" aria-label={chart.title}>
+              <h3 className="ops-widget-head">{chart.title}</h3>
+              <div className="ops-widget-body">
+                <BarsChart chart={chart} />
+              </div>
+            </section>
+          ))}
+
+          {(docExports.length > 0 || pdfExports.length > 0) && (
+            <section className="ops-widget" aria-labelledby="ops-exports-title">
+              <h3 className="ops-widget-head" id="ops-exports-title">
+                Documentos y reportes
+                <small>PDF institucional</small>
+              </h3>
+              <div className="ops-widget-body ops-export-list">
+                {docExports.map((item) => (
                   <ResourceCard
                     key={item.label}
                     title={item.label}
-                    subtitle="Documento oficial ULEAM descargable en PDF"
+                    subtitle="Órdenes y hojas de ruta emitidas"
                     icon={<FileText size={18} />}
+                    href={item.href}
+                  />
+                ))}
+                {pdfExports.map((item) => (
+                  <ResourceCard
+                    key={item.label}
+                    title={item.label}
+                    subtitle="Descargar informe del periodo"
+                    icon={<Download size={18} />}
                     badge="PDF"
                     onClick={() => {
-                      if (item.kind === 'documentos') {
-                        window.location.href = item.href;
-                      } else {
-                        setPdfError(null);
-                        void downloadReportPdf(item.kind).catch(() =>
-                          setPdfError(`No se pudo generar el PDF de ${item.label}.`)
-                        );
-                      }
+                      setPdfError(null);
+                      void downloadReportPdf(item.kind).catch(() =>
+                        setPdfError(`No se pudo generar el PDF de ${item.label}.`)
+                      );
                     }}
                   />
                 ))}
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
+        </div>
       </div>
 
-      {(extraCharts.length > 0 || extraExports.length > 0) && (
+      {extraCharts.length > 1 && (
         <details className="ops-more">
           <summary>Más indicadores del periodo</summary>
-          {extraCharts.length > 0 && (
-            <div className="ops-chart-grid">
-              {extraCharts.map((chart) => (
-                <section key={chart.id} className="ops-widget">
-                  <h3 className="ops-widget-head">{chart.title}</h3>
-                  <div className="ops-widget-body">
-                    <ChartBlock chart={chart} />
-                  </div>
-                </section>
-              ))}
-            </div>
-          )}
-          {extraExports.length > 0 && (
-            <div className="ops-export-list ops-more-exports">
-              {extraExports.map((item) =>
-                item.kind === 'documentos' ? (
-                  <Link
-                    key={item.label}
-                    className="btn btn-outline"
-                    to={item.href}
-                  >
-                    <FileText size={16} /> {item.label}
-                  </Link>
-                ) : (
-                  <button
-                    key={item.label}
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={() => {
-                      setPdfError(null);
-                      void downloadReportPdf(item.kind).catch(() =>
-                        setPdfError(
-                          `No se pudo generar el PDF de ${item.label}.`
-                        )
-                      );
-                    }}
-                  >
-                    <Download size={16} /> {item.label}
-                  </button>
-                )
-              )}
-            </div>
-          )}
+          <div className="sg-stat-grid" style={{ marginTop: 8 }}>
+            {extraCharts.slice(1).map((chart) => (
+              <section key={chart.id} className="ops-widget" aria-label={chart.title}>
+                <h3 className="ops-widget-head">{chart.title}</h3>
+                <div className="ops-widget-body">
+                  <BarsChart chart={chart} />
+                </div>
+              </section>
+            ))}
+          </div>
         </details>
       )}
     </div>

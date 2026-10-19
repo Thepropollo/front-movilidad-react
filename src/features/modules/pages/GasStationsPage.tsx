@@ -360,10 +360,10 @@ export default function GasStationsPage() {
       <div className="sgv-dark-table-card p-6">
         <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
           <div>
-            <h2 className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Estaciones de servicio registradas
             </h2>
-            <p className="font-mono text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Convenios institucionales activos y volumen de combustible
             </p>
           </div>
@@ -407,25 +407,25 @@ export default function GasStationsPage() {
                           aria-hidden="true"
                         />
                         <div>
-                          <span className="font-mono font-bold text-slate-900 block">
+                          <span className="font-bold text-slate-900 block">
                             {s.commercial_name}
                           </span>
-                          <span className="font-mono text-xs text-slate-500">
+                          <span className="text-xs text-slate-500">
                             {s.address}
                           </span>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <span className="font-mono text-slate-700">{s.ruc}</span>
+                      <span className="text-slate-700">{s.ruc}</span>
                     </td>
                     <td>
-                      <span className="font-mono font-bold text-emerald-600">
+                      <span className="font-bold text-emerald-600">
                         {s.price_per_liter ? `$${Number(s.price_per_liter).toFixed(3)}` : '—'}
                       </span>
                     </td>
                     <td>
-                      <span className="font-mono text-slate-700">
+                      <span className="text-slate-700">
                         {s.monthly_quota_liters ? `${s.monthly_quota_liters} L` : '—'}
                       </span>
                     </td>
@@ -466,7 +466,7 @@ export default function GasStationsPage() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="text-center py-8 font-mono text-slate-400 text-sm"
+                    className="text-center py-8 text-slate-500 text-sm"
                   >
                     {stationSearch.trim()
                       ? 'No se encontraron estaciones con esa búsqueda.'

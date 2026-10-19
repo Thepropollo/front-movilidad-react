@@ -106,7 +106,7 @@ function getStatusBadgeStyle(status?: string) {
   if (s.includes('finalizado') || s.includes('completado')) {
     return 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100';
   }
-  return 'bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200';
+  return 'bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200';
 }
 
 function getStatusDotColor(status?: string) {
@@ -115,7 +115,7 @@ function getStatusDotColor(status?: string) {
   if (s.includes('ruta') || s.includes('en_ruta')) return 'bg-amber-500';
   if (s.includes('pendiente') || s.includes('feedback')) return 'bg-purple-500';
   if (s.includes('finalizado') || s.includes('completado')) return 'bg-emerald-500';
-  return 'bg-zinc-500';
+  return 'bg-slate-500';
 }
 
 export default function CalendarAgenda({
@@ -283,12 +283,12 @@ export default function CalendarAgenda({
   };
 
   return (
-    <div className={`w-full flex flex-col gap-4 font-mono text-zinc-900 ${className}`}>
+    <div className={`w-full flex flex-col gap-4 text-slate-900 ${className}`}>
       {/* 1. Header Bar: Month Year, Navigation, View Selector, Action Button */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         {/* Left: Month Year + Arrows + Today */}
         <div className="flex items-center gap-3">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 capitalize font-mono select-none">
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 capitalize select-none">
             {monthTitle}
           </h2>
 
@@ -296,7 +296,7 @@ export default function CalendarAgenda({
             <button
               type="button"
               onClick={handlePrev}
-              className="w-8 h-8 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 flex items-center justify-center text-zinc-700 transition-colors shadow-2xs cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors shadow-2xs cursor-pointer active:scale-95"
               aria-label="Previous"
               title="Anterior"
             >
@@ -306,7 +306,7 @@ export default function CalendarAgenda({
             <button
               type="button"
               onClick={handleToday}
-              className="h-8 px-3 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-xs font-semibold text-zinc-800 transition-colors shadow-2xs cursor-pointer active:scale-95 flex items-center justify-center"
+              className="h-8 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-800 transition-colors shadow-2xs cursor-pointer active:scale-95 flex items-center justify-center"
             >
               {locale === 'es' ? 'Hoy' : 'Today'}
             </button>
@@ -314,7 +314,7 @@ export default function CalendarAgenda({
             <button
               type="button"
               onClick={handleNext}
-              className="w-8 h-8 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 flex items-center justify-center text-zinc-700 transition-colors shadow-2xs cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-700 transition-colors shadow-2xs cursor-pointer active:scale-95"
               aria-label="Next"
               title="Siguiente"
             >
@@ -326,14 +326,14 @@ export default function CalendarAgenda({
         {/* Right: View switcher + New Event button */}
         <div className="flex items-center gap-2.5 ml-auto">
           {/* Segmented view switcher */}
-          <div className="flex items-center p-1 bg-zinc-100/90 border border-zinc-200 rounded-lg text-xs font-medium text-zinc-600 gap-0.5">
+          <div className="flex items-center p-1 bg-slate-100/90 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 gap-0.5">
             <button
               type="button"
               onClick={() => changeView('month')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                 activeView === 'month'
-                  ? 'bg-white text-zinc-950 font-semibold shadow-xs'
-                  : 'hover:text-zinc-950 hover:bg-zinc-200/50'
+                  ? 'bg-white text-slate-950 font-semibold shadow-xs'
+                  : 'hover:text-slate-950 hover:bg-slate-200/50'
               }`}
             >
               <Calendar size={13} />
@@ -345,8 +345,8 @@ export default function CalendarAgenda({
               onClick={() => changeView('week')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                 activeView === 'week'
-                  ? 'bg-white text-zinc-950 font-semibold shadow-xs'
-                  : 'hover:text-zinc-950 hover:bg-zinc-200/50'
+                  ? 'bg-white text-slate-950 font-semibold shadow-xs'
+                  : 'hover:text-slate-950 hover:bg-slate-200/50'
               }`}
             >
               <LayoutGrid size={13} />
@@ -358,8 +358,8 @@ export default function CalendarAgenda({
               onClick={() => changeView('day')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                 activeView === 'day'
-                  ? 'bg-white text-zinc-950 font-semibold shadow-xs'
-                  : 'hover:text-zinc-950 hover:bg-zinc-200/50'
+                  ? 'bg-white text-slate-950 font-semibold shadow-xs'
+                  : 'hover:text-slate-950 hover:bg-slate-200/50'
               }`}
             >
               <Clock size={13} />
@@ -371,8 +371,8 @@ export default function CalendarAgenda({
               onClick={() => changeView('list')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                 activeView === 'list'
-                  ? 'bg-white text-zinc-950 font-semibold shadow-xs'
-                  : 'hover:text-zinc-950 hover:bg-zinc-200/50'
+                  ? 'bg-white text-slate-950 font-semibold shadow-xs'
+                  : 'hover:text-slate-950 hover:bg-slate-200/50'
               }`}
             >
               <ListIcon size={13} />
@@ -385,7 +385,7 @@ export default function CalendarAgenda({
             <button
               type="button"
               onClick={onNewEvent}
-              className="flex items-center gap-1.5 px-3.5 h-8.5 bg-black hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 h-8.5 bg-black hover:bg-primary-hover text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer active:scale-95"
             >
               <Plus size={14} strokeWidth={2.5} />
               <span>{newEventLabel}</span>
@@ -398,20 +398,20 @@ export default function CalendarAgenda({
       <div className="relative w-full">
         <Search
           size={15}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
         />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange?.(e.target.value)}
           placeholder={searchPlaceholder}
-          className="w-full pl-9 pr-4 py-2 border border-zinc-200 rounded-lg bg-white text-zinc-900 placeholder:text-zinc-400 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 transition-all shadow-2xs"
+          className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder:text-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-slate-950 focus:border-slate-950 transition-all shadow-2xs"
         />
         {searchQuery && (
           <button
             type="button"
             onClick={() => onSearchChange?.('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 p-0.5 rounded cursor-pointer"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 p-0.5 rounded cursor-pointer"
             title="Borrar búsqueda"
           >
             <X size={14} />
@@ -434,11 +434,11 @@ export default function CalendarAgenda({
                   onClick={() => setOpenFilterId(isOpen ? null : group.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer shadow-2xs ${
                     hasActiveFilter
-                      ? 'border-zinc-900 bg-zinc-900 text-white font-semibold'
-                      : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700'
+                      ? 'border-primary bg-primary text-white font-semibold'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                   }`}
                 >
-                  <Filter size={12} className={hasActiveFilter ? 'text-zinc-300' : 'text-zinc-500'} />
+                  <Filter size={12} className={hasActiveFilter ? 'text-slate-300' : 'text-slate-500'} />
                   <span>
                     {hasActiveFilter && activeOption ? `${group.label}: ${activeOption.label}` : group.label}
                   </span>
@@ -458,8 +458,8 @@ export default function CalendarAgenda({
 
                 {/* Popover dropdown */}
                 {isOpen && (
-                  <div className="absolute left-0 mt-1.5 w-52 bg-white border border-zinc-200 rounded-lg shadow-lg z-40 py-1 font-mono text-xs">
-                    <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-zinc-400 border-b border-zinc-100">
+                  <div className="absolute left-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-lg shadow-lg z-40 py-1 text-xs">
+                    <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-100">
                       Filtrar por {group.label}
                     </div>
                     <div className="max-h-56 overflow-y-auto py-1">
@@ -471,15 +471,15 @@ export default function CalendarAgenda({
                             group.onSelect(opt.value);
                             setOpenFilterId(null);
                           }}
-                          className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between cursor-pointer hover:bg-zinc-100 transition-colors ${
+                          className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors ${
                             group.selectedValue === opt.value
-                              ? 'bg-zinc-100 font-semibold text-zinc-900'
-                              : 'text-zinc-700'
+                              ? 'bg-slate-100 font-semibold text-slate-900'
+                              : 'text-slate-700'
                           }`}
                         >
                           <span>{opt.label}</span>
                           {group.selectedValue === opt.value && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-900" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                           )}
                         </button>
                       ))}
@@ -494,22 +494,22 @@ export default function CalendarAgenda({
 
       {/* 4. Main Calendar Content: Month, Week, Day, List Views */}
       {isLoading ? (
-        <div className="border border-zinc-200 rounded-xl p-12 bg-white flex flex-col items-center justify-center gap-2 text-zinc-400 shadow-xs">
-          <div className="w-6 h-6 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin" />
-          <span className="text-xs font-mono">Cargando eventos de agenda…</span>
+        <div className="border border-slate-200 rounded-xl p-12 bg-white flex flex-col items-center justify-center gap-2 text-slate-500 shadow-xs">
+          <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
+          <span className="text-xs ">Cargando eventos de agenda…</span>
         </div>
       ) : (
         <>
           {/* MONTH VIEW (Exact replica of the uploaded image) */}
           {activeView === 'month' && (
-            <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-xs">
+            <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
               {/* Day of Week Headers */}
-              <div className="grid grid-cols-7 border-b border-zinc-200 bg-white">
+              <div className="grid grid-cols-7 border-b border-slate-200 bg-white">
                 {weekdayNames.map((name, i) => (
                   <div
                     key={name}
-                    className={`py-3 text-center text-xs font-semibold text-zinc-700 ${
-                      i < 6 ? 'border-r border-zinc-200' : ''
+                    className={`py-3 text-center text-xs font-semibold text-slate-700 ${
+                      i < 6 ? 'border-r border-slate-200' : ''
                     }`}
                   >
                     {name}
@@ -530,9 +530,9 @@ export default function CalendarAgenda({
                         changeDate(cell.date);
                       }}
                       className={`min-h-[110px] md:min-h-[125px] p-2 flex flex-col gap-1 transition-colors select-none ${
-                        isRightBorder ? 'border-r border-zinc-200' : ''
-                      } ${isBottomBorder ? 'border-b border-zinc-200' : ''} ${
-                        cell.isCurrentMonth ? 'bg-white hover:bg-zinc-50/70' : 'bg-zinc-50/40 hover:bg-zinc-100/60'
+                        isRightBorder ? 'border-r border-slate-200' : ''
+                      } ${isBottomBorder ? 'border-b border-slate-200' : ''} ${
+                        cell.isCurrentMonth ? 'bg-white hover:bg-slate-50/70' : 'bg-slate-50/40 hover:bg-slate-100/60'
                       }`}
                     >
                       {/* Cell Day Header */}
@@ -548,15 +548,15 @@ export default function CalendarAgenda({
                           <span
                             className={`text-xs ${
                               cell.isCurrentMonth
-                                ? 'font-medium text-zinc-800'
-                                : 'text-zinc-400 font-normal'
+                                ? 'font-medium text-slate-800'
+                                : 'text-slate-500 font-normal'
                             }`}
                           >
                             {cell.dayNumber}
                           </span>
                         )}
                         {cell.events.length > 0 && (
-                          <span className="text-[10px] text-zinc-400 font-mono">
+                          <span className="text-[10px] text-slate-500 ">
                             {cell.events.length}
                           </span>
                         )}
@@ -572,7 +572,7 @@ export default function CalendarAgenda({
                               e.stopPropagation();
                               handleCardClick(event);
                             }}
-                            className={`text-left px-2 py-1 rounded-md text-[11px] font-mono leading-tight border transition-all cursor-pointer truncate flex items-center gap-1.5 ${getStatusBadgeStyle(
+                            className={`text-left px-2 py-1 rounded-md text-[11px] leading-tight border transition-all cursor-pointer truncate flex items-center gap-1.5 ${getStatusBadgeStyle(
                               event.status
                             )}`}
                             title={`${event.title}${event.driver ? ` · ${event.driver}` : ''}`}
@@ -594,7 +594,7 @@ export default function CalendarAgenda({
                               changeDate(cell.date);
                               changeView('day');
                             }}
-                            className="text-[10px] text-zinc-500 hover:text-zinc-950 font-semibold px-1 text-left cursor-pointer"
+                            className="text-[10px] text-slate-500 hover:text-slate-950 font-semibold px-1 text-left cursor-pointer"
                           >
                             +{cell.events.length - 3} más...
                           </button>
@@ -609,16 +609,16 @@ export default function CalendarAgenda({
 
           {/* WEEK VIEW */}
           {activeView === 'week' && (
-            <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-xs">
-              <div className="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50/50">
+            <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
+              <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/50">
                 {weekDays.map((day, idx) => (
                   <div
                     key={day.iso}
                     className={`p-3 text-center flex flex-col items-center gap-1.5 ${
-                      idx < 6 ? 'border-r border-zinc-200' : ''
+                      idx < 6 ? 'border-r border-slate-200' : ''
                     }`}
                   >
-                    <span className="text-xs font-semibold text-zinc-600">
+                    <span className="text-xs font-semibold text-slate-600">
                       {weekdayNames[day.weekdayIndex]}
                     </span>
                     {day.isToday ? (
@@ -626,7 +626,7 @@ export default function CalendarAgenda({
                         {day.dayNumber}
                       </div>
                     ) : (
-                      <span className="text-sm font-semibold text-zinc-800">
+                      <span className="text-sm font-semibold text-slate-800">
                         {day.dayNumber}
                       </span>
                     )}
@@ -634,14 +634,14 @@ export default function CalendarAgenda({
                 ))}
               </div>
 
-              <div className="grid grid-cols-7 divide-x divide-zinc-200 min-h-[380px]">
+              <div className="grid grid-cols-7 divide-x divide-slate-200 min-h-[380px]">
                 {weekDays.map((day) => (
                   <div
                     key={day.iso}
-                    className="p-2 flex flex-col gap-2 bg-white hover:bg-zinc-50/30 transition-colors"
+                    className="p-2 flex flex-col gap-2 bg-white hover:bg-slate-50/30 transition-colors"
                   >
                     {day.events.length === 0 ? (
-                      <div className="text-[11px] text-zinc-400 italic text-center py-6">
+                      <div className="text-[11px] text-slate-500 italic text-center py-6">
                         Sin viajes
                       </div>
                     ) : (
@@ -649,7 +649,7 @@ export default function CalendarAgenda({
                         <div
                           key={event.id}
                           onClick={() => handleCardClick(event)}
-                          className="p-2.5 rounded-lg border border-zinc-200 bg-white hover:border-zinc-400 hover:shadow-xs transition-all cursor-pointer flex flex-col gap-1.5"
+                          className="p-2.5 rounded-lg border border-slate-200 bg-white hover:border-uleam-500 hover:shadow-xs transition-all cursor-pointer flex flex-col gap-1.5"
                         >
                           <div className="flex items-center justify-between gap-1">
                             <span
@@ -659,25 +659,25 @@ export default function CalendarAgenda({
                             >
                               {event.statusLabel || event.status || 'Viaje'}
                             </span>
-                            <span className="text-[10px] text-zinc-400 font-mono">
+                            <span className="text-[10px] text-slate-500 ">
                               #{event.id}
                             </span>
                           </div>
 
-                          <div className="font-semibold text-xs text-zinc-900 leading-snug line-clamp-2">
+                          <div className="font-semibold text-xs text-slate-900 leading-snug line-clamp-2">
                             {event.title}
                           </div>
 
                           {event.driver && (
-                            <div className="flex items-center gap-1 text-[11px] text-zinc-600 truncate">
-                              <User size={11} className="text-zinc-400 flex-shrink-0" />
+                            <div className="flex items-center gap-1 text-[11px] text-slate-600 truncate">
+                              <User size={11} className="text-slate-500 flex-shrink-0" />
                               <span className="truncate">{event.driver}</span>
                             </div>
                           )}
 
                           {event.vehicle && (
-                            <div className="flex items-center gap-1 text-[11px] text-zinc-600 truncate">
-                              <Car size={11} className="text-zinc-400 flex-shrink-0" />
+                            <div className="flex items-center gap-1 text-[11px] text-slate-600 truncate">
+                              <Car size={11} className="text-slate-500 flex-shrink-0" />
                               <span className="truncate">{event.vehicle}</span>
                             </div>
                           )}
@@ -692,11 +692,11 @@ export default function CalendarAgenda({
 
           {/* DAY VIEW */}
           {activeView === 'day' && (
-            <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-xs p-5 flex flex-col gap-4">
-              <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+            <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs p-5 flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <CalendarDays size={18} className="text-zinc-500" />
-                  <h3 className="text-base font-bold text-zinc-900 capitalize font-mono">
+                  <CalendarDays size={18} className="text-slate-500" />
+                  <h3 className="text-base font-bold text-slate-900 capitalize ">
                     {activeDate.toLocaleDateString(locale === 'es' ? 'es-EC' : 'en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -705,14 +705,14 @@ export default function CalendarAgenda({
                     })}
                   </h3>
                 </div>
-                <span className="text-xs text-zinc-500 font-mono">
+                <span className="text-xs text-slate-500 ">
                   {(eventsByDate[toISODate(activeDate)] || []).length} evento(s) programados
                 </span>
               </div>
 
               <div className="flex flex-col gap-3">
                 {(eventsByDate[toISODate(activeDate)] || []).length === 0 ? (
-                  <div className="py-12 text-center text-zinc-400 text-xs font-mono">
+                  <div className="py-12 text-center text-slate-500 text-xs ">
                     No hay viajes ni eventos programados para esta fecha.
                   </div>
                 ) : (
@@ -720,7 +720,7 @@ export default function CalendarAgenda({
                     <div
                       key={event.id}
                       onClick={() => handleCardClick(event)}
-                      className="p-4 rounded-xl border border-zinc-200 hover:border-zinc-950 transition-all bg-white hover:shadow-xs cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      className="p-4 rounded-xl border border-slate-200 hover:border-slate-950 transition-all bg-white hover:shadow-xs cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
                     >
                       <div className="flex flex-col gap-1.5 min-w-0">
                         <div className="flex items-center gap-2">
@@ -731,21 +731,21 @@ export default function CalendarAgenda({
                           >
                             {event.statusLabel || event.status}
                           </span>
-                          <span className="text-xs text-zinc-400">Viaje #{event.id}</span>
+                          <span className="text-xs text-slate-500">Viaje #{event.id}</span>
                         </div>
-                        <h4 className="text-sm font-bold text-zinc-900 truncate">
+                        <h4 className="text-sm font-bold text-slate-900 truncate">
                           {event.title}
                         </h4>
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-600">
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
                           {event.driver && (
                             <span className="flex items-center gap-1">
-                              <User size={13} className="text-zinc-400" />
+                              <User size={13} className="text-slate-500" />
                               {event.driver}
                             </span>
                           )}
                           {event.vehicle && (
                             <span className="flex items-center gap-1">
-                              <Car size={13} className="text-zinc-400" />
+                              <Car size={13} className="text-slate-500" />
                               {event.vehicle}
                             </span>
                           )}
@@ -753,7 +753,7 @@ export default function CalendarAgenda({
                       </div>
 
                       <div className="flex items-center gap-2 self-end md:self-center">
-                        <span className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100">
+                        <span className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100">
                           Ver detalles
                         </span>
                       </div>
@@ -766,11 +766,11 @@ export default function CalendarAgenda({
 
           {/* LIST VIEW */}
           {activeView === 'list' && (
-            <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-xs">
+            <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs font-mono">
+                <table className="w-full text-left border-collapse text-xs ">
                   <thead>
-                    <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-700 font-semibold">
+                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-700 font-semibold">
                       <th className="py-3 px-4">Fecha</th>
                       <th className="py-3 px-4">Destino</th>
                       <th className="py-3 px-4">Conductor</th>
@@ -780,10 +780,10 @@ export default function CalendarAgenda({
                       <th className="py-3 px-4 text-right">Acción</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-200">
+                  <tbody className="divide-y divide-slate-200">
                     {events.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-zinc-400">
+                        <td colSpan={7} className="py-8 text-center text-slate-500">
                           No se encontraron eventos en este período.
                         </td>
                       </tr>
@@ -792,18 +792,18 @@ export default function CalendarAgenda({
                         <tr
                           key={event.id}
                           onClick={() => handleCardClick(event)}
-                          className="hover:bg-zinc-50/80 transition-colors cursor-pointer"
+                          className="hover:bg-slate-50/80 transition-colors cursor-pointer"
                         >
-                          <td className="py-3 px-4 text-zinc-800 whitespace-nowrap font-medium">
+                          <td className="py-3 px-4 text-slate-800 whitespace-nowrap font-medium">
                             {event.date}
                           </td>
-                          <td className="py-3 px-4 font-semibold text-zinc-900 max-w-xs truncate">
+                          <td className="py-3 px-4 font-semibold text-slate-900 max-w-xs truncate">
                             {event.title}
                           </td>
-                          <td className="py-3 px-4 text-zinc-700 whitespace-nowrap">
+                          <td className="py-3 px-4 text-slate-700 whitespace-nowrap">
                             {event.driver || '—'}
                           </td>
-                          <td className="py-3 px-4 text-zinc-700 whitespace-nowrap">
+                          <td className="py-3 px-4 text-slate-700 whitespace-nowrap">
                             {event.vehicle || '—'}
                           </td>
                           <td className="py-3 px-4 whitespace-nowrap">
@@ -815,7 +815,7 @@ export default function CalendarAgenda({
                               {event.statusLabel || event.status}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-zinc-600 whitespace-nowrap">
+                          <td className="py-3 px-4 text-slate-600 whitespace-nowrap">
                             {event.driver_response || '—'}
                           </td>
                           <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -825,7 +825,7 @@ export default function CalendarAgenda({
                                 e.stopPropagation();
                                 handleCardClick(event);
                               }}
-                              className="px-2 py-1 rounded text-zinc-700 hover:text-black hover:bg-zinc-100 font-semibold"
+                              className="px-2 py-1 rounded text-slate-700 hover:text-black hover:bg-slate-100 font-semibold"
                             >
                               Ver
                             </button>
@@ -839,8 +839,8 @@ export default function CalendarAgenda({
 
               {/* Pagination if provided */}
               {paginationMeta && paginationMeta.last_page > 1 && (
-                <div className="flex items-center justify-between p-3 border-t border-zinc-200 bg-zinc-50 text-xs">
-                  <span className="text-zinc-500">
+                <div className="flex items-center justify-between p-3 border-t border-slate-200 bg-slate-50 text-xs">
+                  <span className="text-slate-500">
                     Mostrando página {paginationMeta.current_page} de {paginationMeta.last_page} ({paginationMeta.total} registros)
                   </span>
                   <div className="flex items-center gap-1">
@@ -848,7 +848,7 @@ export default function CalendarAgenda({
                       type="button"
                       disabled={paginationMeta.current_page <= 1}
                       onClick={() => onPageChange?.(paginationMeta.current_page - 1)}
-                      className="px-2.5 py-1 rounded border border-zinc-200 bg-white text-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100"
+                      className="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100"
                     >
                       Anterior
                     </button>
@@ -856,7 +856,7 @@ export default function CalendarAgenda({
                       type="button"
                       disabled={paginationMeta.current_page >= paginationMeta.last_page}
                       onClick={() => onPageChange?.(paginationMeta.current_page + 1)}
-                      className="px-2.5 py-1 rounded border border-zinc-200 bg-white text-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100"
+                      className="px-2.5 py-1 rounded border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100"
                     >
                       Siguiente
                     </button>
@@ -875,11 +875,11 @@ export default function CalendarAgenda({
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="w-full max-w-md bg-white border border-zinc-200 rounded-2xl p-6 shadow-2xl font-mono flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150"
+            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between gap-3 border-b border-zinc-100 pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <span
                   className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1.5 ${getStatusBadgeStyle(
@@ -888,14 +888,14 @@ export default function CalendarAgenda({
                 >
                   {selectedEvent.statusLabel || selectedEvent.status}
                 </span>
-                <h3 className="text-base font-bold text-zinc-950 leading-snug">
+                <h3 className="text-base font-bold text-slate-950 leading-snug">
                   {selectedEvent.title}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedEvent(null)}
-                className="w-8 h-8 rounded-lg border border-zinc-200 hover:bg-zinc-100 flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors"
+                className="w-8 h-8 rounded-lg border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -903,53 +903,53 @@ export default function CalendarAgenda({
 
             {/* Details Grid */}
             <div className="flex flex-col gap-3 text-xs">
-              <div className="flex items-center gap-2.5 text-zinc-700">
-                <Calendar size={15} className="text-zinc-400 flex-shrink-0" />
+              <div className="flex items-center gap-2.5 text-slate-700">
+                <Calendar size={15} className="text-slate-500 flex-shrink-0" />
                 <div>
-                  <span className="text-zinc-400">Salida: </span>
-                  <strong className="text-zinc-900">{selectedEvent.date}</strong>
+                  <span className="text-slate-500">Salida: </span>
+                  <strong className="text-slate-900">{selectedEvent.date}</strong>
                   {selectedEvent.return_date && (
                     <>
-                      <span className="text-zinc-400 ml-2">Retorno: </span>
-                      <strong className="text-zinc-900">{selectedEvent.return_date}</strong>
+                      <span className="text-slate-500 ml-2">Retorno: </span>
+                      <strong className="text-slate-900">{selectedEvent.return_date}</strong>
                     </>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5 text-zinc-700">
-                <User size={15} className="text-zinc-400 flex-shrink-0" />
+              <div className="flex items-center gap-2.5 text-slate-700">
+                <User size={15} className="text-slate-500 flex-shrink-0" />
                 <div>
-                  <span className="text-zinc-400">Conductor: </span>
-                  <strong className="text-zinc-900">{selectedEvent.driver || 'No asignado'}</strong>
+                  <span className="text-slate-500">Conductor: </span>
+                  <strong className="text-slate-900">{selectedEvent.driver || 'No asignado'}</strong>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5 text-zinc-700">
-                <Car size={15} className="text-zinc-400 flex-shrink-0" />
+              <div className="flex items-center gap-2.5 text-slate-700">
+                <Car size={15} className="text-slate-500 flex-shrink-0" />
                 <div>
-                  <span className="text-zinc-400">Vehículo: </span>
-                  <strong className="text-zinc-900">{selectedEvent.vehicle || 'No asignado'}</strong>
+                  <span className="text-slate-500">Vehículo: </span>
+                  <strong className="text-slate-900">{selectedEvent.vehicle || 'No asignado'}</strong>
                 </div>
               </div>
 
               {selectedEvent.driver_response && (
-                <div className="flex items-center gap-2.5 text-zinc-700">
-                  <CheckCircle2 size={15} className="text-zinc-400 flex-shrink-0" />
+                <div className="flex items-center gap-2.5 text-slate-700">
+                  <CheckCircle2 size={15} className="text-slate-500 flex-shrink-0" />
                   <div>
-                    <span className="text-zinc-400">Respuesta conductor: </span>
-                    <strong className="text-zinc-900">{selectedEvent.driver_response}</strong>
+                    <span className="text-slate-500">Respuesta conductor: </span>
+                    <strong className="text-slate-900">{selectedEvent.driver_response}</strong>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Footer Buttons */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setSelectedEvent(null)}
-                className="px-4 py-2 rounded-lg border border-zinc-200 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 transition-colors"
+                className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
               >
                 Cerrar
               </button>

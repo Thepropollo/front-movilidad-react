@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { Download, Eye, FileUp, FileText, PenLine, Eraser, FileCheck, Layers, ShieldCheck, Wrench, FolderArchive } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Download, Eye, FileUp, FileText, PenLine, FileCheck, Layers, ShieldCheck, Wrench, FolderArchive } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { downloadApiFile, fetchApiBlob } from '@/services/download';
@@ -54,11 +54,7 @@ export default function InstitutionalDocumentsPage() {
   const [mode, setMode] = useState<'view' | 'sign'>('view');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [signSlot, setSignSlot] = useState('');
-  const [signPassword, setSignPassword] = useState('');
   const [signOk, setSignOk] = useState(false);
-  const [hasStroke, setHasStroke] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const drawing = useRef(false);
 
   const isSecretaria = roleIds.includes('secretaria');
   const isMechanic = roleIds.includes('mecanico');
@@ -145,9 +141,7 @@ export default function InstitutionalDocumentsPage() {
       setMode(nextMode);
       const first = (doc.signature_slots || []).find((s) => s.can_sign);
       setSignSlot(first?.slot || '');
-      setSignPassword('');
       setSignOk(false);
-      setHasStroke(false);
     } catch {
       setError('No se pudo visualizar el PDF.');
     } finally {
@@ -232,52 +226,6 @@ export default function InstitutionalDocumentsPage() {
     }
   };
 
-  const canvasPoint = (event: PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return {
-      x: (event.clientX - rect.left) * scaleX,
-      y: (event.clientY - rect.top) * scaleY,
-    };
-  };
-
-  const startDraw = (event: PointerEvent<HTMLCanvasElement>) => {
-    const ctx = canvasRef.current?.getContext('2d');
-    const point = canvasPoint(event);
-    if (!ctx || !point) return;
-    drawing.current = true;
-    ctx.strokeStyle = '#102a56';
-    ctx.lineWidth = 2.4;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(point.x, point.y);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const moveDraw = (event: PointerEvent<HTMLCanvasElement>) => {
-    if (!drawing.current) return;
-    const ctx = canvasRef.current?.getContext('2d');
-    const point = canvasPoint(event);
-    if (!ctx || !point) return;
-    ctx.lineTo(point.x, point.y);
-    ctx.stroke();
-    setHasStroke(true);
-  };
-
-  const endDraw = () => {
-    drawing.current = false;
-  };
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setHasStroke(false);
-  };
-
   const closePreview = () => {
     setActive(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -294,19 +242,13 @@ export default function InstitutionalDocumentsPage() {
       setError('Debe aceptar que revisó el documento.');
       return;
     }
-    if (!window.confirm('¿Confirmas que deseas firmar digitalmente este documento?')) {
-      return;
-    }
     setBusy(true);
     setMsg(null);
     setError(null);
     try {
-      const image = hasStroke ? canvasRef.current?.toDataURL('image/png') : undefined;
       const { data } = await api.post(`/documentos/${active.id}/firmar`, {
         slot: signSlot,
-        password: signPassword,
         declaration: true,
-        signature_image: image,
       });
       setMsg(data.message);
       closePreview();
@@ -494,7 +436,7 @@ export default function InstitutionalDocumentsPage() {
 
       <div className="sgv-table-card" style={{ marginTop: 20 }}>
         {docs.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 text-sm">
+          <div className="p-8 text-center text-slate-500 text-sm">
             Aún no hay documentos emitidos o archivados en el repositorio.
           </div>
         ) : (
@@ -519,12 +461,12 @@ export default function InstitutionalDocumentsPage() {
                   const canSign = slots.some((s) => s.can_sign);
                   return (
                     <tr key={d.id}>
-                      <td className="font-mono font-semibold text-slate-800">#{d.id}</td>
+                      <td className="font-semibold text-slate-800">#{d.id}</td>
                       <td>
                         <span className="font-semibold text-primary block">
                           {catalog[d.document_type]?.label || d.document_type}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-500">
                           {catalog[d.document_type]?.code || 'DOC-ULEAM'}
                         </span>
                       </td>
@@ -541,16 +483,16 @@ export default function InstitutionalDocumentsPage() {
                             )}
                           </div>
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-slate-500">—</span>
                         )}
                       </td>
                       <td>
                         {slots.length === 0 ? (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-slate-500">—</span>
                         ) : (
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs font-bold text-slate-700">
+                              <span className="text-xs font-bold text-slate-700">
                                 {signedCount}/{slots.length}
                               </span>
                               <span
@@ -567,7 +509,7 @@ export default function InstitutionalDocumentsPage() {
                                   : 'Firmas pendientes'}
                               </span>
                             </div>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-slate-500">
                               {slots
                                 .filter((s) => s.signed)
                                 .map((s) => `${s.label}${s.valid ? ' ✓' : ''}`)
@@ -661,8 +603,8 @@ export default function InstitutionalDocumentsPage() {
               </>
             )}
             {mode === 'sign' && (
-              <button type="button" className="btn btn-primary" onClick={() => void submitSign()} disabled={busy}>
-                <PenLine size={16} /> Confirmar firma digital
+              <button type="button" className="btn btn-primary" onClick={() => void submitSign()} disabled={busy || !signOk}>
+                <PenLine size={16} /> Aceptar y firmar
               </button>
             )}
           </>
@@ -687,26 +629,6 @@ export default function InstitutionalDocumentsPage() {
               </div>
             ) : (
               <p className="ops-muted">Cargando documento…</p>
-            )}
-            {mode === 'sign' && (
-              <div className="sign-overlay">
-                <div className="sign-overlay-head">
-                  <strong>Trazo de firma digital</strong>
-                  <button type="button" className="btn btn-outline" onClick={clearSignature}>
-                    <Eraser size={14} /> Borrar
-                  </button>
-                </div>
-                <canvas
-                  ref={canvasRef}
-                  width={720}
-                  height={110}
-                  aria-label="Área para firmar encima del documento"
-                  onPointerDown={startDraw}
-                  onPointerMove={moveDraw}
-                  onPointerUp={endDraw}
-                  onPointerLeave={endDraw}
-                />
-              </div>
             )}
           </div>
           <aside className="sign-side">
@@ -741,24 +663,17 @@ export default function InstitutionalDocumentsPage() {
                       ))}
                   </select>
                 </label>
-                <label className="form-label" htmlFor="sign-password">
-                  Contraseña
-                  <input
-                    id="sign-password"
-                    type="password"
-                    className="form-input"
-                    value={signPassword}
-                    onChange={(e) => setSignPassword(e.target.value)}
-                    autoComplete="current-password"
-                  />
-                </label>
+                <p className="ops-muted">
+                  Al aceptar, el documento queda firmado con un código QR de esta cuenta.
+                  No hace falta dibujar ni volver a escribir la contraseña.
+                </p>
                 <label className="sign-check">
                   <input
                     type="checkbox"
                     checked={signOk}
                     onChange={(e) => setSignOk(e.target.checked)}
                   />
-                  Revisé el documento en pantalla y firmo en representación de mi cargo.
+                  Revisé el documento y acepto firmarlo con mi cuenta.
                 </label>
               </>
             )}

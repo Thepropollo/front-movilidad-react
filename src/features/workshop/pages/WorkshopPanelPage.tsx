@@ -291,7 +291,7 @@ const WorkshopPanelPage: React.FC = () => {
           }}
           metricValue={issues.filter((i) => i.status !== 'solventado').length}
           metricLabel="Novedades"
-          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+          gradientClass="from-slate-900 via-slate-900 to-slate-800"
         />
       </div>
 
@@ -414,7 +414,7 @@ const WorkshopPanelPage: React.FC = () => {
                   >
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <span className="font-bold text-red-800 font-mono text-sm mr-2">
+                        <span className="font-bold text-red-800 text-sm mr-2">
                           {issue.vehicle.plate}
                         </span>
                         <span className="text-xs text-primary font-medium">
@@ -497,7 +497,7 @@ const WorkshopPanelPage: React.FC = () => {
                   >
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <span className="font-bold text-primary font-mono text-sm mr-2">
+                        <span className="font-bold text-primary text-sm mr-2">
                           {order.vehicle.plate}
                         </span>
                         <span className="text-xs text-primary font-medium">
@@ -517,7 +517,7 @@ const WorkshopPanelPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="text-sm text-gray-700 bg-gray-50 p-2.5 rounded-lg font-mono text-xs">
+                    <div className="text-sm text-gray-700 bg-gray-50 p-2.5 rounded-lg text-xs">
                       <p className="font-bold text-gray-600 mb-1">
                         TRABAJOS REQUERIDOS:
                       </p>
@@ -599,7 +599,7 @@ const WorkshopPanelPage: React.FC = () => {
                 <p className="font-semibold text-primary">
                   {selectedIssue.vehicle.brand} {selectedIssue.vehicle.model}
                 </p>
-                <p className="text-secondary-brand font-mono font-bold text-xs">
+                <p className="text-secondary-brand font-bold text-xs">
                   {selectedIssue.vehicle.plate}
                 </p>
               </div>
@@ -712,7 +712,7 @@ const WorkshopPanelPage: React.FC = () => {
                 <p className="font-semibold text-primary">
                   {selectedOrder.vehicle.brand} {selectedOrder.vehicle.model}
                 </p>
-                <p className="text-secondary-brand font-mono font-bold text-xs">
+                <p className="text-secondary-brand font-bold text-xs">
                   {selectedOrder.vehicle.plate}
                 </p>
               </div>

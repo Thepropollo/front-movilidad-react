@@ -274,7 +274,7 @@ const ChecklistDigitalPage: React.FC = () => {
           }}
           metricValue={routeSheets.length}
           metricLabel="Por Inspeccionar"
-          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+          gradientClass="from-slate-900 via-slate-900 to-slate-800"
         />
       </div>
 
@@ -400,7 +400,7 @@ const ChecklistDigitalPage: React.FC = () => {
                   ))}
                 </select>
                 {routeSheets.length === 0 && (
-                  <p className="font-mono text-slate-400 text-xs mt-2">
+                  <p className="text-slate-500 text-xs mt-2">
                     No hay vehículos pendientes de salida o llegada en este momento.
                   </p>
                 )}
@@ -419,46 +419,46 @@ const ChecklistDigitalPage: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-4 text-sm mt-2">
                     <div>
-                      <p className="font-mono text-slate-500 text-xs">Vehículo</p>
-                      <p className="font-mono font-semibold text-slate-900">
+                      <p className="text-slate-500 text-xs">Vehículo</p>
+                      <p className="font-semibold text-slate-900">
                         {selectedSheet.vehicle.brand}{' '}
                         {selectedSheet.vehicle.model}
                       </p>
-                      <p className="text-secondary font-mono font-bold text-xs">
+                      <p className="text-secondary font-bold text-xs">
                         {selectedSheet.vehicle.plate}
                       </p>
                     </div>
                     <div>
-                      <p className="font-mono text-slate-500 text-xs">Conductor</p>
-                      <p className="font-mono font-semibold text-slate-900">
+                      <p className="text-slate-500 text-xs">Conductor</p>
+                      <p className="font-semibold text-slate-900">
                         {selectedSheet.driver.user.first_name}{' '}
                         {selectedSheet.driver.user.last_name}
                       </p>
-                      <p className="font-mono text-slate-500 text-xs">
-                        Licencia: {labelOf(CONTRACT_TYPE_LABEL, selectedSheet.driver.contract_type)}
+                      <p className="text-slate-500 text-xs">
+                        Modalidad: {labelOf(CONTRACT_TYPE_LABEL, selectedSheet.driver.contract_type)}
                       </p>
                     </div>
                     <div className="col-span-2">
-                      <p className="font-mono text-slate-500 text-xs">Destino & Motivo</p>
-                      <p className="font-mono font-semibold text-slate-900">
+                      <p className="text-slate-500 text-xs">Destino & Motivo</p>
+                      <p className="font-semibold text-slate-900">
                         {selectedSheet.request.destination}
                       </p>
-                      <p className="font-mono text-slate-500 text-xs italic">
+                      <p className="text-slate-500 text-xs italic">
                         "{selectedSheet.request.travel_reason}"
                       </p>
                     </div>
                     <div>
-                      <p className="font-mono text-slate-500 text-xs">Kilometraje Inicial</p>
-                      <p className="font-mono font-semibold text-emerald-600">
+                      <p className="text-slate-500 text-xs">Kilometraje Inicial</p>
+                      <p className="font-semibold text-emerald-600">
                         {selectedSheet.vehicle.current_mileage} km
                       </p>
                     </div>
                     {selectedSheet.trip_status === 'en_ruta' && (
                       <div>
-                        <p className="font-mono text-slate-500 text-xs">
+                        <p className="text-slate-500 text-xs">
                           Registrado al Salir
                         </p>
-                        <p className="font-mono font-semibold text-slate-900">
+                        <p className="font-semibold text-slate-900">
                           {selectedSheet.initial_mileage} km
                         </p>
                       </div>
@@ -495,9 +495,9 @@ const ChecklistDigitalPage: React.FC = () => {
                           key={level}
                           type="button"
                           onClick={() => setFuelLevel(level)}
-                          className={`py-2 px-1 text-xs font-mono font-semibold rounded-lg border text-center transition-all cursor-pointer ${
+                          className={`py-2 px-1 text-xs font-semibold rounded-lg border text-center transition-all cursor-pointer ${
                             fuelLevel === level
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-xs font-bold'
+                              ? 'bg-primary text-white border-primary shadow-xs font-bold'
                               : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                           }`}
                         >
@@ -543,7 +543,7 @@ const ChecklistDigitalPage: React.FC = () => {
                         key={category}
                         className="border-b border-slate-200 pb-6 last:border-0 last:pb-0"
                       >
-                        <h3 className="font-mono font-bold text-slate-900 text-base mb-4 flex items-center gap-2">
+                        <h3 className="font-bold text-slate-900 text-base mb-4 flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-secondary"></span>
                           {category}
                         </h3>
@@ -559,7 +559,7 @@ const ChecklistDigitalPage: React.FC = () => {
                                   key={comp.id}
                                   className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:border-slate-300 transition-all gap-4"
                                 >
-                                  <span className="font-mono font-medium text-slate-900 text-sm sm:text-base">
+                                  <span className="font-medium text-slate-900 text-sm sm:text-base">
                                     {comp.component_name}
                                   </span>
 
@@ -569,7 +569,7 @@ const ChecklistDigitalPage: React.FC = () => {
                                       onClick={() =>
                                         handleConditionChange(comp.id, 'BUENO')
                                       }
-                                      className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-all cursor-pointer ${
+                                      className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                                         currentCondition === 'BUENO'
                                           ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -585,7 +585,7 @@ const ChecklistDigitalPage: React.FC = () => {
                                           'REGULAR'
                                         )
                                       }
-                                      className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-all cursor-pointer ${
+                                      className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                                         currentCondition === 'REGULAR'
                                           ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
                                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -598,7 +598,7 @@ const ChecklistDigitalPage: React.FC = () => {
                                       onClick={() =>
                                         handleConditionChange(comp.id, 'MALO')
                                       }
-                                      className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-all cursor-pointer ${
+                                      className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                                         currentCondition === 'MALO'
                                           ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
                                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -633,10 +633,10 @@ const ChecklistDigitalPage: React.FC = () => {
                             size={24}
                           />
                           <div>
-                            <p className="font-mono font-bold text-rose-300">
+                            <p className="font-bold text-rose-300">
                               Excepción del Taller Detectada
                             </p>
-                            <p className="font-mono text-xs text-rose-400/90 mt-1">
+                            <p className="text-xs text-rose-400/90 mt-1">
                               Al marcar elementos defectuosos (MALO), el sistema
                               derivará automáticamente la unidad a estado "En
                               Taller" en el libro de novedades, bloqueando su
@@ -651,10 +651,10 @@ const ChecklistDigitalPage: React.FC = () => {
                             size={24}
                           />
                           <div>
-                            <p className="font-mono font-bold text-emerald-300">
+                            <p className="font-bold text-emerald-300">
                               Todo se encuentra en orden
                             </p>
-                            <p className="font-mono text-xs text-emerald-400/90 mt-1">
+                            <p className="text-xs text-emerald-400/90 mt-1">
                               {isArrivalInspection
                                 ? 'El checklist está limpio. Se registrará la llegada y se cerrará la hoja de ruta.'
                                 : 'El checklist está limpio. El vehículo será autorizado para salir a ruta e iniciar la comisión asignada.'}

@@ -219,13 +219,13 @@ export default function TripEvaluationPage() {
       </div>
 
       {msg && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-mono flex items-center gap-2" role="status">
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-2" role="status">
           <CheckCircle2 size={18} className="text-emerald-600 shrink-0" aria-hidden />
           <span>{msg}</span>
         </div>
       )}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-mono flex items-center gap-2" role="alert">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-2" role="alert">
           <AlertCircle size={18} className="text-rose-600 shrink-0" aria-hidden />
           <span>{error}</span>
         </div>
@@ -234,18 +234,18 @@ export default function TripEvaluationPage() {
       {loading ? (
         <div className="module-panel module-state flex flex-col items-center justify-center py-16" role="status">
           <span className="spinner w-8 h-8 mb-3" aria-hidden />
-          <p className="font-mono text-xs text-zinc-500">Buscando viajes pendientes de evaluación…</p>
+          <p className="text-xs text-slate-500">Buscando viajes pendientes de evaluación…</p>
         </div>
       ) : error && rows.length === 0 ? (
         <div className="module-panel module-state text-center py-16" role="alert">
-          <strong className="text-zinc-900 block mb-1">No se pudo cargar la bandeja</strong>
-          <p className="ops-muted text-xs font-mono">Use «Actualizar Pendientes» para intentarlo nuevamente.</p>
+          <strong className="text-slate-900 block mb-1">No se pudo cargar la bandeja</strong>
+          <p className="ops-muted text-xs ">Use «Actualizar Pendientes» para intentarlo nuevamente.</p>
         </div>
       ) : rows.length === 0 ? (
         <div className="module-panel module-state evaluation-empty text-center py-16" role="status">
           <CheckCircle2 size={44} className="text-emerald-500 mx-auto mb-3" aria-hidden />
-          <strong className="text-base text-zinc-900 block">No tienes viajes pendientes por calificar</strong>
-          <p className="ops-muted text-xs font-mono mt-1">Las evaluaciones aparecen automáticamente después de concluir un viaje institucional.</p>
+          <strong className="text-base text-slate-900 block">No tienes viajes pendientes por calificar</strong>
+          <p className="ops-muted text-xs mt-1">Las evaluaciones aparecen automáticamente después de concluir un viaje institucional.</p>
         </div>
       ) : (
         <>
@@ -283,7 +283,7 @@ export default function TripEvaluationPage() {
                   </h2>
                   <p className="sgv-dark-form-subtitle">{selected.request.travel_reason}</p>
                 </div>
-                <div className="evaluation-trip-meta font-mono text-xs text-slate-500 mt-3 flex flex-wrap gap-4">
+                <div className="evaluation-trip-meta text-xs text-slate-500 mt-3 flex flex-wrap gap-4">
                   <span className="flex items-center gap-1.5"><CalendarDays size={14} className="text-secondary" aria-hidden />{formatDateTimeReadable(selected.request.departure_date)}</span>
                   <span className="flex items-center gap-1.5"><UserRound size={14} className="text-secondary" aria-hidden />{selected.driver.user.first_name} {selected.driver.user.last_name}</span>
                   <span className="flex items-center gap-1.5"><CarFront size={14} className="text-secondary" aria-hidden />{selected.vehicle.brand} {selected.vehicle.model} · {selected.vehicle.plate}</span>
@@ -309,7 +309,7 @@ export default function TripEvaluationPage() {
 
               <div className="evaluation-comments">
                 <label className="form-label" htmlFor="eval-comments">
-                  Comentarios o novedades <span className="font-mono text-slate-500 text-xs">(opcional)</span>
+                  Comentarios o novedades <span className="text-slate-500 text-xs">(opcional)</span>
                 </label>
                 <div className="evaluation-textarea-wrap">
                   <textarea
@@ -322,12 +322,12 @@ export default function TripEvaluationPage() {
                     placeholder="Cuéntenos sobre retrasos, puntualidad, seguridad, trato o estado de la unidad..."
                     disabled={submitting}
                   />
-                  <span className="font-mono text-xs text-slate-500"><MessageSquare size={14} aria-hidden />{comments.length}/1000</span>
+                  <span className="text-xs text-slate-500"><MessageSquare size={14} aria-hidden />{comments.length}/1000</span>
                 </div>
               </div>
 
               <div className="sgv-dark-divider flex-wrap">
-                <p className="font-mono text-xs text-slate-500 mr-auto">Las dos calificaciones son obligatorias para asentar el registro.</p>
+                <p className="text-xs text-slate-500 mr-auto">Las dos calificaciones son obligatorias para asentar el registro.</p>
                 <Button
                   type="submit"
                   variant="dark-submit"

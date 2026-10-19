@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowUpRight } from 'lucide-react';
 
-export type StatCardTone = 'neutral' | 'info' | 'warn' | 'danger' | 'ok';
+export type StatCardTone = 'neutral' | 'info' | 'warn' | 'danger' | 'ok' | 'gold';
 
 export interface StatCardProps {
   label: string;
@@ -15,47 +16,10 @@ export interface StatCardProps {
   className?: string;
 }
 
-const TONE_STYLES: Record<
-  StatCardTone,
-  { label: string; text: string; icon: string; border: string; activeBorder: string }
-> = {
-  neutral: {
-    label: 'text-zinc-500',
-    text: 'text-zinc-900',
-    icon: 'text-zinc-400',
-    border: 'border-zinc-200',
-    activeBorder: 'border-zinc-900 ring-2 ring-zinc-900/10',
-  },
-  info: {
-    label: 'text-blue-600',
-    text: 'text-blue-600',
-    icon: 'text-blue-500',
-    border: 'border-blue-100',
-    activeBorder: 'border-blue-500 ring-2 ring-blue-500/20',
-  },
-  warn: {
-    label: 'text-amber-600',
-    text: 'text-amber-600',
-    icon: 'text-amber-500',
-    border: 'border-amber-100',
-    activeBorder: 'border-amber-500 ring-2 ring-amber-500/20',
-  },
-  danger: {
-    label: 'text-rose-600',
-    text: 'text-rose-600',
-    icon: 'text-rose-500',
-    border: 'border-rose-100',
-    activeBorder: 'border-rose-500 ring-2 ring-rose-500/20',
-  },
-  ok: {
-    label: 'text-emerald-600',
-    text: 'text-emerald-600',
-    icon: 'text-emerald-500',
-    border: 'border-emerald-100',
-    activeBorder: 'border-emerald-500 ring-2 ring-emerald-500/20',
-  },
-};
-
+/**
+ * Indicador institucional (KPI). Tono = acento lateral + icono teñido.
+ * Es enlace o botón cuando recibe `href`/`onClick`; de lo contrario, solo lectura.
+ */
 export default function StatCard({
   label,
   value,
@@ -67,45 +31,44 @@ export default function StatCard({
   onClick,
   className = '',
 }: StatCardProps) {
-  const styles = TONE_STYLES[tone] || TONE_STYLES.neutral;
   const isInteractive = Boolean(href || onClick);
+  const classes = [
+    'sg-stat',
+    `tone-${tone}`,
+    isInteractive ? 'is-interactive' : '',
+    active ? 'is-active' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-  const content = (
-    <div
-      className={`group p-4 bg-white rounded-xl shadow-xs flex flex-col justify-between gap-3 transition-all duration-150 border ${
-        active ? styles.activeBorder : `${styles.border} hover:border-zinc-400 hover:shadow-sm`
-      } ${isInteractive ? 'cursor-pointer select-none' : ''} ${className}`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span
-          className={`font-mono text-xs font-semibold uppercase tracking-wider truncate ${styles.label}`}
-        >
-          {label}
-        </span>
+  const body = (
+    <>
+      <div className="sg-stat-head">
+        <span className="sg-stat-label">{label}</span>
         {icon && (
-          <span className={`shrink-0 transition-transform ${isInteractive ? 'group-hover:scale-110' : ''} ${styles.icon}`}>
+          <span className="sg-stat-icon" aria-hidden="true">
             {icon}
           </span>
         )}
       </div>
-
-      <div className="flex items-baseline justify-between gap-2">
-        <strong className={`font-mono font-bold text-2xl leading-none ${styles.text}`}>
-          {value}
-        </strong>
-        {hint && (
-          <span className="font-mono text-[11px] text-zinc-400 truncate max-w-[120px] text-right">
-            {hint}
-          </span>
-        )}
-      </div>
-    </div>
+      <strong className="sg-stat-value">{value}</strong>
+      {hint && <span className="sg-stat-hint">{hint}</span>}
+      {isInteractive && (
+        <ArrowUpRight size={16} className="sg-stat-arrow" aria-hidden="true" />
+      )}
+    </>
   );
 
   if (href) {
     return (
-      <Link to={href} onClick={onClick} className="block text-inherit no-underline">
-        {content}
+      <Link
+        to={href}
+        onClick={onClick}
+        className={classes}
+        aria-current={active ? 'true' : undefined}
+      >
+        {body}
       </Link>
     );
   }
@@ -115,12 +78,14 @@ export default function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className="w-full text-left bg-transparent border-0 p-0 m-0 font-inherit cursor-pointer"
+        className={classes}
+        aria-pressed={active}
+        style={{ textAlign: 'left', cursor: 'pointer' }}
       >
-        {content}
+        {body}
       </button>
     );
   }
 
-  return content;
+  return <div className={classes}>{body}</div>;
 }

@@ -151,54 +151,54 @@ const RectorPanel: React.FC = () => {
           }}
           metricValue={pendingRequests.length}
           metricLabel="Por Autorizar"
-          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+          gradientClass="from-slate-900 via-slate-900 to-slate-800"
         />
       </div>
 
       {/* Modern Statistics Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+        <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs font-semibold text-amber-600 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
               Pendientes
             </span>
             <Clock size={16} className="text-amber-500" />
           </div>
           <div className="flex items-baseline justify-between">
-            <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+            <strong className="font-bold text-2xl text-slate-900 leading-none">
               {pendingRequests.length}
             </strong>
-            <span className="font-mono text-[11px] text-amber-600 font-semibold">Requieren firma</span>
+            <span className="text-[11px] text-amber-600 font-semibold">Requieren firma</span>
           </div>
         </div>
 
-        <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+        <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
               Procesadas
             </span>
             <CheckCircle2 size={16} className="text-emerald-500" />
           </div>
           <div className="flex items-baseline justify-between">
-            <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+            <strong className="font-bold text-2xl text-slate-900 leading-none">
               {processedRequests.length}
             </strong>
-            <span className="font-mono text-[11px] text-emerald-600 font-semibold">Aprobadas / Resueltas</span>
+            <span className="text-[11px] text-emerald-600 font-semibold">Aprobadas / Resueltas</span>
           </div>
         </div>
 
-        <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+        <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Total Solicitudes
             </span>
-            <FileCheck size={16} className="text-zinc-400" />
+            <FileCheck size={16} className="text-slate-500" />
           </div>
           <div className="flex items-baseline justify-between">
-            <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+            <strong className="font-bold text-2xl text-slate-900 leading-none">
               {requests.length}
             </strong>
-            <span className="font-mono text-[11px] text-zinc-400">Total registradas</span>
+            <span className="text-[11px] text-slate-500">Total registradas</span>
           </div>
         </div>
       </div>
@@ -207,7 +207,7 @@ const RectorPanel: React.FC = () => {
         <button
           onClick={fetchRequests}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition cursor-pointer font-mono"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition cursor-pointer "
         >
           <RefreshCw className={loading ? 'animate-spin' : ''} size={16} />
           <span>Actualizar</span>
@@ -414,7 +414,7 @@ const RectorPanel: React.FC = () => {
                             {req.requester?.first_name}{' '}
                             {req.requester?.last_name}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-slate-500">
                             {req.requester?.faculty_institution}
                           </div>
                         </td>
@@ -422,11 +422,11 @@ const RectorPanel: React.FC = () => {
                           <div className="font-medium text-slate-800">
                             {req.origin} &rarr; {req.destination}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-slate-500">
                             {req.departure_date} al {req.return_date}
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 text-right font-bold text-primary font-mono">
+                        <td className="px-4 py-3.5 text-right font-bold text-primary ">
                           ${Number(req.projected_cost).toFixed(2)}
                         </td>
                         <td className="px-4 py-3.5 text-slate-500 text-xs">

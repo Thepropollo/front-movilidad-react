@@ -145,68 +145,130 @@ export function ConductorStopsPage() {
         <form
           className="module-panel"
           onSubmit={(e) => void add(e)}
-          style={{ marginBottom: 16, display: 'grid', gap: 8 }}
+          style={{ marginBottom: 16, display: 'grid', gap: 12 }}
         >
-          <input
-            className="form-input"
-            placeholder="Ubicacion / canton"
-            value={form.location}
-            onChange={(e) => setForm({ ...form, location: e.target.value })}
-            required
-          />
-          <div className="filters-row">
+          <div className="form-group">
+            <label className="form-label" htmlFor="stop-location">
+              Ubicación o cantón visitado <span className="text-red-500">*</span>
+            </label>
             <input
+              id="stop-location"
               className="form-input"
-              type="number"
-              placeholder="Odometro km"
-              value={form.odometer_km}
-              onChange={(e) =>
-                setForm({ ...form, odometer_km: e.target.value })
-              }
+              placeholder="Ej. Cantón Chone, Campus El Carmen, Bahía de Caráquez"
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+              required
             />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div className="form-group">
+              <label className="form-label" htmlFor="stop-odometer">
+                Odómetro (km)
+              </label>
+              <input
+                id="stop-odometer"
+                className="form-input"
+                type="number"
+                placeholder="Ej. 124500"
+                value={form.odometer_km}
+                onChange={(e) =>
+                  setForm({ ...form, odometer_km: e.target.value })
+                }
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="stop-lat">
+                Latitud
+              </label>
+              <input
+                id="stop-lat"
+                className="form-input"
+                placeholder="-0.9537"
+                value={form.latitude}
+                onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="stop-lng">
+                Longitud
+              </label>
+              <input
+                id="stop-lng"
+                className="form-input"
+                placeholder="-80.7189"
+                value={form.longitude}
+                onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+              />
+            </div>
+            <div className="form-group flex flex-col justify-end">
+              <button
+                type="button"
+                className="btn btn-uleam-sso w-full justify-center"
+                onClick={() => void captureGps()}
+              >
+                <MapPin size={16} aria-hidden /> Capturar GPS
+              </button>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="stop-notes">
+              Notas u observaciones de la parada
+            </label>
             <input
+              id="stop-notes"
               className="form-input"
-              placeholder="Latitud"
-              value={form.latitude}
-              onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+              placeholder="Ej. Descenso de estudiantes para práctica de campo"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
-            <input
-              className="form-input"
-              placeholder="Longitud"
-              value={form.longitude}
-              onChange={(e) => setForm({ ...form, longitude: e.target.value })}
-            />
-            <button
-              type="button"
-              className="btn btn-uleam-sso"
-              onClick={() => void captureGps()}
-            >
-              <MapPin size={16} aria-hidden /> Capturar GPS
+          </div>
+          <div className="flex justify-end">
+            <button className="btn btn-primary" type="submit">
+              Registrar parada en ruta
             </button>
           </div>
-          <input
-            className="form-input"
-            placeholder="Notas"
-            value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-          />
-          <button className="btn btn-primary" type="submit">
-            Agregar parada
-          </button>
         </form>
       )}
       <div className="module-panel">
-        <ol>
-          {stops.map((s) => (
-            <li key={s.id}>
-              {s.sequence}. {s.location || s.visited_canton} · km{' '}
-              {s.odometer_km ?? '—'}
-              {s.latitude && s.longitude
-                ? ` · GPS ${s.latitude}, ${s.longitude}`
-                : ' · sin GPS'}
-            </li>
-          ))}
-        </ol>
+        <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+          <MapPin size={16} className="text-secondary" />
+          Hito de paradas registradas ({stops.length})
+        </h3>
+        {stops.length === 0 ? (
+          <p className="ops-muted text-xs">No se han registrado paradas intermedias aún.</p>
+        ) : (
+          <div className="space-y-2">
+            {stops.map((s) => (
+              <div
+                key={s.id}
+                className="p-3 rounded-lg border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center text-[11px] shrink-0">
+                    {s.sequence}
+                  </span>
+                  <strong className="text-slate-900 text-sm">
+                    {s.location || s.visited_canton}
+                  </strong>
+                </div>
+                <div className="flex items-center gap-3 text-slate-500 font-mono">
+                  {s.odometer_km !== null && s.odometer_km !== undefined && (
+                    <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700">
+                      {s.odometer_km} km
+                    </span>
+                  )}
+                  {s.latitude && s.longitude ? (
+                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                      <MapPin size={12} /> {s.latitude}, {s.longitude}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400">Sin GPS</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

@@ -23,6 +23,13 @@ interface TripRecord {
     destination?: string;
     origin?: string;
     departure_date?: string;
+    return_date?: string;
+    occupant_count?: number;
+    requester?: {
+      first_name?: string;
+      last_name?: string;
+      faculty_institution?: string;
+    };
   };
   driver?: {
     id?: number;
@@ -204,13 +211,13 @@ export default function ReassignPage() {
       </div>
 
       {msg && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-mono flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-2">
           <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
           <span>{msg}</span>
         </div>
       )}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-mono flex items-center gap-2" role="alert">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-2" role="alert">
           <AlertTriangle size={16} className="text-rose-600 shrink-0" />
           <span>{error}</span>
         </div>
@@ -219,12 +226,12 @@ export default function ReassignPage() {
       {loading ? (
         <div className="module-panel flex flex-col items-center justify-center py-16">
           <span className="spinner w-9 h-9 mb-3" />
-          <p className="ops-muted font-mono text-xs">Cargando viajes por reasignar…</p>
+          <p className="ops-muted text-xs">Cargando viajes por reasignar…</p>
         </div>
       ) : trips.length === 0 ? (
         <div className="module-panel flex flex-col items-center justify-center py-16 text-center">
           <CheckCircle2 size={40} className="text-emerald-500 mb-2" />
-          <p className="text-base font-semibold text-zinc-900">
+          <p className="text-base font-semibold text-slate-900">
             No hay viajes por reasignar.
           </p>
           <p className="ops-muted text-sm mt-1">
@@ -237,13 +244,13 @@ export default function ReassignPage() {
           const canSubmit = Boolean(current.driver_id);
           const isRejected = t.driver_response === 'rechazado';
           return (
-            <div key={t.id} className="module-panel shadow-sm border border-zinc-200 rounded-xl p-5 mb-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-4 border-b border-zinc-100 pb-3">
-                <h2 className="text-lg font-bold font-mono text-zinc-900 m-0">
+            <div key={t.id} className="module-panel shadow-sm border border-slate-200 rounded-xl p-5 mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4 border-b border-slate-100 pb-3">
+                <h2 className="text-lg font-bold text-slate-900 m-0">
                   #{t.id} · {t.request?.destination || 'Sin destino'}
                 </h2>
                 <span
-                  className={`px-3 py-1 text-xs font-mono font-bold rounded-full ${
+                  className={`px-3 py-1 text-xs font-bold rounded-full ${
                     isRejected
                       ? 'bg-rose-100 text-rose-800 border border-rose-200'
                       : 'bg-amber-100 text-amber-800 border border-amber-200'
@@ -255,40 +262,51 @@ export default function ReassignPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                 <div>
-                  <span className="ops-muted text-xs font-mono block">Origen</span>
-                  <p className="text-sm font-semibold text-zinc-800 m-0 mt-0.5">
-                    {t.request?.origin || '—'}
+                  <span className="ops-muted text-xs block">Ruta</span>
+                  <p className="text-sm font-semibold text-slate-800 m-0 mt-0.5">
+                    {t.request?.origin || '—'} → {t.request?.destination || '—'}
                   </p>
                 </div>
                 <div>
-                  <span className="ops-muted text-xs font-mono block">Salida</span>
-                  <p className="text-sm font-semibold text-zinc-800 m-0 mt-0.5">
+                  <span className="ops-muted text-xs block">Fechas</span>
+                  <p className="text-sm font-semibold text-slate-800 m-0 mt-0.5">
                     {formatDateReadable(t.request?.departure_date)}
+                    {t.request?.return_date ? ` → ${formatDateReadable(t.request.return_date)}` : ''}
                   </p>
                 </div>
                 <div>
-                  <span className="ops-muted text-xs font-mono block">Conductor actual</span>
-                  <p className="text-sm font-semibold text-zinc-800 m-0 mt-0.5">
+                  <span className="ops-muted text-xs block">Conductor actual</span>
+                  <p className="text-sm font-semibold text-slate-800 m-0 mt-0.5">
                     {t.driver?.user?.first_name || ''} {t.driver?.user?.last_name || ''}
                   </p>
                 </div>
                 <div>
-                  <span className="ops-muted text-xs font-mono block">Vehículo actual</span>
-                  <p className="text-sm font-semibold text-zinc-800 m-0 mt-0.5">
+                  <span className="ops-muted text-xs block">Vehículo actual</span>
+                  <p className="text-sm font-semibold text-slate-800 m-0 mt-0.5">
                     {t.vehicle?.plate || '—'}
                   </p>
                 </div>
+                {t.request?.requester && (
+                  <div className="col-span-2 sm:col-span-3">
+                    <span className="ops-muted text-xs block">Solicitante institucional</span>
+                    <p className="text-xs font-semibold text-slate-700 m-0 mt-0.5">
+                      {t.request.requester.first_name} {t.request.requester.last_name}
+                      {t.request.requester.faculty_institution ? ` · ${t.request.requester.faculty_institution}` : ''}
+                      {t.request.occupant_count ? ` · ${t.request.occupant_count} pasajero(s)` : ''}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {t.driver_reject_reason && (
-                <div className="p-3 bg-rose-50/70 border border-rose-200/60 rounded-lg text-xs font-mono text-rose-800 mb-4">
+                <div className="p-3 bg-rose-50/70 border border-rose-200/60 rounded-lg text-xs text-rose-800 mb-4">
                   <strong>Motivo del rechazo:</strong> {t.driver_reject_reason}
                 </div>
               )}
 
               <div className="flex flex-wrap items-end gap-3 pt-2">
                 <label className="flex-1 min-w-[220px]">
-                  <span className="text-xs font-mono font-semibold text-zinc-700 block mb-1">
+                  <span className="text-xs font-semibold text-slate-700 block mb-1">
                     Nuevo conductor *
                   </span>
                   <select
@@ -316,7 +334,7 @@ export default function ReassignPage() {
                   </select>
                 </label>
                 <label className="flex-1 min-w-[220px]">
-                  <span className="text-xs font-mono font-semibold text-zinc-700 block mb-1">
+                  <span className="text-xs font-semibold text-slate-700 block mb-1">
                     Nuevo vehículo (opcional)
                   </span>
                   <select
@@ -344,7 +362,7 @@ export default function ReassignPage() {
                 </label>
                 <button
                   type="button"
-                  className="btn btn-primary h-[42px] px-6 text-xs font-mono uppercase tracking-wider"
+                  className="btn btn-primary h-[42px] px-6 text-xs uppercase tracking-wider"
                   disabled={!canSubmit || savingId === t.id}
                   onClick={() => void submit(t.id)}
                 >

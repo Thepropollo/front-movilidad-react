@@ -286,7 +286,7 @@ const TransportPanel: React.FC = () => {
           }}
           metricValue={requests.length}
           metricLabel="Por Asignar"
-          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+          gradientClass="from-slate-900 via-slate-900 to-slate-800"
         />
       </div>
 
@@ -399,7 +399,7 @@ const TransportPanel: React.FC = () => {
                     >
                       {labelOf(MOBILIZATION_TYPE_LABEL, req.mobilization_type)}
                     </span>
-                    <span className="font-extrabold text-primary text-sm font-mono">
+                    <span className="font-extrabold text-primary text-sm ">
                       ${Number(req.projected_cost).toFixed(2)}
                     </span>
                   </div>
@@ -441,7 +441,7 @@ const TransportPanel: React.FC = () => {
               <h3 className="text-slate-700 font-bold text-lg">
                 Asignación de Recursos en Patio
               </h3>
-              <p className="text-slate-400 text-sm mt-1 max-w-sm">
+              <p className="text-slate-500 text-sm mt-1 max-w-sm">
                 Seleccione una solicitud de movilización de la lista de la
                 izquierda para comenzar el despacho de vehículos y conductores.
               </p>

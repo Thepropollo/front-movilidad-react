@@ -466,10 +466,10 @@ export default function FleetVehiclesPage() {
       <div className="sgv-dark-table-card p-6">
         <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
           <div>
-            <h2 className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Vehículos registrados
             </h2>
-            <p className="font-mono text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Inventario de la flota vehicular y vigencia documental
             </p>
           </div>
@@ -499,7 +499,7 @@ export default function FleetVehiclesPage() {
               {filteredVehicles.length > 0 ? (
                 filteredVehicles.map((v, idx) => (
                   <tr key={v.id}>
-                    <td className="font-mono font-bold text-slate-900">{v.plate}</td>
+                    <td className="font-bold text-slate-900">{v.plate}</td>
                     <td>
                       <div className="flex items-center gap-3">
                         <div
@@ -513,10 +513,10 @@ export default function FleetVehiclesPage() {
                           aria-hidden="true"
                         />
                         <div>
-                          <span className="font-mono font-semibold text-slate-900 block">
+                          <span className="font-semibold text-slate-900 block">
                             {v.brand} {v.model}
                           </span>
-                          <span className="font-mono text-xs text-slate-500">
+                          <span className="text-xs text-slate-500">
                             Año {v.year} · {v.color}
                           </span>
                         </div>
@@ -538,7 +538,7 @@ export default function FleetVehiclesPage() {
                             {meta.label}
                           </span>
                           {document?.expiration_date && (
-                            <small className="block font-mono text-[11px] text-slate-500 mt-1">
+                            <small className="block text-[11px] text-slate-500 mt-1">
                               Vence: {document.expiration_date}
                             </small>
                           )}
@@ -575,7 +575,7 @@ export default function FleetVehiclesPage() {
                 <tr>
                   <td
                     colSpan={3 + VEHICLE_DOCUMENT_TYPES.length}
-                    className="text-center py-8 font-mono text-slate-400 text-sm"
+                    className="text-center py-8 text-slate-500 text-sm"
                   >
                     {vehicleSearch.trim()
                       ? 'No se encontraron vehículos con esa búsqueda.'

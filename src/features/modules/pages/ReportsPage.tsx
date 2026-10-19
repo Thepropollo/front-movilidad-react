@@ -125,7 +125,7 @@ export default function ReportsPage() {
         }}
         metricValue={data?.total ?? 'RPT'}
         metricLabel="Total Registros"
-        gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+        gradientClass="from-slate-900 via-slate-900 to-slate-800"
       />
 
       {/* Available Report Types Grid (Image 1 format) */}
@@ -137,14 +137,14 @@ export default function ReportsPage() {
             subtitle={`Formato oficial ${KIND_META[a.id]?.code || 'ULEAM'}`}
             icon={<FileText size={18} />}
             badge={kind === a.id ? 'Activo' : undefined}
-            className={kind === a.id ? 'border-zinc-900 bg-zinc-50/70 ring-1 ring-zinc-900' : ''}
+            className={kind === a.id ? 'border-primary bg-slate-50/70 ring-1 ring-primary' : ''}
             onClick={() => setKind(a.id)}
           />
         ))}
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-mono" role="alert">
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs " role="alert">
           {error}
         </div>
       )}
@@ -224,64 +224,64 @@ export default function ReportsPage() {
 
       {data && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 my-3">
-          <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
-            <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+          <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Registros
             </span>
-            <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+            <strong className="font-bold text-2xl text-slate-900 leading-none">
               {data.total}
             </strong>
           </div>
 
           {data.summary?.costo_total != null && (
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
-              <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Costo proyectado
               </span>
-              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+              <strong className="font-bold text-2xl text-slate-900 leading-none">
                 ${Number(data.summary.costo_total).toFixed(2)}
               </strong>
             </div>
           )}
 
           {data.summary?.mantenimiento_vencido != null && (
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
-              <span className="font-mono text-xs font-semibold text-amber-600 uppercase tracking-wider">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
                 Mant. Vencido
               </span>
-              <strong className="font-mono font-bold text-2xl text-amber-600 leading-none">
+              <strong className="font-bold text-2xl text-amber-600 leading-none">
                 {data.summary.mantenimiento_vencido}
               </strong>
             </div>
           )}
 
           {data.summary?.vencidos != null && (
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
-              <span className="font-mono text-xs font-semibold text-rose-600 uppercase tracking-wider">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider">
                 Aceite vencido
               </span>
-              <strong className="font-mono font-bold text-2xl text-rose-600 leading-none">
+              <strong className="font-bold text-2xl text-rose-600 leading-none">
                 {data.summary.vencidos}
               </strong>
             </div>
           )}
 
           {data.summary?.km_total != null && (
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
-              <span className="font-mono text-xs font-semibold text-sky-600 uppercase tracking-wider">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+              <span className="text-xs font-semibold text-sky-600 uppercase tracking-wider">
                 Km recorridos
               </span>
-              <strong className="font-mono font-bold text-2xl text-sky-600 leading-none">
+              <strong className="font-bold text-2xl text-sky-600 leading-none">
                 {data.summary.km_total}
               </strong>
             </div>
           )}
 
-          <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
-            <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+          <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Generado
             </span>
-            <strong className="font-mono font-bold text-xs text-zinc-700 leading-tight truncate">
+            <strong className="font-bold text-xs text-slate-700 leading-tight truncate">
               {String(data.generated_at).replace('T', ' ').slice(0, 19)}
             </strong>
           </div>

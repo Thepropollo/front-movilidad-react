@@ -10,6 +10,7 @@ import {
   Car,
   Plane,
   ArrowRight,
+  User,
 } from 'lucide-react';
 import api from '@/services/api';
 import Button from '@/components/Button';
@@ -41,6 +42,21 @@ interface RequestData {
   projected_cost: number;
   status: string;
   phases?: ProcessPhase[];
+  route_sheet?: {
+    id: number;
+    trip_status?: string;
+    vehicle?: {
+      plate: string;
+      brand: string;
+      model: string;
+    };
+    driver?: {
+      user?: {
+        first_name: string;
+        last_name: string;
+      };
+    };
+  } | null;
 }
 
 const RequestForm: React.FC = () => {
@@ -509,7 +525,7 @@ const RequestForm: React.FC = () => {
                     height={240}
                   />
                   {destinationPoint.lat !== null && destinationPoint.lng !== null && (
-                    <p className="destination-coordinates font-mono text-xs text-slate-400">
+                    <p className="destination-coordinates text-xs text-slate-500">
                       Punto seleccionado: {destinationPoint.lat.toFixed(6)},{' '}
                       {destinationPoint.lng.toFixed(6)}
                     </p>
@@ -656,6 +672,15 @@ const RequestForm: React.FC = () => {
                   setReturnTime('');
                   setOrigin('MANTA');
                   setDestinationAddress('');
+                  setOccupantCount('1');
+                  setPublicServantsCount('0');
+                  setCommunicationNumber('');
+                  setAcademicProgram('');
+                  setActivityType('visitas_academicas');
+                  setDestinationPoint({ lat: null, lng: null, address: '' });
+                  setShowDestinationMap(false);
+                  setLocationError(null);
+                  setErrors(null);
                 }}
               >
                 Limpiar
@@ -677,16 +702,16 @@ const RequestForm: React.FC = () => {
         <div className="lg:col-span-6 sgv-dark-table-card p-6 sm:p-8 self-start">
           <div className="flex justify-between items-center mb-6 pb-3 border-b border-slate-200">
             <div>
-              <h2 className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                 Historial de Solicitudes
               </h2>
-              <p className="font-mono text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Registro cronológico de comisiones solicitadas
               </p>
             </div>
             <button
               onClick={fetchRequests}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
               title="Actualizar listado"
               aria-label="Actualizar historial de solicitudes"
             >
@@ -697,10 +722,10 @@ const RequestForm: React.FC = () => {
           {pastRequests.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="mx-auto text-slate-300 mb-4" size={48} />
-              <p className="font-mono text-slate-600 font-medium">
+              <p className="text-slate-600 font-medium">
                 Aún no has registrado solicitudes de movilización.
               </p>
-              <p className="font-mono text-slate-400 text-xs mt-1">
+              <p className="text-slate-500 text-xs mt-1">
                 Completa el formulario de la izquierda para ingresar tu primera solicitud.
               </p>
             </div>
@@ -718,13 +743,13 @@ const RequestForm: React.FC = () => {
                       <div className="flex items-start gap-3 min-w-0">
                         <div className={`sgv-avatar-squircle ${avatarVariant} mt-0.5`} aria-hidden="true" />
                         <div className="min-w-0">
-                          <p className="font-mono font-bold text-slate-900 text-sm flex items-center gap-2">
+                          <p className="font-bold text-slate-900 text-sm flex items-center gap-2">
                             {req.origin}
-                            <ArrowRight size={14} className="text-slate-400 shrink-0" />
+                            <ArrowRight size={14} className="text-slate-500 shrink-0" />
                             {req.destination}
                           </p>
-                          <p className="font-mono text-xs text-slate-500 mt-1">
-                            <Calendar size={12} className="inline mr-1 text-slate-400" />
+                          <p className="text-xs text-slate-500 mt-1">
+                            <Calendar size={12} className="inline mr-1 text-slate-500" />
                             {formatDateReadable(req.departure_date)}
                             {req.departure_time ? ` · ${req.departure_time}` : ''}
                             <span className="mx-1 text-slate-300">→</span>
@@ -734,8 +759,8 @@ const RequestForm: React.FC = () => {
                             {req.estimated_days} d
                           </p>
                           {req.destination_address && (
-                            <p className="font-mono text-xs text-slate-500 mt-1 flex items-start gap-1">
-                              <MapPin size={12} className="mt-0.5 shrink-0 text-slate-400" />
+                            <p className="text-xs text-slate-500 mt-1 flex items-start gap-1">
+                              <MapPin size={12} className="mt-0.5 shrink-0 text-slate-500" />
                               <span className="truncate">{req.destination_address}</span>
                             </p>
                           )}
@@ -743,16 +768,35 @@ const RequestForm: React.FC = () => {
                       </div>
                       <div>{getStatusBadge(req.status)}</div>
                     </div>
+                    {req.route_sheet && (
+                      <div className="mt-2.5 p-2.5 rounded-lg bg-blue-50/70 border border-blue-100 flex flex-wrap items-center justify-between text-xs gap-2">
+                        <div className="flex items-center gap-1.5 text-blue-900 font-medium">
+                          <Car size={13} className="text-blue-700 shrink-0" />
+                          <span>
+                            Unidad: <strong>{req.route_sheet.vehicle?.plate || 'Asignada'}</strong>
+                            {req.route_sheet.vehicle ? ` (${req.route_sheet.vehicle.brand} ${req.route_sheet.vehicle.model})` : ''}
+                          </span>
+                        </div>
+                        {req.route_sheet.driver?.user && (
+                          <div className="flex items-center gap-1.5 text-blue-900 font-medium">
+                            <User size={13} className="text-blue-700 shrink-0" />
+                            <span>
+                              Conductor: <strong>{req.route_sheet.driver.user.first_name} {req.route_sheet.driver.user.last_name}</strong>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {req.phases && req.phases.length > 0 && (
                       <div className="mt-3">
                         <ProcessPhaseLine phases={req.phases} compact />
                       </div>
                     )}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
-                      <span className="font-mono text-xs text-slate-500 uppercase">
+                      <span className="text-xs text-slate-500 uppercase">
                         {labelOf(MOBILIZATION_TYPE_LABEL, req.mobilization_type)}
                       </span>
-                      <span className="font-mono font-bold text-emerald-600 text-sm">
+                      <span className="font-bold text-emerald-600 text-sm">
                         ${Number(req.projected_cost).toFixed(2)}
                       </span>
                     </div>
@@ -805,7 +849,7 @@ const RequestForm: React.FC = () => {
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                 Días Estimados
               </span>
-              <span className="text-lg font-bold text-slate-900 font-mono">
+              <span className="text-lg font-bold text-slate-900 ">
                 {preCalcData?.estimated_days} día(s)
               </span>
             </div>
@@ -813,7 +857,7 @@ const RequestForm: React.FC = () => {
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                 Costo Proyectado
               </span>
-              <span className="text-xl font-extrabold text-primary font-mono">
+              <span className="text-xl font-extrabold text-primary ">
                 ${Number(preCalcData?.projected_cost).toFixed(2)}
               </span>
             </div>

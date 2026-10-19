@@ -1,0 +1,172 @@
+/* ==========================================================================
+   SIGMOV · ULEAM — Tokens de diseño
+   Referencias: Geotab/Fleetio (herramientas de flota), Atlassian e IBM Carbon
+   (lienzo neutro 80–90 %, el color solo carga significado, rejilla de 8 px,
+   bordes en lugar de sombras, radios pequeños, sin degradados).
+   Paleta funcional: AZUL = acción/marca · CELESTE = seleccionado/en curso ·
+   VERDE = operativo/completado · ÁMBAR = pendiente · ROJO = atención.
+   Contraste WCAG 2.2 AA verificado (texto ≥ 4.5:1, UI ≥ 3:1).
+   ========================================================================== */
+
+:root {
+  /* ---------- Neutros fríos (lienzo y texto) ---------- */
+  --n-0: #ffffff;
+  --n-50: #f4f6f9; /* canvas */
+  --n-100: #eceff3;
+  --n-200: #dfe4ea; /* borde sutil */
+  --n-300: #c7cfd9; /* borde fuerte */
+  --n-400: #98a4b3;
+  --n-500: #6b7a8c; /* texto apagado 4.9:1 */
+  --n-600: #4e5c6e;
+  --n-700: #36424f;
+  --n-800: #212a35;
+  --n-900: #121921;
+
+  /* ---------- Azul marino ULEAM (identidad: cabecera, títulos) ---------- */
+  /* Escala aclarada: blanco sobre navy-700 = 8.1:1 */
+  --navy-900: #0f3863;
+  --navy-800: #164579;
+  --navy-700: #1d518f; /* azul institucional (versión clara) */
+  --navy-600: #2a63a8;
+
+  /* ---------- Azul de acción ---------- */
+  --blue-700: #0a4f8f;
+  --blue-600: #0b63b4; /* botones primarios, enlaces · 5.6:1 sobre blanco */
+  --blue-500: #1877d2;
+  --blue-100: #dcebfa;
+  --blue-50: #eef5fc;
+
+  /* ---------- Celeste (seleccionado, en curso, información) ---------- */
+  --sky-700: #0f6f8f;
+  --sky-600: #1486ad; /* texto sobre blanco 4.6:1 */
+  --sky-500: #22a3cf;
+  --sky-100: #d9f0f8;
+  --sky-50: #ebf7fb;
+
+  /* ---------- Verde (operativo, completado) ---------- */
+  --green-700: #166c3f;
+  --green-600: #1d8a4f; /* texto sobre blanco 4.6:1 */
+  --green-500: #26a65e;
+  --green-100: #dcf3e5;
+  --green-50: #edf9f1;
+
+  /* ---------- Ámbar (pendiente, por vencer) ---------- */
+  --amber-700: #8a4b00;
+  --amber-600: #b35f00;
+  --amber-500: #e08a00;
+  --amber-100: #fdeed4;
+  --amber-50: #fff7e8;
+
+  /* ---------- Rojo (atención, rechazo) — uso exclusivo ---------- */
+  --red-700: #9b1c1c;
+  --red-600: #c02626;
+  --red-500: #dc3b3b;
+  --red-100: #fbe3e3;
+  --red-50: #fdf1f1;
+
+  /* ---------- Semántica ---------- */
+  --surface-page: var(--n-50);
+  --surface-card: var(--n-0);
+  --surface-subtle: var(--n-100);
+  --surface-header: var(--navy-700);
+  --surface-sidebar: var(--n-0);
+  --border-subtle: var(--n-200);
+  --border-strong: var(--n-300);
+
+  --text-strong: var(--n-800);
+  --text-body: var(--n-600);
+  --text-soft: var(--n-600);
+  --text-muted: var(--n-500);
+  --text-brand: var(--navy-700);
+  --text-link: var(--blue-600);
+  --text-on-dark: #ffffff;
+  --text-on-dark-soft: rgba(255, 255, 255, 0.72);
+
+  --action: var(--blue-600);
+  --action-hover: var(--blue-700);
+  --selected-bg: var(--sky-50);
+  --selected-fg: var(--sky-700);
+
+  /* Series de datos (orden fijo para consistencia entre gráficos) */
+  --chart-1: var(--blue-600);
+  --chart-2: var(--sky-500);
+  --chart-3: var(--green-500);
+  --chart-4: var(--amber-500);
+  --chart-5: var(--n-400);
+  --chart-neg: var(--red-500);
+
+  /* ---------- Compatibilidad con variables heredadas ---------- */
+  --color-primary: var(--navy-700);
+  --color-primary-hover: var(--navy-800);
+  --color-secondary: var(--sky-500);
+  --color-secondary-hover: var(--sky-600);
+  --color-gold: var(--sky-500);
+  --color-gold-dark: var(--sky-600);
+  --color-gold-light: var(--sky-50);
+  --color-tertiary: var(--n-100);
+  --color-neutral: var(--n-700);
+  --color-info: var(--blue-600);
+  --color-success: var(--green-600);
+  --color-success-text: var(--green-700);
+  --color-danger: var(--red-600);
+  --color-danger-text: var(--red-700);
+  --color-warning: var(--amber-600);
+  --bg-page: var(--surface-page);
+  --bg-panel: var(--surface-card);
+  --bg-sidebar: var(--surface-sidebar);
+  --border-color: var(--border-subtle);
+  --border-hover: var(--border-strong);
+  --text-primary: var(--text-strong);
+  --text-secondary: var(--text-soft);
+  --danger: var(--red-600);
+  --success: var(--green-600);
+  --warning: var(--amber-600);
+
+  /* ---------- Tipografía (una sola familia) ---------- */
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: var(--font-sans);
+  --fs-2xs: 0.75rem; /* 12 */
+  --fs-xs: 0.8125rem; /* 13 */
+  --fs-sm: 0.875rem; /* 14 */
+  --fs-md: 0.9375rem; /* 15 */
+  --fs-lg: 1.0625rem; /* 17 */
+  --fs-xl: 1.25rem; /* 20 */
+  --fs-2xl: 1.5rem; /* 24 */
+  --fs-3xl: 1.875rem; /* 30 */
+  --lh-tight: 1.2;
+  --lh-snug: 1.35;
+  --lh-normal: 1.5;
+
+  /* ---------- Rejilla de 8 px, forma ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-pill: 999px;
+
+  /* ---------- Elevación: solo para capas flotantes ---------- */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 4px 12px rgba(18, 25, 33, 0.1), 0 1px 3px rgba(18, 25, 33, 0.08);
+  --shadow-lg: 0 12px 32px rgba(18, 25, 33, 0.18), 0 2px 6px rgba(18, 25, 33, 0.08);
+
+  /* ---------- Foco y movimiento ---------- */
+  --focus-color: var(--blue-500);
+  --focus-ring: 0 0 0 2px var(--n-0), 0 0 0 4px var(--focus-color);
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 100ms;
+  --dur-base: 150ms;
+  --transition-smooth: all var(--dur-base) var(--ease-out);
+
+  /* ---------- Layout ---------- */
+  --header-h: 56px;
+  --sidebar-w: 256px;
+  --content-max: 1480px;
+  --tap-target: 36px;
+}

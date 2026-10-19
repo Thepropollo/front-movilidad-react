@@ -84,12 +84,12 @@ export default function ModuleStubPage({ title, description }: Props) {
         />
       </div>
 
-      <div className="module-panel shadow-sm border border-zinc-200 rounded-xl p-5" role="status">
-        <h2 className="text-base font-bold font-mono text-zinc-900 mb-2">Arquitectura y Reglas del Módulo</h2>
-        <p className="ops-muted text-xs font-mono leading-relaxed mb-4">
+      <div className="module-panel shadow-sm border border-slate-200 rounded-xl p-5" role="status">
+        <h2 className="text-base font-bold text-slate-900 mb-2">Arquitectura y Reglas del Módulo</h2>
+        <p className="ops-muted text-xs leading-relaxed mb-4">
           La interfaz y reglas de negocio de este módulo ya están definidas para su clase de usuario. La persistencia completa se activará cuando el endpoint correspondiente esté desplegado en el servidor institucional.
         </p>
-        <ul className="text-xs font-mono text-zinc-700 space-y-2 list-disc pl-5">
+        <ul className="text-xs text-slate-700 space-y-2 list-disc pl-5">
           <li>Navegación, guards de autenticación y permisos por rol: <strong>activos</strong>.</li>
           <li>Contraste, foco visual y etiquetas semánticas: <strong>aplicados en el shell</strong>.</li>
           <li>Integración con API RESTful: <strong>en cola según prioridad del flujo operativo</strong>.</li>

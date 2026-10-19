@@ -127,7 +127,7 @@ export default function MapPage() {
   const legend = useMemo(
     () => [
       { c: '#0b5fff', t: 'Origen' },
-      { c: '#002855', t: 'Paradas GPS' },
+      { c: '#1d518f', t: 'Paradas GPS' },
       { c: '#c5a059', t: 'Destino' },
     ],
     []
@@ -209,7 +209,7 @@ export default function MapPage() {
       )}
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-mono flex items-center gap-2" role="alert">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-2" role="alert">
           <AlertCircle size={16} className="text-rose-600 shrink-0" />
           <span>{error}</span>
         </div>
@@ -242,30 +242,30 @@ export default function MapPage() {
             ))}
           </select>
           {!loadingTrips && trips.length === 0 && (
-            <p className="ops-muted text-xs font-mono mt-2" role="status">
+            <p className="ops-muted text-xs mt-2" role="status">
               No hay hojas de ruta disponibles para visualizar.
             </p>
           )}
 
           {detail && (
-            <div className="map-meta mt-4 space-y-1 text-xs font-mono">
+            <div className="map-meta mt-4 space-y-1 text-xs ">
               <p className="m-0">
-                <strong className="text-zinc-700">Conductor:</strong> {detail.driver?.first_name}{' '}
+                <strong className="text-slate-700">Conductor:</strong> {detail.driver?.first_name}{' '}
                 {detail.driver?.last_name}
               </p>
               <p className="m-0">
-                <strong className="text-zinc-700">Vehículo:</strong> {detail.vehicle?.plate}
+                <strong className="text-slate-700">Vehículo:</strong> {detail.vehicle?.plate}
               </p>
               <p className="m-0">
-                <strong className="text-zinc-700">Paradas:</strong> {(detail.stops || []).length}
+                <strong className="text-slate-700">Paradas:</strong> {(detail.stops || []).length}
               </p>
               <p className="m-0">
-                <strong className="text-zinc-700">Estado:</strong>{' '}
+                <strong className="text-slate-700">Estado:</strong>{' '}
                 {labelOf(TRIP_STATUS_LABEL, detail.trip_status || '')}
               </p>
               {detail.destination_address && (
                 <p className="m-0">
-                  <strong className="text-zinc-700">Dirección destino:</strong> {detail.destination_address}
+                  <strong className="text-slate-700">Dirección destino:</strong> {detail.destination_address}
                 </p>
               )}
             </div>
@@ -273,14 +273,14 @@ export default function MapPage() {
 
           <ul className="map-legend mt-4" aria-label="Leyenda">
             {legend.map((l) => (
-              <li key={l.t} className="flex items-center gap-2 text-xs font-mono">
+              <li key={l.t} className="flex items-center gap-2 text-xs ">
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ background: l.c }} />
                 <span>{l.t}</span>
               </li>
             ))}
           </ul>
           {loading && (
-            <div className="map-sidebar-loading flex items-center gap-2 text-xs font-mono text-zinc-500 mt-3" role="status">
+            <div className="map-sidebar-loading flex items-center gap-2 text-xs text-slate-500 mt-3" role="status">
               <span className="spinner w-4 h-4" />
               <span>Armando mapa…</span>
             </div>
@@ -292,11 +292,11 @@ export default function MapPage() {
           {loading && (
             <div className="map-loading" role="status">
               <span className="spinner w-7 h-7" />
-              <span className="text-xs font-mono">Localizando origen y paradas…</span>
+              <span className="text-xs ">Localizando origen y paradas…</span>
             </div>
           )}
           {markers.length === 0 && !loading && (
-            <p className="map-empty text-xs font-mono">
+            <p className="map-empty text-xs ">
               Seleccione un viaje en el menú lateral para ver la ruta en el mapa satelital.
             </p>
           )}

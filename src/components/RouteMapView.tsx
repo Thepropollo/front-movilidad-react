@@ -37,7 +37,7 @@ const liveIcon = () =>
 const COLORS: Record<string, string> = {
   origin: '#0b5fff',
   destination: '#c5a059',
-  stop: '#002855',
+  stop: '#1d518f',
   live: '#2e7d32',
 };
 
@@ -119,7 +119,7 @@ export default function RouteMapView({
     let fallbackLine: L.Polyline | null = null;
     if (drawLine && points.length >= 2) {
       fallbackLine = L.polyline(points, {
-        color: '#002855',
+        color: '#1d518f',
         weight: 4,
         opacity: 0.85,
         dashArray: '8 8',
@@ -156,7 +156,7 @@ export default function RouteMapView({
             (p) => [p.lat, p.lng] as L.LatLngExpression
           );
           L.polyline(routeLatLngs, {
-            color: '#002855',
+            color: '#1d518f',
             weight: 5,
             opacity: 0.9,
           }).addTo(routeLayer);

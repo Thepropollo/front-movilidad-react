@@ -1,4 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
+import {
+  BarChart3,
+  BookOpen,
+  Calendar,
+  CalendarDays,
+  Car,
+  FileText,
+  Layers,
+  ShieldCheck,
+  Users,
+  Wrench,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_EXPERIENCE } from '../../config/roleExperience';
 import {
@@ -7,20 +19,8 @@ import {
   isDualDocenteFacultad,
   type RoleId,
 } from '../../config/roles';
-import api from '@/services/api';
 import OperationalDashboard from './OperationalDashboard';
 import ResourceCard from '@/components/ResourceCard';
-import HeroMetricCard from '@/components/HeroMetricCard';
-import {
-  Car,
-  FileText,
-  Layers,
-  ShieldCheck,
-  Sparkles,
-  Wrench,
-  BarChart3,
-  Calendar,
-} from 'lucide-react';
 
 type Props = {
   focusRoles: RoleId[];
@@ -30,25 +30,25 @@ type Props = {
 
 function getPillarIcon(title: string) {
   const t = title.toLowerCase();
-  if (t.includes('solicitud') || t.includes('trámite') || t.includes('docum')) {
-    return <FileText size={18} />;
-  }
-  if (t.includes('vehícul') || t.includes('flota') || t.includes('auto')) {
-    return <Car size={18} />;
-  }
-  if (t.includes('manten') || t.includes('taller') || t.includes('orden')) {
-    return <Wrench size={18} />;
-  }
-  if (t.includes('seguridad') || t.includes('garita') || t.includes('control')) {
-    return <ShieldCheck size={18} />;
-  }
-  if (t.includes('agenda') || t.includes('horario') || t.includes('calendario')) {
-    return <Calendar size={18} />;
-  }
-  if (t.includes('reporte') || t.includes('indicador') || t.includes('métrica')) {
-    return <BarChart3 size={18} />;
-  }
-  return <Layers size={18} />;
+  if (t.includes('particip') || t.includes('invitac')) return <Users size={20} />;
+  if (t.includes('solicit') || t.includes('trámite') || t.includes('docum') || t.includes('pendiente'))
+    return <FileText size={20} />;
+  if (t.includes('vehícul') || t.includes('flota') || t.includes('viaje') || t.includes('hoja'))
+    return <Car size={20} />;
+  if (t.includes('manten') || t.includes('taller') || t.includes('orden') || t.includes('lubric') || t.includes('novedad'))
+    return <Wrench size={20} />;
+  if (t.includes('autoriz') || t.includes('inspec') || t.includes('evaluar')) return <ShieldCheck size={20} />;
+  if (t.includes('agenda') || t.includes('horario') || t.includes('calendario')) return <Calendar size={20} />;
+  if (t.includes('reporte') || t.includes('indicador') || t.includes('historial') || t.includes('seguim') || t.includes('trazab'))
+    return <BarChart3 size={20} />;
+  return <Layers size={20} />;
+}
+
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Buenos días';
+  if (hour < 19) return 'Buenas tardes';
+  return 'Buenas noches';
 }
 
 export default function RoleHomePage({ focusRoles, title, subtitle }: Props) {
@@ -56,68 +56,56 @@ export default function RoleHomePage({ focusRoles, title, subtitle }: Props) {
   const active = focusRoles.filter((r) => roleIds.includes(r));
   const focusRole = (active[0] || roleIds[0]) as RoleId | undefined;
   const experience = focusRole ? ROLE_EXPERIENCE[focusRole] : undefined;
+  const roleLabel = active.map((r) => ROLE_LABELS[r]).join(' · ');
 
-  const [kpiData, setKpiData] = useState<{ value: string | number; label: string } | null>(null);
-
-  useEffect(() => {
-    let ignore = false;
-    api
-      .get('/dashboard/metrics', {
-        params: focusRole ? { focus: focusRole } : undefined,
-      })
-      .then(({ data }) => {
-        if (!ignore && data?.kpis && data.kpis.length > 0) {
-          const top = data.kpis[0];
-          setKpiData({
-            value: top.value,
-            label: top.label.toUpperCase(),
-          });
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      ignore = true;
-    };
-  }, [focusRole]);
+  const today = useMemo(
+    () =>
+      new Intl.DateTimeFormat('es-EC', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(new Date()),
+    []
+  );
 
   return (
-    <section className="role-home flex flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto" aria-labelledby="role-home-title">
-      {/* 1. Hero Metric Card (Image 2 format) */}
-      <HeroMetricCard
-        headline={`Bienvenido/a, ${user?.first_name || ''} ${user?.last_name || ''}`}
-        author={title || active.map((r) => ROLE_LABELS[r]).join(' · ') || 'Universidad Laica Eloy Alfaro de Manabí'}
-        tag={{
-          icon: <Sparkles size={13} />,
-          label: experience?.promise ?? subtitle,
-        }}
-        metricValue={kpiData ? String(kpiData.value) : '—'}
-        metricLabel={kpiData ? kpiData.label : 'OPERATIVIDAD'}
-        gradientClass="from-zinc-950 via-zinc-900 to-zinc-800"
-      />
+    <section className="role-home" aria-labelledby="role-home-title">
+      <header className="sg-page-head">
+        <div>
+          <p className="sg-kicker">
+            {greeting()}, {user?.first_name || 'bienvenido/a'}
+          </p>
+          <h1 id="role-home-title">{title}</h1>
+          <p className="sg-lead">{experience?.promise ?? subtitle}</p>
+        </div>
+        <div className="sg-page-head-aside">
+          <span className="sg-chip">
+            <CalendarDays size={15} aria-hidden="true" />
+            <span style={{ textTransform: 'capitalize' }}>{today}</span>
+          </span>
+          {roleLabel && (
+            <span className="sg-chip">
+              <ShieldCheck size={15} aria-hidden="true" />
+              {roleLabel}
+            </span>
+          )}
+        </div>
+      </header>
 
       {(isDualConductorMechanic(roleIds) || isDualDocenteFacultad(roleIds)) && (
-        <div className="p-3 bg-zinc-100 border border-zinc-200 rounded-xl text-xs font-mono text-zinc-700" role="note">
-          Doble rol activo: el menú lateral organiza las funciones de cada perfil.
-        </div>
+        <p className="sg-note is-gold" role="note">
+          Doble rol activo: el menú lateral agrupa las funciones de cada perfil.
+        </p>
       )}
 
-      {/* 2. Process / Resource Cards Grid (Image 1 format) */}
       {experience && experience.pillars.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold font-mono text-zinc-900 uppercase tracking-wider">
-              Procesos Principales
-            </h2>
-            <span className="text-xs font-mono text-zinc-400">
-              Acceso rápido a flujos clave
-            </span>
+        <section className="sg-section" aria-label="Procesos de este panel">
+          <div className="sg-section-head">
+            <h2>Procesos principales</h2>
+            <span>Acceso directo a los flujos de su rol</span>
           </div>
-
-          <div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            aria-label="Procesos de este panel"
-          >
+          <div className="sg-stat-grid">
             {experience.pillars.map((pillar) => (
               <ResourceCard
                 key={pillar.href}
@@ -128,19 +116,20 @@ export default function RoleHomePage({ focusRoles, title, subtitle }: Props) {
               />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* 3. Operational Dashboard (Includes MetricProgressCard & Stats) */}
       <OperationalDashboard focusRole={focusRole} />
 
-      {/* 4. Operational Guide Accordion */}
       {experience && (
-        <details className="p-4 bg-white border border-zinc-200 rounded-xl font-mono text-xs text-zinc-700 cursor-pointer shadow-xs">
-          <summary className="font-bold text-zinc-900 select-none">
-            Guía operativa del panel
+        <details className="sg-details">
+          <summary>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+              <BookOpen size={17} aria-hidden="true" />
+              Guía operativa del panel
+            </span>
           </summary>
-          <ol className="list-decimal pl-5 mt-3 space-y-2 text-zinc-600">
+          <ol>
             {experience.guide.map((step) => (
               <li key={step}>{step}</li>
             ))}

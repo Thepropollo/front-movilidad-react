@@ -185,7 +185,7 @@ const DriverFuelTicketsPage: React.FC = () => {
           }}
           metricValue={orders.length}
           metricLabel="Vales Emitidos"
-          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+          gradientClass="from-slate-900 via-slate-900 to-slate-800"
         />
       </div>
 
@@ -382,7 +382,7 @@ const DriverFuelTicketsPage: React.FC = () => {
                                 ? 'ACTIVO'
                                 : 'DESPACHADO'}
                             </span>
-                            <span className="text-[10px] text-gray-400 font-mono">
+                            <span className="text-[10px] text-gray-400 ">
                               #{order.order_code}
                             </span>
                           </div>
@@ -401,13 +401,13 @@ const DriverFuelTicketsPage: React.FC = () => {
                           <div className="grid grid-cols-2 gap-3 mt-4 text-xs">
                             <div>
                               <p className="text-gray-400">Placa Vehículo</p>
-                              <p className="font-bold text-primary font-mono text-sm uppercase">
+                              <p className="font-bold text-primary text-sm uppercase">
                                 {order.route_sheet.vehicle.plate}
                               </p>
                             </div>
                             <div>
                               <p className="text-gray-400">Tipo Combustible</p>
-                              <p className="font-bold text-gold-dark font-mono text-sm capitalize">
+                              <p className="font-bold text-gold-dark text-sm capitalize">
                                 {labelOf(FUEL_TYPE_LABEL, order.dispatched_fuel_type)}
                               </p>
                             </div>
@@ -419,6 +419,14 @@ const DriverFuelTicketsPage: React.FC = () => {
                                 {order.route_sheet.request.destination}
                               </p>
                             </div>
+                            {order.route_sheet.driver?.user && (
+                              <div className="col-span-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-gray-500">Conductor Autorizado:</span>
+                                <span className="font-semibold text-primary">
+                                  {order.route_sheet.driver.user.first_name} {order.route_sheet.driver.user.last_name}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -467,7 +475,7 @@ const DriverFuelTicketsPage: React.FC = () => {
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                             Código del vale
                           </p>
-                          <p className="mt-1 break-all text-center font-mono font-bold text-sm text-primary">
+                          <p className="mt-1 break-all text-center font-bold text-sm text-primary">
                             {order.order_code}
                           </p>
                           {isConsumed && (

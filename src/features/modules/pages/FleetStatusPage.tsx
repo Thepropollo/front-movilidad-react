@@ -121,63 +121,63 @@ export default function FleetStatusPage() {
         <>
           {/* Modern Statistics Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Registrados
                 </span>
-                <Car size={16} className="text-zinc-400" />
+                <Car size={16} className="text-slate-500" />
               </div>
               <div className="flex items-baseline justify-between">
-                <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+                <strong className="font-bold text-2xl text-slate-900 leading-none">
                   {vehicles.length}
                 </strong>
-                <span className="font-mono text-[11px] text-zinc-400">Total unidades</span>
+                <span className="text-[11px] text-slate-500">Total unidades</span>
               </div>
             </div>
 
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
                   Al Día
                 </span>
                 <ShieldCheck size={16} className="text-emerald-500" />
               </div>
               <div className="flex items-baseline justify-between">
-                <strong className="font-mono font-bold text-2xl text-emerald-600 leading-none">
+                <strong className="font-bold text-2xl text-emerald-600 leading-none">
                   {upToDateCount}
                 </strong>
-                <span className="font-mono text-[11px] text-emerald-600 font-semibold">Sin novedades</span>
+                <span className="text-[11px] text-emerald-600 font-semibold">Sin novedades</span>
               </div>
             </div>
 
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-amber-600 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
                   Por Vencer
                 </span>
                 <AlertTriangle size={16} className="text-amber-500" />
               </div>
               <div className="flex items-baseline justify-between">
-                <strong className="font-mono font-bold text-2xl text-amber-600 leading-none">
+                <strong className="font-bold text-2xl text-amber-600 leading-none">
                   {attentionCount}
                 </strong>
-                <span className="font-mono text-[11px] text-amber-500 font-semibold">Atención requerida</span>
+                <span className="text-[11px] text-amber-500 font-semibold">Atención requerida</span>
               </div>
             </div>
 
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-3">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-rose-600 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider">
                   Vencidos
                 </span>
                 <XCircle size={16} className="text-rose-500" />
               </div>
               <div className="flex items-baseline justify-between">
-                <strong className="font-mono font-bold text-2xl text-rose-600 leading-none">
+                <strong className="font-bold text-2xl text-rose-600 leading-none">
                   {expiredCount}
                 </strong>
-                <span className="font-mono text-[11px] text-rose-500 font-semibold">Urgente</span>
+                <span className="text-[11px] text-rose-500 font-semibold">Urgente</span>
               </div>
             </div>
           </div>

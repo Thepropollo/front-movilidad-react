@@ -113,7 +113,7 @@ const Dashboard: React.FC = () => {
               : (loadingMetrics ? '...' : '0')
           }
           metricLabel={dashData?.kpis?.[0]?.label.toUpperCase() || 'TAREAS PENDIENTES'}
-          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+          gradientClass="from-slate-900 via-slate-900 to-slate-800"
         />
       </div>
 

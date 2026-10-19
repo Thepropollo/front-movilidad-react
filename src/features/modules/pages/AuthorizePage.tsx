@@ -24,6 +24,8 @@ type Solicitud = {
   mobilization_type: string;
   status: string;
   departure_date: string;
+  return_date?: string;
+  occupant_count?: number;
   travel_reason: string;
   phases?: ProcessPhase[];
   requester?: {
@@ -171,45 +173,45 @@ export default function AuthorizePage() {
       </div>
 
       {msg && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-mono flex items-center gap-2" role="status">
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-2" role="status">
           <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
           <span>{msg}</span>
         </div>
       )}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-mono flex items-center gap-2" role="alert">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-2" role="alert">
           <AlertCircle size={16} className="text-rose-600 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="module-panel shadow-sm border border-zinc-200 rounded-xl p-5">
+      <div className="module-panel shadow-sm border border-slate-200 rounded-xl p-5">
         {loading ? (
           <div className="module-state flex flex-col items-center justify-center py-12" role="status">
             <span className="spinner w-8 h-8 mb-3" aria-hidden />
-            <p className="ops-muted font-mono text-xs">Cargando solicitudes pendientes…</p>
+            <p className="ops-muted text-xs">Cargando solicitudes pendientes…</p>
           </div>
         ) : error && rows.length === 0 ? (
           <div className="module-state text-center py-12" role="alert">
-            <strong className="text-zinc-900 block mb-1">No se pudo cargar la bandeja</strong>
-            <p className="ops-muted text-xs font-mono">Use «Actualizar Bandeja» para intentarlo nuevamente.</p>
+            <strong className="text-slate-900 block mb-1">No se pudo cargar la bandeja</strong>
+            <p className="ops-muted text-xs ">Use «Actualizar Bandeja» para intentarlo nuevamente.</p>
           </div>
         ) : rows.length === 0 ? (
           <div className="module-state text-center py-12" role="status">
             <CheckCircle2 size={40} className="text-emerald-500 mx-auto mb-2" />
-            <strong className="text-zinc-900 text-base block">No hay solicitudes pendientes</strong>
-            <p className="ops-muted text-xs font-mono mt-1">La bandeja de Secretaría General está completamente al día.</p>
+            <strong className="text-slate-900 text-base block">No hay solicitudes pendientes</strong>
+            <p className="ops-muted text-xs mt-1">La bandeja de Secretaría General está completamente al día.</p>
           </div>
         ) : (
-          <ul className="ops-list divide-y divide-zinc-100">
+          <ul className="ops-list divide-y divide-slate-100">
             {rows.map((r) => (
               <li key={r.id} className="ops-item py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2">
-                    <strong className="font-mono text-base text-zinc-900">
+                    <strong className="text-base text-slate-900">
                       #{r.id} · {r.destination}
                     </strong>
-                    <span className={`text-[11px] font-mono px-2 py-0.5 rounded font-semibold ${
+                    <span className={`text-[11px] px-2 py-0.5 rounded font-semibold ${
                       r.mobilization_type === 'externa'
                         ? 'bg-amber-100 text-amber-800'
                         : 'bg-blue-100 text-blue-800'
@@ -217,12 +219,15 @@ export default function AuthorizePage() {
                       {labelOf(MOBILIZATION_TYPE_LABEL, r.mobilization_type)}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-600 font-mono">
-                    Solicitante: <span className="font-semibold text-zinc-800">{r.requester?.first_name} {r.requester?.last_name}</span> ·{' '}
-                    Salida: <span className="font-semibold text-zinc-800">{formatDateTimeReadable(r.departure_date)}</span>
+                  <p className="text-xs text-slate-600">
+                    Solicitante: <span className="font-semibold text-slate-800">{r.requester?.first_name} {r.requester?.last_name}</span>
+                    {r.requester?.faculty_institution ? ` (${r.requester.faculty_institution})` : ''} ·{' '}
+                    Salida: <span className="font-semibold text-slate-800">{formatDateTimeReadable(r.departure_date)}</span>
+                    {r.return_date ? ` → Retorno: ${formatDateTimeReadable(r.return_date)}` : ''}
+                    {r.occupant_count ? ` · ${r.occupant_count} ocupante(s)` : ''}
                   </p>
-                  <p className="ops-muted text-xs bg-zinc-50 p-2.5 rounded-lg border border-zinc-100">
-                    <span className="font-semibold text-zinc-700">Motivo:</span> {r.travel_reason}
+                  <p className="ops-muted text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <span className="font-semibold text-slate-700">Motivo:</span> {r.travel_reason}
                   </p>
                   {r.phases && r.phases.length > 0 && (
                     <div className="pt-1">
@@ -230,12 +235,12 @@ export default function AuthorizePage() {
                     </div>
                   )}
                   <div className="pt-1">
-                    <label className="text-xs font-mono font-semibold text-zinc-700 block mb-1" htmlFor={`obs-${r.id}`}>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1" htmlFor={`obs-${r.id}`}>
                       Observación / Justificación (obligatorio si rechaza):
                     </label>
                     <textarea
                       id={`obs-${r.id}`}
-                      className="form-input text-xs font-mono w-full"
+                      className="form-input text-xs w-full"
                       rows={2}
                       placeholder="Ingrese comentarios sobre la ruta, pertinencia institucional o motivo de rechazo..."
                       value={observation[r.id] || ''}
@@ -248,7 +253,7 @@ export default function AuthorizePage() {
                 <div className="ops-actions flex lg:flex-col gap-2 shrink-0">
                   <button
                     type="button"
-                    className="btn btn-primary text-xs font-mono uppercase tracking-wider px-5 py-2.5"
+                    className="btn btn-primary text-xs uppercase tracking-wider px-5 py-2.5"
                     disabled={processingId !== null}
                     onClick={() => void act(r.id, 'approve')}
                   >
@@ -256,7 +261,7 @@ export default function AuthorizePage() {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-danger text-xs font-mono uppercase tracking-wider px-5 py-2.5"
+                    className="btn btn-danger text-xs uppercase tracking-wider px-5 py-2.5"
                     disabled={processingId !== null}
                     onClick={() => void act(r.id, 'reject')}
                   >

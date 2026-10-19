@@ -14,7 +14,6 @@ import {
   Menu,
   ShieldCheck,
   UserCheck,
-  UserRound,
   Wrench,
   X,
 } from 'lucide-react';
@@ -143,6 +142,16 @@ export default function AppShell() {
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
+          <Link to={home} className="shell-topbar-brand" title="Ir al inicio">
+            <span className="shell-topbar-mark" aria-hidden="true">
+              <img src="/logo-uleam-cara.png" alt="" />
+            </span>
+            <span>
+              <strong>SIGMOV</strong>
+              <small>Gestión y Movilidad · ULEAM</small>
+            </span>
+          </Link>
+
           <div className="shell-topbar-left">
             <Breadcrumbs homePath={home} />
           </div>
@@ -150,14 +159,15 @@ export default function AppShell() {
           <div className="shell-topbar-right">
             <NotificationBell placement="down" />
             <span className="shell-topbar-role">{roles}</span>
-            <div className="shell-topbar-user">
-              <UserRound size={15} aria-hidden />
+            <div className="shell-topbar-user" title={fullName || 'Usuario'}>
+              <span className="shell-topbar-avatar" aria-hidden="true">
+                {initials}
+              </span>
               <span>{fullName || user?.first_name || 'Usuario'}</span>
             </div>
           </div>
         </header>
 
-        {/* Acet Labs Minimalist Monospace Sidebar */}
         <aside
           id="shell-sidebar"
           className={`shell-sidebar${menuOpen ? ' is-open' : ''}`}
@@ -165,19 +175,15 @@ export default function AppShell() {
           aria-hidden={!drawerOpen}
           {...(!drawerOpen ? { inert: true } : {})}
         >
-          {/* Brand Mark (ULEAM Horizontal Logo + SIGMOV Brand) */}
           <div className="shell-brand">
             <Link to={home} className="shell-brand-link" onClick={closeMenu} title="Ir al inicio">
-              <img
-                src="/brand/logo-uleam-horizontal.png"
-                alt="Universidad Laica Eloy Alfaro de Manabí"
-                className="shell-brand-logo"
-              />
-              <div className="shell-brand-divider" aria-hidden="true" />
-              <div className="shell-brand-text">
-                <strong className="shell-brand-name">SIGMOV · ULEAM</strong>
-                <small className="shell-brand-sub">Gestión y Movilidad</small>
-              </div>
+              <span className="shell-brand-plate">
+                <img
+                  src="/brand/logo-uleam-horizontal-clear.png"
+                  alt="Universidad Laica Eloy Alfaro de Manabí"
+                  className="shell-brand-logo"
+                />
+              </span>
             </Link>
             {(isDualConductorMechanic(roleIds) ||
               isDualDocenteFacultad(roleIds)) && (
@@ -185,9 +191,10 @@ export default function AppShell() {
             )}
           </div>
 
-          {/* Navigation Items (Icons + Monospace Typography) */}
           <nav className="shell-nav" aria-label="Módulos">
-            {/* Dashboard Link */}
+            <p className="shell-nav-section" aria-hidden="true">
+              Panel
+            </p>
             <NavLink
               to={home}
               end
@@ -197,10 +204,12 @@ export default function AppShell() {
               onClick={closeMenu}
             >
               <LayoutGrid size={18} aria-hidden="true" />
-              <span>Dashboard</span>
+              <span>Inicio</span>
             </NavLink>
 
-            {/* Dynamic Module Groups */}
+            <p className="shell-nav-section" aria-hidden="true">
+              Módulos
+            </p>
             {Object.entries(grouped).map(([module, links]) => {
               const ModuleIcon = getModuleIcon(module);
               const groupOpen = links.some((link) =>
@@ -238,18 +247,16 @@ export default function AppShell() {
               );
             })}
 
-            {/* Logout item directly in the navigation list (matching Acet Labs reference) */}
             <button
               type="button"
               className="shell-logout-link"
               onClick={() => void handleLogout()}
             >
               <LogOut size={18} aria-hidden="true" />
-              <span>Logout</span>
+              <span>Cerrar sesión</span>
             </button>
           </nav>
 
-          {/* User Profile Footer (Circular Avatar + Monospace Name at bottom) */}
           <footer className="shell-user">
             <div className="shell-user-profile">
               <div className="shell-avatar-circle" aria-hidden="true">

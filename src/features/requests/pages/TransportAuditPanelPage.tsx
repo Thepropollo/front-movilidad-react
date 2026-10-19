@@ -152,7 +152,7 @@ const TransportAuditPanelPage: React.FC = () => {
           }}
           metricValue={liquidations.length}
           metricLabel="Por Auditar"
-          gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+          gradientClass="from-slate-900 via-slate-900 to-slate-800"
         />
       </div>
 
@@ -264,7 +264,7 @@ const TransportAuditPanelPage: React.FC = () => {
                         <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">
                           POR AUDITAR
                         </span>
-                        <span className="text-[10px] text-gray-400 font-mono">
+                        <span className="text-[10px] text-gray-400 ">
                           Viaje #{liq.route_sheet_id}
                         </span>
                       </div>
@@ -366,7 +366,7 @@ const TransportAuditPanelPage: React.FC = () => {
                       <span className="text-gray-500">
                         Viáticos de Comisión Exterior
                       </span>
-                      <span className="font-bold text-primary font-mono">
+                      <span className="font-bold text-primary ">
                         ${selectedLiq.allowances_amount.toFixed(2)}
                       </span>
                     </div>
@@ -374,7 +374,7 @@ const TransportAuditPanelPage: React.FC = () => {
                       <span className="text-gray-500">
                         Horas Suplementarias (50%)
                       </span>
-                      <span className="font-bold text-primary font-mono">
+                      <span className="font-bold text-primary ">
                         ${selectedLiq.overtime_50_amount.toFixed(2)}
                       </span>
                     </div>
@@ -382,7 +382,7 @@ const TransportAuditPanelPage: React.FC = () => {
                       <span className="text-gray-500">
                         Horas Extraordinarias (100%)
                       </span>
-                      <span className="font-bold text-primary font-mono">
+                      <span className="font-bold text-primary ">
                         ${selectedLiq.overtime_100_amount.toFixed(2)}
                       </span>
                     </div>
@@ -390,7 +390,7 @@ const TransportAuditPanelPage: React.FC = () => {
                       <span className="font-bold text-primary">
                         Total Liquidación Conductor
                       </span>
-                      <span className="font-black text-gold-dark font-mono">
+                      <span className="font-black text-gold-dark ">
                         ${selectedLiq.total_payout.toFixed(2)}
                       </span>
                     </div>

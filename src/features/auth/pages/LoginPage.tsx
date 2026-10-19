@@ -19,12 +19,26 @@ const ALLOW_REGISTER = import.meta.env.VITE_ALLOW_REGISTER === 'true';
 
 const DEMO_ACCOUNTS = [
   { role: 'Secretaría', email: 'secretaria@uleam.edu.ec' },
+  { role: 'Secretaría 2', email: 'secretaria2@uleam.edu.ec' },
+  { role: 'Secretaría 3', email: 'secretaria3@uleam.edu.ec' },
   { role: 'Docente', email: 'docente@uleam.edu.ec' },
+  { role: 'Docente 2', email: 'docente2@uleam.edu.ec' },
+  { role: 'Docente 3', email: 'docente3@uleam.edu.ec' },
   { role: 'Vicerrector', email: 'vicerrector@uleam.edu.ec' },
+  { role: 'Vicerrector 2', email: 'vicerrector2@uleam.edu.ec' },
+  { role: 'Vicerrector 3', email: 'vicerrector3@uleam.edu.ec' },
   { role: 'Conductor', email: 'conductor1@uleam.edu.ec' },
+  { role: 'Conductor 2', email: 'conductor2@uleam.edu.ec' },
+  { role: 'Conductor 3', email: 'conductor3@uleam.edu.ec' },
   { role: 'Mecánico', email: 'mecanico@uleam.edu.ec' },
+  { role: 'Mecánico 2', email: 'mecanico2@uleam.edu.ec' },
+  { role: 'Mecánico 3', email: 'mecanico3@uleam.edu.ec' },
   { role: 'Facultad', email: 'decano@uleam.edu.ec' },
+  { role: 'Facultad 2', email: 'facultad2@uleam.edu.ec' },
+  { role: 'Facultad 3', email: 'facultad3@uleam.edu.ec' },
   { role: 'Estudiante', email: 'e1314433382@live.uleam.edu.ec' },
+  { role: 'Estudiante 2', email: 'estudiante2@uleam.edu.ec' },
+  { role: 'Estudiante 3', email: 'estudiante3@uleam.edu.ec' },
 ] as const;
 
 const REQUEST_STEPS = [
@@ -120,12 +134,6 @@ export default function Login() {
             <strong>SIGMOV · ULEAM</strong>
             <small>Sistema Institucional de Gestión y Movilidad</small>
           </div>
-        </div>
-        <div className="login-top-right">
-          <span className="login-portal-badge">
-            <span className="login-badge-dot" aria-hidden />
-            Portal Institucional
-          </span>
         </div>
       </header>
 

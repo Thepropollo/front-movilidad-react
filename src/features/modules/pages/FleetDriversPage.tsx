@@ -378,10 +378,10 @@ export default function FleetDriversPage() {
       <div className="sgv-dark-table-card p-6">
         <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
           <div>
-            <h2 className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Conductores registrados
             </h2>
-            <p className="font-mono text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Nómina de choferes institucionales y estatus de disponibilidad
             </p>
           </div>
@@ -422,10 +422,10 @@ export default function FleetDriversPage() {
                           aria-hidden="true"
                         />
                         <div>
-                          <span className="font-mono font-bold text-slate-900 block">
+                          <span className="font-bold text-slate-900 block">
                             {d.user?.first_name || d.name} {d.user?.last_name}
                           </span>
-                          <span className="font-mono text-xs text-slate-500">
+                          <span className="text-xs text-slate-500">
                             {d.user?.email || d.national_id || '—'}
                           </span>
                         </div>
@@ -441,7 +441,7 @@ export default function FleetDriversPage() {
                       </span>
                     </td>
                     <td>
-                      <span className="font-mono text-slate-700">
+                      <span className="text-slate-700">
                         {d.license_type || d.licenses?.[0]?.license_type || '—'}
                       </span>
                     </td>
@@ -473,7 +473,7 @@ export default function FleetDriversPage() {
                 <tr>
                   <td
                     colSpan={4}
-                    className="text-center py-8 font-mono text-slate-400 text-sm"
+                    className="text-center py-8 text-slate-500 text-sm"
                   >
                     {driverSearch.trim()
                       ? 'No se encontraron conductores con esa búsqueda.'

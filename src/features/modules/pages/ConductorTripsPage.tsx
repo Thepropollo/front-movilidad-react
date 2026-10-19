@@ -10,6 +10,8 @@ import {
   Navigation,
   AlertCircle,
   Truck,
+  User,
+  Users,
 } from 'lucide-react';
 import { formatDateTimeReadable } from '@/lib/datetime';
 import { DRIVER_RESPONSE_LABEL, TRIP_STATUS_LABEL, labelOf } from '@/lib/labels';
@@ -21,7 +23,19 @@ type Trip = {
   trip_status: string;
   driver_response: string;
   driver_reject_reason?: string | null;
-  request?: { destination: string; departure_date: string; origin: string };
+  request?: {
+    destination: string;
+    departure_date: string;
+    return_date?: string;
+    origin: string;
+    travel_reason?: string;
+    occupant_count?: number;
+    requester?: {
+      first_name: string;
+      last_name: string;
+      faculty_institution?: string;
+    };
+  };
   vehicle?: { plate: string; brand: string; model: string };
 };
 
@@ -161,47 +175,47 @@ export default function ConductorTripsPage() {
       </div>
 
       {msg && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-mono flex items-center gap-2" role="status">
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-2" role="status">
           <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
           <span>{msg}</span>
         </div>
       )}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-mono flex items-center gap-2" role="alert">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-2" role="alert">
           <AlertCircle size={16} className="text-rose-600 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="module-panel shadow-sm border border-zinc-200 rounded-xl p-5">
+      <div className="module-panel shadow-sm border border-slate-200 rounded-xl p-5">
         {loading ? (
           <div className="module-state flex flex-col items-center justify-center py-12" role="status">
             <span className="spinner w-8 h-8 mb-3" aria-hidden />
-            <p className="ops-muted font-mono text-xs">Cargando asignaciones del conductor…</p>
+            <p className="ops-muted text-xs">Cargando asignaciones del conductor…</p>
           </div>
         ) : error && trips.length === 0 ? (
           <div className="module-state text-center py-12" role="alert">
-            <strong className="text-zinc-900 block mb-1">No se pudieron cargar las asignaciones</strong>
-            <p className="ops-muted text-xs font-mono">Use «Actualizar Asignaciones» para intentarlo nuevamente.</p>
+            <strong className="text-slate-900 block mb-1">No se pudieron cargar las asignaciones</strong>
+            <p className="ops-muted text-xs ">Use «Actualizar Asignaciones» para intentarlo nuevamente.</p>
           </div>
         ) : trips.length === 0 ? (
           <div className="module-state text-center py-12" role="status">
             <CheckCircle2 size={40} className="text-emerald-500 mx-auto mb-2" />
-            <strong className="text-zinc-900 text-base block">No tienes viajes asignados</strong>
-            <p className="ops-muted text-xs font-mono mt-1">Las nuevas asignaciones emitidas por Secretaría aparecerán aquí.</p>
+            <strong className="text-slate-900 text-base block">No tienes viajes asignados</strong>
+            <p className="ops-muted text-xs mt-1">Las nuevas asignaciones emitidas por Secretaría aparecerán aquí.</p>
           </div>
         ) : (
-          <ul className="ops-list divide-y divide-zinc-100">
+          <ul className="ops-list divide-y divide-slate-100">
             {trips.map((t) => {
               const isPending = t.driver_response === 'pendiente';
               return (
                 <li key={t.id} className="ops-item py-4 flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <strong className="font-mono text-base text-zinc-900">
+                      <strong className="text-base text-slate-900">
                         #{t.id} · {t.request?.destination || 'Sin destino'}
                       </strong>
-                      <span className={`text-[11px] font-mono px-2 py-0.5 rounded font-semibold ${
+                      <span className={`text-[11px] px-2 py-0.5 rounded font-semibold ${
                         isPending
                           ? 'bg-amber-100 text-amber-800'
                           : t.driver_response === 'aceptado'
@@ -210,34 +224,46 @@ export default function ConductorTripsPage() {
                       }`}>
                         {labelOf(DRIVER_RESPONSE_LABEL, t.driver_response)}
                       </span>
-                      <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 font-semibold">
+                      <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">
                         Estado: {labelOf(TRIP_STATUS_LABEL, t.trip_status)}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono text-zinc-600">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
                       <p className="m-0 flex items-center gap-1.5">
                         <Navigation size={14} className="text-secondary shrink-0" />
-                        <span>Ruta: <strong className="text-zinc-800">{t.request?.origin} → {t.request?.destination}</strong></span>
+                        <span>Ruta: <strong className="text-slate-800">{t.request?.origin} → {t.request?.destination}</strong></span>
                       </p>
                       <p className="m-0 flex items-center gap-1.5">
                         <CalendarDays size={14} className="text-secondary shrink-0" />
-                        <span>Salida: <strong className="text-zinc-800">{formatDateTimeReadable(t.request?.departure_date)}</strong></span>
+                        <span>Salida: <strong className="text-slate-800">{formatDateTimeReadable(t.request?.departure_date)}</strong></span>
                       </p>
                       <p className="m-0 flex items-center gap-1.5">
                         <Car size={14} className="text-secondary shrink-0" />
-                        <span>Vehículo: <strong className="text-zinc-800">{t.vehicle?.plate} · {t.vehicle?.brand} {t.vehicle?.model}</strong></span>
+                        <span>Vehículo: <strong className="text-slate-800">{t.vehicle?.plate} · {t.vehicle?.brand} {t.vehicle?.model}</strong></span>
                       </p>
+                      {t.request?.requester && (
+                        <p className="m-0 flex items-center gap-1.5">
+                          <User size={14} className="text-secondary shrink-0" />
+                          <span>Docente: <strong className="text-slate-800">{t.request.requester.first_name} {t.request.requester.last_name}</strong> {t.request.requester.faculty_institution ? `(${t.request.requester.faculty_institution})` : ''}</span>
+                        </p>
+                      )}
+                      {t.request?.occupant_count && (
+                        <p className="m-0 flex items-center gap-1.5">
+                          <Users size={14} className="text-secondary shrink-0" />
+                          <span>Pasajeros: <strong className="text-slate-800">{t.request.occupant_count} persona(s)</strong></span>
+                        </p>
+                      )}
                     </div>
 
                     {isPending && (
                       <div className="pt-2">
-                        <label className="text-xs font-mono font-semibold text-zinc-700 block mb-1" htmlFor={`trip-reason-${t.id}`}>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1" htmlFor={`trip-reason-${t.id}`}>
                           Motivo en caso de rechazo:
                         </label>
                         <textarea
                           id={`trip-reason-${t.id}`}
-                          className="form-input text-xs font-mono w-full"
+                          className="form-input text-xs w-full"
                           rows={2}
                           placeholder="Explique el motivo si no puede atender este viaje (licencia, descanso, turno)..."
                           value={reason[t.id] || ''}
@@ -253,7 +279,7 @@ export default function ConductorTripsPage() {
                     <div className="ops-actions flex lg:flex-col gap-2 shrink-0 pt-2 lg:pt-0">
                       <button
                         type="button"
-                        className="btn btn-primary text-xs font-mono uppercase tracking-wider px-5 py-2.5"
+                        className="btn btn-primary text-xs uppercase tracking-wider px-5 py-2.5"
                         disabled={processingId !== null}
                         onClick={() => void respond(t.id, 'accept')}
                       >
@@ -261,7 +287,7 @@ export default function ConductorTripsPage() {
                       </button>
                       <button
                         type="button"
-                        className="btn btn-danger text-xs font-mono uppercase tracking-wider px-5 py-2.5"
+                        className="btn btn-danger text-xs uppercase tracking-wider px-5 py-2.5"
                         disabled={processingId !== null}
                         onClick={() => void respond(t.id, 'reject')}
                       >

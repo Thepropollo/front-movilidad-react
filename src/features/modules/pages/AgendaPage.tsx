@@ -288,7 +288,7 @@ export default function AgendaPage() {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-mono flex items-center gap-2">
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs flex items-center gap-2">
           <AlertTriangle size={16} className="text-red-600 shrink-0" />
           <span>{error}</span>
         </div>

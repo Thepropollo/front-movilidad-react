@@ -246,55 +246,55 @@ export default function FlujoPage() {
               }}
               metricValue={projectedCost}
               metricLabel="Costo Proyectado"
-              gradientClass="from-slate-900 via-zinc-900 to-zinc-800"
+              gradientClass="from-slate-900 via-slate-900 to-slate-800"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Tipo Movilización
                 </span>
-                <Compass size={15} className="text-zinc-400" />
+                <Compass size={15} className="text-slate-500" />
               </div>
-              <strong className="font-mono font-bold text-base text-zinc-900 leading-snug">
+              <strong className="font-bold text-base text-slate-900 leading-snug">
                 {labelOf(MOBILIZATION_TYPE_LABEL, detail.mobilization_type)}
               </strong>
             </div>
 
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Días Estimados
                 </span>
-                <Clock size={15} className="text-zinc-400" />
+                <Clock size={15} className="text-slate-500" />
               </div>
-              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+              <strong className="font-bold text-2xl text-slate-900 leading-none">
                 {detail.estimated_days ?? '—'}
               </strong>
             </div>
 
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Participantes
                 </span>
-                <Users size={15} className="text-zinc-400" />
+                <Users size={15} className="text-slate-500" />
               </div>
-              <strong className="font-mono font-bold text-2xl text-zinc-900 leading-none">
+              <strong className="font-bold text-2xl text-slate-900 leading-none">
                 {participantsSummary.total}
               </strong>
             </div>
 
-            <div className="group p-4 bg-white border border-zinc-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
+            <div className="group p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col justify-between gap-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
                   Confirmados
                 </span>
                 <DollarSign size={15} className="text-emerald-500" />
               </div>
-              <strong className="font-mono font-bold text-2xl text-emerald-600 leading-none">
+              <strong className="font-bold text-2xl text-emerald-600 leading-none">
                 {participantsSummary.aceptados + participantsSummary.rechazados}
               </strong>
             </div>

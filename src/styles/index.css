@@ -1,64 +1,41 @@
 @import 'tailwindcss';
+@import './tokens.css';
 
+/* Paleta Tailwind alineada a los tokens institucionales (ver tokens.css). */
 @theme {
-  --color-primary: #002855;
-  --color-primary-hover: #001e40;
-  --color-secondary: #c5a059;
-  --color-secondary-hover: #b08d46;
-  --color-tertiary: #f4f6f9;
-  --color-neutral: #334155;
+  --color-primary: #1d518f;
+  --color-primary-hover: #164579;
+  --color-secondary: #22a3cf;
+  --color-secondary-hover: #1486ad;
+  --color-tertiary: #eceff3;
+  --color-neutral: #36424f;
 
-  --color-primary-brand: #002855;
-  --color-secondary-brand: #c5a059;
+  --color-primary-brand: #1d518f;
+  --color-secondary-brand: #22a3cf;
 
-  --color-success: #2e7d32;
-  --color-success-text: #1b5e20;
-  --color-danger: #d32f2f;
-  --color-danger-text: #b71c1c;
-  --color-warning: #ed6c02;
-  --color-info: #005691;
-  --color-muted: #64748b;
-  --color-gold: #c5a059;
-  --color-gold-dark: #b08d46;
-  --color-gold-light: #fdfaf2;
-}
+  --color-uleam-50: #eef5fc;
+  --color-uleam-100: #dcebfa;
+  --color-uleam-200: #d9f0f8;
+  --color-uleam-500: #1877d2;
+  --color-uleam-600: #0b63b4;
+  --color-uleam-700: #0a4f8f;
+  --color-uleam-800: #1d518f;
+  --color-uleam-900: #164579;
 
-:root {
-  /* Branding Colors */
-  --color-primary: #002855;
-  --color-primary-hover: #001e40;
-  --color-secondary: #c5a059;
-  --color-secondary-hover: #b08d46;
-  --color-gold: #c5a059;
-  --color-gold-dark: #b08d46;
-  --color-gold-light: #fdfaf2;
-  --color-tertiary: #f4f6f9;
-  --color-neutral: #334155;
+  --color-success: #1d8a4f;
+  --color-success-text: #166c3f;
+  --color-danger: #c02626;
+  --color-danger-text: #9b1c1c;
+  --color-warning: #b35f00;
+  --color-info: #0b63b4;
+  --color-muted: #6b7a8c;
+  --color-gold: #22a3cf;
+  --color-gold-dark: #1486ad;
+  --color-gold-light: #ebf7fb;
 
-  /* Interface Palette */
-  --bg-page: #f4f6f9;
-  --bg-panel: #ffffff;
-  --bg-sidebar: #f4f4f5;
-  --border-color: #e2e8f0;
-  --border-hover: #cbd5e1;
-
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-
-  --danger: #d32f2f;
-  --success: #2e7d32;
-  --warning: #ed6c02;
-
-  --font-sans: 'Manrope', 'Source Sans 3', 'Segoe UI', sans-serif;
-  --focus-ring: 0 0 0 3px rgba(0, 40, 85, 0.35);
-  --color-info: #0b5fff;
-  --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-lg:
-    0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
 }
 
 * {
@@ -362,7 +339,7 @@ body,
 /* Additional Button types from style guide if needed */
 .btn-gold {
   background-color: var(--color-secondary);
-  color: #002855;
+  color: #1d518f;
 }
 
 .btn-gold:hover {
@@ -950,7 +927,7 @@ body,
 }
 
 .shell-breadcrumb-link:hover {
-  color: #002855;
+  color: #1d518f;
   background: #f4f4f5;
 }
 
@@ -1083,7 +1060,7 @@ body,
 .shell-brand-name {
   font-size: 13px;
   font-weight: 800;
-  color: #002855;
+  color: #1d518f;
   letter-spacing: 0.01em;
   line-height: 1.2;
   white-space: nowrap;
@@ -1458,7 +1435,7 @@ body,
   align-items: center;
   min-height: 48px;
   padding: 10px 20px;
-  background: linear-gradient(90deg, #002855 0%, #003875 100%);
+  background: linear-gradient(90deg, #1d518f 0%, #2a63a8 100%);
   color: #fff;
   border-bottom: 2px solid var(--color-secondary);
 }
@@ -1708,7 +1685,7 @@ body,
 .auth-demo-chip {
   border: 1px solid #c9d5e4;
   background: #f7f9fc;
-  color: #002855;
+  color: #1d518f;
   border-radius: 10px;
   padding: 8px 10px;
   font-size: 12px;
@@ -1721,7 +1698,7 @@ body,
 
 .auth-demo-chip:hover:not(:disabled) {
   background: #eef3f9;
-  border-color: #002855;
+  border-color: #1d518f;
 }
 
 .auth-demo-chip:disabled {
@@ -1756,9 +1733,9 @@ body,
   gap: 8px;
   padding: 12px 16px;
   border-radius: 10px;
-  border: 1px solid #002855;
+  border: 1px solid #1d518f;
   background: #fff;
-  color: #002855;
+  color: #1d518f;
   font-weight: 700;
   cursor: pointer;
 }
@@ -3013,7 +2990,7 @@ body,
 }
 
 .guide-step-dot.stop {
-  background: #002855;
+  background: #1d518f;
 }
 
 .guide-step.is-complete .guide-step-dot.stop {
@@ -3358,7 +3335,7 @@ body,
 
 .stat-card strong {
   font-size: 1.25rem;
-  color: #002855;
+  color: #1d518f;
 }
 
 .trace-head {
@@ -3375,7 +3352,7 @@ body,
 
 .trace-head h2 {
   margin: 0 0 4px;
-  color: #002855;
+  color: #1d518f;
 }
 
 .trace-stats {
@@ -3394,7 +3371,7 @@ body,
 
 .trace-grid h3 {
   margin: 0 0 10px;
-  color: #002855;
+  color: #1d518f;
   font-size: 1rem;
 }
 
@@ -3467,7 +3444,7 @@ body,
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #002855;
+  background: #1d518f;
   color: #fff;
   display: grid;
   place-items: center;
@@ -3491,7 +3468,7 @@ body,
 
 .flow-head h3 {
   margin: 0;
-  color: #002855;
+  color: #1d518f;
   font-size: 1.05rem;
 }
 
@@ -3633,7 +3610,7 @@ body,
 
 .flow-bitacora-title {
   margin: 0 0 12px;
-  color: #002855;
+  color: #1d518f;
   font-size: 1rem;
 }
 
@@ -4152,7 +4129,7 @@ button:disabled {
 }
 
 .role-home-hero-meta strong {
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   font-size: 1.45rem;
   line-height: 1;
 }
@@ -5188,7 +5165,7 @@ button:disabled {
 .ops-widget-head {
   margin: 0;
   padding: 10px 16px;
-  background: var(--color-primary, #002855);
+  background: var(--color-primary, #1d518f);
   color: #fff;
   font-size: 13.5px;
   font-weight: 700;
@@ -5227,7 +5204,7 @@ button:disabled {
 .ops-state-content strong {
   display: block;
   font-size: 14px;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
 }
 
 .ops-state-card .ops-muted {
@@ -5237,7 +5214,7 @@ button:disabled {
 }
 
 .ops-spin {
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   animation: ops-spinner 1.2s linear infinite;
   flex-shrink: 0;
 }
@@ -5266,7 +5243,7 @@ button:disabled {
 
 .ops-dashboard-head h2 {
   margin: 0 0 4px;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   font-size: 1.25rem;
 }
 
@@ -5292,7 +5269,7 @@ button:disabled {
 
 .ops-kpi:hover,
 .ops-kpi:focus-visible {
-  border-color: var(--color-primary, #002855);
+  border-color: var(--color-primary, #1d518f);
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 40, 85, 0.08);
 }
@@ -5307,7 +5284,7 @@ button:disabled {
 
 .ops-kpi strong {
   font-size: 1.6rem;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   line-height: 1.1;
 }
 
@@ -5318,7 +5295,7 @@ button:disabled {
 }
 
 .ops-kpi.tone-info {
-  border-top-color: var(--color-primary, #002855);
+  border-top-color: var(--color-primary, #1d518f);
   background: #f8fafc;
 }
 
@@ -5351,7 +5328,7 @@ button:disabled {
 
 .ops-widget-body h3 {
   margin: 0 0 12px;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   font-size: 1rem;
 }
 
@@ -5378,7 +5355,7 @@ button:disabled {
   min-width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: var(--color-primary, #002855);
+  background: var(--color-primary, #1d518f);
   color: #fff;
   display: grid;
   place-items: center;
@@ -5389,7 +5366,7 @@ button:disabled {
 .ops-bar-fill {
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(90deg, #002855, #c5a059);
+  background: linear-gradient(90deg, #1d518f, #c5a059);
 }
 
 .ops-bar-track {
@@ -5404,7 +5381,7 @@ button:disabled {
   margin-bottom: 16px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(135deg, #002855 0%, #001e40 100%);
+  background: linear-gradient(135deg, #1d518f 0%, #164579 100%);
   color: #fff;
   box-shadow: 0 4px 16px rgba(0, 40, 85, 0.12);
 }
@@ -5459,7 +5436,7 @@ button:disabled {
 }
 
 .role-home-column h3 {
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
 }
 
 .role-home-focus h2::before,
@@ -5604,7 +5581,7 @@ button:disabled {
   right: 16px;
   bottom: 16px;
   background: rgba(255, 255, 255, 0.96);
-  border: 2px dashed #002855;
+  border: 2px dashed #1d518f;
   border-radius: 12px;
   padding: 8px 10px 10px;
   box-shadow: 0 10px 28px rgba(0, 40, 85, 0.18);
@@ -5620,7 +5597,7 @@ button:disabled {
 
 .sign-overlay-head strong {
   font-size: 13px;
-  color: #002855;
+  color: #1d518f;
 }
 
 .sign-overlay canvas {
@@ -5881,7 +5858,7 @@ button:disabled {
     align-items: flex-start;
     text-align: left;
     padding: 48px 64px;
-    background: #002855;
+    background: #1d518f;
   }
 
   .auth-kicker {
@@ -6034,7 +6011,7 @@ button:disabled {
 }
 
 .landing-brand strong {
-  color: #002855;
+  color: #1d518f;
   font-size: 15px;
 }
 
@@ -6050,7 +6027,7 @@ button:disabled {
 }
 
 .landing-nav nav a:not(.btn) {
-  color: #002855;
+  color: #1d518f;
   text-decoration: none;
   font-weight: 700;
   font-size: 14px;
@@ -6167,7 +6144,7 @@ button:disabled {
 
 .landing-section h2,
 .landing-cta h2 {
-  color: #002855;
+  color: #1d518f;
   font-size: clamp(1.5rem, 2.4vw, 2.1rem);
 }
 
@@ -6228,7 +6205,7 @@ button:disabled {
 
 .landing-cards h3 {
   margin: 10px 0 6px;
-  color: #002855;
+  color: #1d518f;
   font-size: 16px;
 }
 
@@ -6272,18 +6249,18 @@ button:disabled {
   display: grid;
   place-items: center;
   background: #e8eef5;
-  color: #002855;
+  color: #1d518f;
   font-size: 13px;
 }
 
 .landing-steps button.is-active,
 .landing-roles button.is-active {
-  border-color: #002855;
+  border-color: #1d518f;
   box-shadow: 0 0 0 3px rgba(0, 40, 85, 0.16);
 }
 
 .landing-steps button.is-active span {
-  background: #002855;
+  background: #1d518f;
   color: #fff;
 }
 
@@ -6297,7 +6274,7 @@ button:disabled {
 .landing-step-panel h3,
 .landing-role-panel h3 {
   margin: 0 0 8px;
-  color: #002855;
+  color: #1d518f;
 }
 
 .landing-roles {
@@ -6315,7 +6292,7 @@ button:disabled {
 }
 
 .landing-roles strong {
-  color: #002855;
+  color: #1d518f;
 }
 
 .landing-roles span {
@@ -6331,7 +6308,7 @@ button:disabled {
   margin: 0 16px 48px;
   padding: 40px 28px;
   border-radius: 22px;
-  background: #002855;
+  background: #1d518f;
   color: #fff;
   text-align: center;
 }
@@ -6812,7 +6789,7 @@ button:disabled {
   align-items: center;
   gap: 8px 24px;
   padding: 12px clamp(16px, 4vw, 40px);
-  background: #001e40;
+  background: #164579;
   color: #94a3b8;
   font-size: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -6978,7 +6955,7 @@ button:disabled {
   max-width: 62ch;
   padding: 8px 12px;
   background: #fdfaf2;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   border: 1px solid rgba(197, 160, 89, 0.35);
   border-radius: 8px;
 }
@@ -7019,7 +6996,7 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   font-size: 0.95rem;
 }
 
@@ -7038,7 +7015,7 @@ button:disabled {
 .ops-dashboard-head h2 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
 }
 
 .ops-kpi {
@@ -7071,7 +7048,7 @@ button:disabled {
 .ops-more summary {
   cursor: pointer;
   font-weight: 700;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   padding: 10px 0;
 }
 
@@ -7132,7 +7109,7 @@ button:disabled {
 }
 
 .phase-line-item.is-current .phase-line-wire {
-  background: linear-gradient(90deg, #2e7d32, #002855);
+  background: linear-gradient(90deg, #2e7d32, #1d518f);
 }
 
 .phase-line-dot {
@@ -7150,7 +7127,7 @@ button:disabled {
 }
 
 .phase-line-item.is-current .phase-line-dot {
-  background: #002855;
+  background: #1d518f;
   border-color: var(--color-secondary, #c5a059);
   box-shadow: 0 0 0 4px rgba(197, 160, 89, 0.35);
   animation: phase-pulse 1.6s ease-out infinite;
@@ -7169,7 +7146,7 @@ button:disabled {
 .phase-line-copy strong {
   font-size: 11px;
   font-weight: 800;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   line-height: 1.25;
 }
 
@@ -7188,7 +7165,7 @@ button:disabled {
 }
 
 .phase-line-item.is-current .phase-line-copy em {
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   font-weight: 700;
 }
 
@@ -7221,7 +7198,7 @@ button:disabled {
 }
 
 .phase-bitacora strong {
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   font-size: 12px;
   text-transform: capitalize;
 }
@@ -7255,7 +7232,7 @@ button:disabled {
 
 .ops-kpi.tone-info {
   background: #f8fafc;
-  border-top-color: var(--color-primary, #002855);
+  border-top-color: var(--color-primary, #1d518f);
 }
 
 .ops-kpi.tone-ok {
@@ -7290,7 +7267,7 @@ button:disabled {
 }
 
 .ops-bar-fill.is-info {
-  background: linear-gradient(90deg, #002855, #005691);
+  background: linear-gradient(90deg, #1d518f, #005691);
 }
 
 .ops-alert-strip {
@@ -7330,14 +7307,14 @@ button:disabled {
 }
 
 .ops-alert-chip:hover {
-  border-color: var(--color-primary, #002855);
+  border-color: var(--color-primary, #1d518f);
   box-shadow: 0 2px 8px rgba(0, 40, 85, 0.08);
 }
 
 .ops-alert-chip span {
   font-weight: 800;
   font-size: 13px;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
 }
 
 .ops-alert-chip em {
@@ -7355,7 +7332,7 @@ button:disabled {
 }
 
 .ops-alert-chip.is-baja {
-  border-left: 4px solid var(--color-primary, #002855);
+  border-left: 4px solid var(--color-primary, #1d518f);
 }
 
 .ops-recent li {
@@ -7560,13 +7537,13 @@ button:disabled {
   display: grid;
   place-items: center;
   background: rgba(0, 40, 85, 0.06);
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
   flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
 .sgv-choice-card.is-selected .sgv-choice-icon {
-  background: var(--color-primary, #002855);
+  background: var(--color-primary, #1d518f);
   color: var(--color-secondary, #c5a059);
 }
 
@@ -7580,7 +7557,7 @@ button:disabled {
 .sgv-choice-body strong {
   font-size: 14.5px;
   font-weight: 700;
-  color: var(--color-primary, #002855);
+  color: var(--color-primary, #1d518f);
 }
 
 .sgv-choice-body span {
@@ -7704,7 +7681,7 @@ button:disabled {
   height: 38px;
   border-radius: 8px;
   background: var(--color-secondary, #c5a059);
-  color: #002855;
+  color: #1d518f;
   font-weight: 800;
   font-size: 14px;
   display: grid;
@@ -7752,7 +7729,7 @@ button:disabled {
 }
 
 .sgv-signature-pad:focus-within {
-  border-color: var(--color-primary, #002855);
+  border-color: var(--color-primary, #1d518f);
 }
 
 .sgv-signature-pad canvas {

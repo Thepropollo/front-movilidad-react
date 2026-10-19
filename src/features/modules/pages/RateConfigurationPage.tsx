@@ -203,20 +203,20 @@ export default function RateConfigurationPage() {
   };
 
   const renderGroup = (group: 'allowance' | 'fuel' | 'other') => (
-    <div className="module-panel shadow-sm border border-zinc-200 rounded-xl p-5 mb-4" key={group}>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-zinc-100 pb-3">
+    <div className="module-panel shadow-sm border border-slate-200 rounded-xl p-5 mb-4" key={group}>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-slate-100 pb-3">
         <div>
-          <p className="text-xs uppercase font-mono tracking-wider font-semibold text-zinc-500 m-0">
+          <p className="text-xs uppercase tracking-wider font-semibold text-slate-500 m-0">
             {group === 'allowance' ? 'Comisión y Personal' : group === 'fuel' ? 'Abastecimiento' : 'Operación'}
           </p>
-          <h2 className="text-lg font-bold font-mono text-zinc-900 m-0 mt-0.5">
+          <h2 className="text-lg font-bold text-slate-900 m-0 mt-0.5">
             {group === 'allowance' ? 'Viáticos, Estipendios y Horas Extra' : group === 'fuel' ? 'Precios de Combustible por Galón' : 'Otros Costos Operativos'}
           </h2>
         </div>
         {group === 'allowance' && (
           <div className="rate-total flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200" aria-label="Costo diario fuera de sede">
-            <span className="text-xs font-mono text-emerald-800">Costo diario fuera de sede:</span>
-            <strong className="text-sm font-mono font-bold text-emerald-900">${dailyTotal.toFixed(2)}</strong>
+            <span className="text-xs text-emerald-800">Costo diario fuera de sede:</span>
+            <strong className="text-sm font-bold text-emerald-900">${dailyTotal.toFixed(2)}</strong>
           </div>
         )}
       </div>
@@ -232,28 +232,28 @@ export default function RateConfigurationPage() {
             };
             const Icon = meta.icon;
             return (
-              <article className="border border-zinc-200 rounded-xl p-4 bg-white hover:border-zinc-300 transition-all flex flex-col justify-between" key={rate.id}>
+              <article className="border border-slate-200 rounded-xl p-4 bg-white hover:border-slate-300 transition-all flex flex-col justify-between" key={rate.id}>
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-9 h-9 rounded-lg bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-700 shrink-0" aria-hidden>
+                    <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0" aria-hidden>
                       <Icon size={18} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold font-mono text-zinc-900 m-0">{meta.label}</h3>
-                      <code className="text-[11px] font-mono text-zinc-400">{rate.rate_key}</code>
+                      <h3 className="text-sm font-bold text-slate-900 m-0">{meta.label}</h3>
+                      <code className="text-[11px] text-slate-500">{rate.rate_key}</code>
                     </div>
                   </div>
-                  <p className="text-xs text-zinc-500 font-mono mb-4">{meta.description}</p>
+                  <p className="text-xs text-slate-500 mb-4">{meta.description}</p>
                 </div>
-                <div className="flex items-center gap-2 pt-2 border-t border-zinc-100">
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                   <label className="sr-only" htmlFor={`rate-${rate.id}`}>
                     Valor de {meta.label}
                   </label>
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-zinc-500">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">$</span>
                     <input
                       id={`rate-${rate.id}`}
-                      className="form-input text-xs font-mono w-full pl-6"
+                      className="form-input text-xs w-full pl-6"
                       type="number"
                       min="0.01"
                       step="0.01"
@@ -265,7 +265,7 @@ export default function RateConfigurationPage() {
                   </div>
                   <button
                     type="button"
-                    className="btn btn-primary text-xs font-mono uppercase tracking-wider px-3 py-2 flex items-center gap-1.5 shrink-0"
+                    className="btn btn-primary text-xs uppercase tracking-wider px-3 py-2 flex items-center gap-1.5 shrink-0"
                     onClick={() => void save(rate)}
                     disabled={savingId === rate.id}
                   >
@@ -347,58 +347,58 @@ export default function RateConfigurationPage() {
       </div>
 
       {message && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-mono flex items-center gap-2" role="status">
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-2" role="status">
           <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
           <span>{message}</span>
         </div>
       )}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-mono flex items-center gap-2" role="alert">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-2" role="alert">
           <AlertCircle size={16} className="text-rose-600 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <form className="module-panel shadow-sm border border-zinc-200 rounded-xl p-5" onSubmit={(event) => void create(event)}>
+      <form className="module-panel shadow-sm border border-slate-200 rounded-xl p-5" onSubmit={(event) => void create(event)}>
         <div className="mb-4">
-          <p className="text-xs uppercase font-mono tracking-wider font-semibold text-zinc-500 m-0">Parámetro Personalizado</p>
-          <h2 className="text-lg font-bold font-mono text-zinc-900 m-0 mt-0.5">Crear Nueva Tarifa Operativa</h2>
-          <p className="ops-muted text-xs font-mono mt-1">
+          <p className="text-xs uppercase tracking-wider font-semibold text-slate-500 m-0">Parámetro Personalizado</p>
+          <h2 className="text-lg font-bold text-slate-900 m-0 mt-0.5">Crear Nueva Tarifa Operativa</h2>
+          <p className="ops-muted text-xs mt-1">
             Agregue cualquier costo que deba formar parte de una comisión o de la operación de flota vehicular.
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
-            <label className="text-xs font-mono font-semibold text-zinc-700 block mb-1" htmlFor="new-rate-key">
+            <label className="text-xs font-semibold text-slate-700 block mb-1" htmlFor="new-rate-key">
               Clave técnica
             </label>
             <input
               id="new-rate-key"
-              className="form-input text-xs font-mono w-full"
+              className="form-input text-xs w-full"
               placeholder="ej. parqueadero_diario"
               value={newRate.rate_key}
               onChange={(event) => setNewRate((current) => ({ ...current, rate_key: event.target.value }))}
             />
           </div>
           <div>
-            <label className="text-xs font-mono font-semibold text-zinc-700 block mb-1" htmlFor="new-rate-label">
+            <label className="text-xs font-semibold text-slate-700 block mb-1" htmlFor="new-rate-label">
               Nombre visible
             </label>
             <input
               id="new-rate-label"
-              className="form-input text-xs font-mono w-full"
+              className="form-input text-xs w-full"
               placeholder="Parqueadero diario"
               value={newRate.rate_label}
               onChange={(event) => setNewRate((current) => ({ ...current, rate_label: event.target.value }))}
             />
           </div>
           <div>
-            <label className="text-xs font-mono font-semibold text-zinc-700 block mb-1" htmlFor="new-rate-group">
+            <label className="text-xs font-semibold text-slate-700 block mb-1" htmlFor="new-rate-group">
               Categoría
             </label>
             <select
               id="new-rate-group"
-              className="form-select text-xs font-mono w-full"
+              className="form-select text-xs w-full"
               value={newRate.rate_group}
               onChange={(event) => setNewRate((current) => ({ ...current, rate_group: event.target.value as typeof current.rate_group }))}
             >
@@ -408,12 +408,12 @@ export default function RateConfigurationPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-mono font-semibold text-zinc-700 block mb-1" htmlFor="new-rate-value">
+            <label className="text-xs font-semibold text-slate-700 block mb-1" htmlFor="new-rate-value">
               Valor ($)
             </label>
             <input
               id="new-rate-value"
-              className="form-input text-xs font-mono w-full"
+              className="form-input text-xs w-full"
               type="number"
               min="0.01"
               step="0.01"
@@ -425,7 +425,7 @@ export default function RateConfigurationPage() {
         </div>
         <button
           type="submit"
-          className="btn btn-primary text-xs font-mono uppercase tracking-wider px-6 py-2.5 flex items-center gap-2"
+          className="btn btn-primary text-xs uppercase tracking-wider px-6 py-2.5 flex items-center gap-2"
           disabled={creating}
         >
           <PlusCircle size={16} />
@@ -436,11 +436,11 @@ export default function RateConfigurationPage() {
       {loading ? (
         <div className="module-panel flex flex-col items-center justify-center py-12" role="status">
           <span className="spinner w-8 h-8 mb-3" />
-          <p className="ops-muted font-mono text-xs">Cargando tarifas del sistema…</p>
+          <p className="ops-muted text-xs">Cargando tarifas del sistema…</p>
         </div>
       ) : rates.length === 0 ? (
         <div className="module-panel text-center py-12" role="status">
-          <p className="ops-muted font-mono text-xs">No hay tarifas configuradas.</p>
+          <p className="ops-muted text-xs">No hay tarifas configuradas.</p>
         </div>
       ) : (
         <div className="rates-stack">
